@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
@@ -84,6 +83,10 @@ const WorkerFormDialog: React.FC<WorkerFormDialogProps> = ({
     }
   };
 
+  // Debug logging
+  console.log('WorkerFormDialog - organizationalRoles:', organizationalRoles);
+  console.log('WorkerFormDialog - formData.roleCode:', formData.roleCode);
+
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-md max-h-[80vh] overflow-y-auto">
@@ -99,17 +102,26 @@ const WorkerFormDialog: React.FC<WorkerFormDialogProps> = ({
             </Label>
             <Select
               value={formData.roleCode ? formData.roleCode.toString() : ''}
-              onValueChange={(value) => onInputChange('roleCode', parseInt(value))}
+              onValueChange={(value) => {
+                console.log('Role selected:', value);
+                onInputChange('roleCode', parseInt(value));
+              }}
             >
               <SelectTrigger className="text-right">
                 <SelectValue placeholder="בחר תפקיד" />
               </SelectTrigger>
               <SelectContent>
-                {organizationalRoles.map(role => (
-                  <SelectItem key={role.roleCode} value={role.roleCode.toString()}>
-                    {role.description}
+                {organizationalRoles && organizationalRoles.length > 0 ? (
+                  organizationalRoles.map(role => (
+                    <SelectItem key={role.roleCode} value={role.roleCode.toString()}>
+                      {role.description}
+                    </SelectItem>
+                  ))
+                ) : (
+                  <SelectItem value="loading" disabled>
+                    טוען תפקידים...
                   </SelectItem>
-                ))}
+                )}
               </SelectContent>
             </Select>
           </div>
@@ -170,6 +182,7 @@ const WorkerFormDialog: React.FC<WorkerFormDialogProps> = ({
                   <SelectValue placeholder="בחר אגף" />
                 </SelectTrigger>
                 <SelectContent>
+                  <SelectItem value="">ללא אגף</SelectItem>
                   {divisions.map(div => (
                     <SelectItem key={div.id} value={div.id.toString()}>
                       {div.name}
@@ -193,6 +206,7 @@ const WorkerFormDialog: React.FC<WorkerFormDialogProps> = ({
                   <SelectValue placeholder="בחר מחלקה" />
                 </SelectTrigger>
                 <SelectContent>
+                  <SelectItem value="">ללא מחלקה</SelectItem>
                   {departments
                     .filter(dept => !formData.divisionId || dept.divisionId === formData.divisionId)
                     .map(dept => (
@@ -218,6 +232,7 @@ const WorkerFormDialog: React.FC<WorkerFormDialogProps> = ({
                   <SelectValue placeholder="בחר צוות רכש" />
                 </SelectTrigger>
                 <SelectContent>
+                  <SelectItem value="">ללא צוות</SelectItem>
                   {procurementTeams.map(team => (
                     <SelectItem key={team.id} value={team.name}>
                       {team.name}
@@ -238,7 +253,7 @@ const WorkerFormDialog: React.FC<WorkerFormDialogProps> = ({
               value={formData.password || ''}
               onChange={(e) => onInputChange('password', e.target.value)}
               className="text-right"
-              placeholder="הכנס סיסמה (6 תווים)"
+              placeholder={editingRecord ? "השאר ריק לשמירת הסיסמה הנוכחית" : "הכנס סיסמה (6 תווים)"}
               maxLength={6}
             />
           </div>

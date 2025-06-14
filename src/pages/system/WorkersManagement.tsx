@@ -73,6 +73,8 @@ const WorkersManagement: React.FC = () => {
     try {
       setLoading(true);
       
+      console.log('Loading workers management data...');
+      
       // Load all data in parallel
       const [workersRes, divisionsRes, departmentsRes, teamsRes, rolesRes] = await Promise.all([
         apiRequest.get('/workers'),
@@ -84,27 +86,44 @@ const WorkersManagement: React.FC = () => {
 
       if (workersRes.ok) {
         const workersData = await workersRes.json();
+        console.log('Loaded workers:', workersData);
         setRecords(workersData);
+      } else {
+        console.error('Failed to load workers:', workersRes.status);
       }
 
       if (divisionsRes.ok) {
         const divisionsData = await divisionsRes.json();
+        console.log('Loaded divisions:', divisionsData);
         setDivisions(divisionsData);
+      } else {
+        console.error('Failed to load divisions:', divisionsRes.status);
       }
 
       if (departmentsRes.ok) {
         const departmentsData = await departmentsRes.json();
+        console.log('Loaded departments:', departmentsData);
         setDepartments(departmentsData);
+      } else {
+        console.error('Failed to load departments:', departmentsRes.status);
       }
 
       if (teamsRes.ok) {
         const teamsData = await teamsRes.json();
+        console.log('Loaded procurement teams:', teamsData);
         setProcurementTeams(teamsData);
+      } else {
+        console.error('Failed to load procurement teams:', teamsRes.status);
       }
 
       if (rolesRes.ok) {
         const rolesData = await rolesRes.json();
+        console.log('Loaded organizational roles:', rolesData);
         setOrganizationalRoles(rolesData);
+      } else {
+        console.error('Failed to load organizational roles:', rolesRes.status);
+        const errorText = await rolesRes.text();
+        console.error('Error response:', errorText);
       }
 
     } catch (error) {
@@ -139,12 +158,14 @@ const WorkersManagement: React.FC = () => {
   };
 
   const handleAdd = () => {
+    console.log('Opening add dialog with organizational roles:', organizationalRoles);
     initializeForm();
     setEditingRecord(null);
     setIsAddDialogOpen(true);
   };
 
   const handleEdit = (record: WorkerRecord) => {
+    console.log('Opening edit dialog for record:', record);
     initializeForm(record);
     setEditingRecord(record);
     setIsAddDialogOpen(true);
@@ -203,6 +224,8 @@ const WorkersManagement: React.FC = () => {
   };
 
   const handleSave = async () => {
+    console.log('Saving worker with form data:', formData);
+    
     if (!validateForm()) return;
 
     try {
@@ -219,6 +242,8 @@ const WorkersManagement: React.FC = () => {
         processedData.availableWorkDays = '';
       }
 
+      console.log('Processed data for API:', processedData);
+
       let response;
       if (editingRecord) {
         // Update existing worker
@@ -230,6 +255,7 @@ const WorkersManagement: React.FC = () => {
 
       if (response.ok) {
         const savedWorker = await response.json();
+        console.log('Worker saved successfully:', savedWorker);
         
         if (editingRecord) {
           setRecords(prev => prev.map(record => 
@@ -252,6 +278,7 @@ const WorkersManagement: React.FC = () => {
         setFormData({});
       } else {
         const errorData = await response.json();
+        console.error('API error:', errorData);
         toast({
           title: "שגיאה",
           description: errorData.error || "שגיאה בשמירת הנתונים",
@@ -299,6 +326,7 @@ const WorkersManagement: React.FC = () => {
   };
 
   const handleInputChange = (key: keyof WorkerRecord, value: any) => {
+    console.log('Form input changed:', key, value);
     setFormData(prev => ({ ...prev, [key]: value }));
   };
 

@@ -6,6 +6,63 @@ import { authenticateToken, authorizeRoles } from '../middleware/auth.js';
 
 const router = express.Router();
 
+// Get organizational roles
+router.get('/organizational-roles', authenticateToken, (req, res) => {
+  const db = getDatabase();
+  
+  db.all('SELECT * FROM organizational_roles ORDER BY role_code', (err, roles) => {
+    if (err) {
+      console.error('Error fetching organizational roles:', err);
+      return res.status(500).json({ error: 'Failed to fetch organizational roles' });
+    }
+    
+    console.log('Fetched organizational roles:', roles);
+    res.json(roles);
+  });
+});
+
+// Get divisions
+router.get('/divisions', authenticateToken, (req, res) => {
+  const db = getDatabase();
+  
+  db.all('SELECT * FROM divisions ORDER BY name', (err, divisions) => {
+    if (err) {
+      console.error('Error fetching divisions:', err);
+      return res.status(500).json({ error: 'Failed to fetch divisions' });
+    }
+    
+    res.json(divisions);
+  });
+});
+
+// Get departments
+router.get('/departments', authenticateToken, (req, res) => {
+  const db = getDatabase();
+  
+  db.all('SELECT * FROM departments ORDER BY name', (err, departments) => {
+    if (err) {
+      console.error('Error fetching departments:', err);
+      return res.status(500).json({ error: 'Failed to fetch departments' });
+    }
+    
+    res.json(departments);
+  });
+});
+
+// Get procurement teams
+router.get('/procurement-teams', authenticateToken, (req, res) => {
+  const db = getDatabase();
+  
+  db.all('SELECT * FROM procurement_teams ORDER BY name', (err, teams) => {
+    if (err) {
+      console.error('Error fetching procurement teams:', err);
+      return res.status(500).json({ error: 'Failed to fetch procurement teams' });
+    }
+    
+    res.json(teams);
+  });
+});
+
 // Get all workers
 router.get('/', authenticateToken, (req, res) => {
   const db = getDatabase();
@@ -128,11 +185,24 @@ router.post('/', [
       email
     } = req.body;
 
+    console.log('Creating worker with data:', {
+      employeeId,
+      roleCode,
+      fullName,
+      roleDescription,
+      divisionId,
+      departmentId,
+      procurementTeam,
+      availableWorkDays,
+      email
+    });
+
     const db = getDatabase();
 
     // Check if employee ID already exists
     db.get('SELECT id FROM users WHERE employee_id = ?', [employeeId], async (err, existingUser) => {
       if (err) {
+        console.error('Database error checking existing user:', err);
         return res.status(500).json({ error: 'Database error' });
       }
 
@@ -167,6 +237,8 @@ router.post('/', [
           return res.status(500).json({ error: 'Failed to create worker' });
         }
 
+        console.log('Worker created with ID:', this.lastID);
+
         // Get the created worker with joined data
         db.get(`
           SELECT 
@@ -179,6 +251,7 @@ router.post('/', [
           WHERE u.id = ?
         `, [this.lastID], (err, newWorker) => {
           if (err) {
+            console.error('Error fetching created worker:', err);
             return res.status(500).json({ error: 'Failed to fetch created worker' });
           }
 
@@ -198,6 +271,7 @@ router.post('/', [
             departmentName: newWorker.department_name
           };
 
+          console.log('Returning created worker:', transformedWorker);
           res.status(201).json(transformedWorker);
         });
       });
@@ -394,62 +468,6 @@ router.delete('/:id', [
     console.error('Error deleting worker:', error);
     res.status(500).json({ error: 'Failed to delete worker' });
   }
-});
-
-// Get organizational roles
-router.get('/organizational-roles', authenticateToken, (req, res) => {
-  const db = getDatabase();
-  
-  db.all('SELECT * FROM organizational_roles ORDER BY role_code', (err, roles) => {
-    if (err) {
-      console.error('Error fetching organizational roles:', err);
-      return res.status(500).json({ error: 'Failed to fetch organizational roles' });
-    }
-    
-    res.json(roles);
-  });
-});
-
-// Get divisions
-router.get('/divisions', authenticateToken, (req, res) => {
-  const db = getDatabase();
-  
-  db.all('SELECT * FROM divisions ORDER BY name', (err, divisions) => {
-    if (err) {
-      console.error('Error fetching divisions:', err);
-      return res.status(500).json({ error: 'Failed to fetch divisions' });
-    }
-    
-    res.json(divisions);
-  });
-});
-
-// Get departments
-router.get('/departments', authenticateToken, (req, res) => {
-  const db = getDatabase();
-  
-  db.all('SELECT * FROM departments ORDER BY name', (err, departments) => {
-    if (err) {
-      console.error('Error fetching departments:', err);
-      return res.status(500).json({ error: 'Failed to fetch departments' });
-    }
-    
-    res.json(departments);
-  });
-});
-
-// Get procurement teams
-router.get('/procurement-teams', authenticateToken, (req, res) => {
-  const db = getDatabase();
-  
-  db.all('SELECT * FROM procurement_teams ORDER BY name', (err, teams) => {
-    if (err) {
-      console.error('Error fetching procurement teams:', err);
-      return res.status(500).json({ error: 'Failed to fetch procurement teams' });
-    }
-    
-    res.json(teams);
-  });
 });
 
 export default router;
