@@ -7,6 +7,7 @@ const DB_PATH = process.env.DB_PATH || './data/procurement.db';
 // Ensure data directory exists
 const dataDir = path.dirname(DB_PATH);
 if (!fs.existsSync(dataDir)) {
+  console.log('Creating data directory:', dataDir);
   fs.mkdirSync(dataDir, { recursive: true });
 }
 
@@ -14,12 +15,13 @@ let db = null;
 
 function getDatabase() {
   if (!db) {
+    console.log('Initializing database at:', DB_PATH);
     db = new sqlite3.Database(DB_PATH, (err) => {
       if (err) {
         console.error('Error opening database:', err);
         throw err;
       }
-      console.log('Connected to SQLite database');
+      console.log('Connected to SQLite database at:', DB_PATH);
     });
     
     // Enable foreign keys
@@ -33,6 +35,8 @@ async function initializeDatabase() {
   
   return new Promise((resolve, reject) => {
     db.serialize(() => {
+      console.log('Creating database tables...');
+      
       // Users table
       db.run(`
         CREATE TABLE IF NOT EXISTS users (
@@ -198,16 +202,28 @@ async function initializeDatabase() {
           description TEXT,
           updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
         )
-      `);
+      `, (err) => {
+        if (err) {
+          console.error('Error creating system_settings table:', err);
+          reject(err);
+          return;
+        }
 
-      // Create indexes for better performance
-      db.run('CREATE INDEX IF NOT EXISTS idx_programs_status ON programs(status)');
-      db.run('CREATE INDEX IF NOT EXISTS idx_programs_work_year ON programs(work_year)');
-      db.run('CREATE INDEX IF NOT EXISTS idx_program_tasks_program_id ON program_tasks(program_id)');
-      db.run('CREATE INDEX IF NOT EXISTS idx_users_employee_id ON users(employee_id)');
-      
-      console.log('Database tables created successfully');
-      resolve();
+        // Create indexes for better performance
+        db.run('CREATE INDEX IF NOT EXISTS idx_programs_status ON programs(status)');
+        db.run('CREATE INDEX IF NOT EXISTS idx_programs_work_year ON programs(work_year)');
+        db.run('CREATE INDEX IF NOT EXISTS idx_program_tasks_program_id ON program_tasks(program_id)');
+        db.run('CREATE INDEX IF NOT EXISTS idx_users_employee_id ON users(employee_id)', (err) => {
+          if (err) {
+            console.error('Error creating indexes:', err);
+            reject(err);
+            return;
+          }
+          
+          console.log('Database tables and indexes created successfully');
+          resolve();
+        });
+      });
     });
   });
 }
