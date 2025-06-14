@@ -4,37 +4,40 @@ import helmet from 'helmet';
 import morgan from 'morgan';
 import compression from 'compression';
 import rateLimit from 'express-rate-limit';
-import bcrypt from 'bcryptjs';
-import jwt from 'jsonwebtoken';
-import { body, validationResult } from 'express-validator';
-import { initializeDatabase, getDatabase } from './config/database.js';
+import { initializeDatabase } from './config/database.js';
 import authRoutes from './routes/auth.js';
+import workersRoutes from './routes/workers.js';
 
 // Environment variables
 process.env.JWT_SECRET = process.env.JWT_SECRET || 'your-super-secret-jwt-key-change-this-in-production';
 process.env.JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN || '24h';
 process.env.BCRYPT_ROUNDS = process.env.BCRYPT_ROUNDS || '12';
-process.env.DB_PATH = process.env.DB_PATH || './data/procurement.db';
+process.env.DB_PATH = process.env.DB_PATH || './src/server/data/procurement.db';
 
-async function createServer() {
+async function startServer() {
   const app = express();
+  const PORT = process.env.PORT || 3001;
 
   // Security middleware
-  app.use(helmet());
+  app.use(helmet({
+    contentSecurityPolicy: false, // Disable CSP for development
+  }));
   app.use(compression());
 
   // Rate limiting
   const limiter = rateLimit({
     windowMs: 15 * 60 * 1000, // 15 minutes
-    max: 100, // limit each IP to 100 requests per windowMs
+    max: 1000, // Increased limit for development
     message: { error: 'Too many requests from this IP, please try again later.' }
   });
   app.use('/api', limiter);
 
   // CORS configuration
   app.use(cors({
-    origin: ['http://localhost:8080', 'http://localhost:3000'],
-    credentials: true
+    origin: ['http://localhost:8080', 'http://localhost:3000', 'http://localhost:5173'],
+    credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization']
   }));
 
   // Body parsing middleware
@@ -69,6 +72,7 @@ async function createServer() {
 
   // API Routes
   app.use('/api/auth', authRoutes);
+  app.use('/api/workers', workersRoutes);
 
   // Error handling middleware
   app.use('/api', (err, req, res, next) => {
@@ -90,7 +94,16 @@ async function createServer() {
     res.status(404).json({ error: 'API route not found' });
   });
 
-  return app;
+  // Start server
+  app.listen(PORT, () => {
+    console.log(`Server running on port ${PORT}`);
+    console.log(`Environment: ${process.env.NODE_ENV || 'development'}`);
+    console.log(`Health check: http://localhost:${PORT}/api/health`);
+  });
 }
 
-export { createServer };
+if (import.meta.url === `file://${process.argv[1]}`) {
+  startServer().catch(console.error);
+}
+
+export { startServer };
