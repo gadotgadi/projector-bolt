@@ -10,7 +10,6 @@ import { Plus, Save, Trash2, AlertTriangle } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { EngagementTypeWithProcess } from '../types/engagementTypes';
 import { mockActivityPool } from '../data/mockData';
-import { mockEngagementTypes, getProcessesForEngagementType } from '../data/engagementTypesData';
 import { Alert, AlertDescription } from '../components/ui/alert';
 
 // Mock data for engagement types with processes
@@ -103,13 +102,20 @@ const EngagementTypes = () => {
   };
 
   const handleAddNewType = () => {
-    if (!newTypeName.trim()) return;
+    if (!newTypeName.trim()) {
+      toast({
+        title: "שגיאה",
+        description: "נא להזין שם לסוג ההתקשרות החדש",
+        variant: "destructive"
+      });
+      return;
+    }
     
     const newId = Math.max(...engagementTypes.map(et => et.id)) + 1;
     const newType: EngagementTypeWithProcess = {
       id: newId,
       name: newTypeName,
-      processes: []
+      processes: [] // עמודה חדשה עם 10 שורות ריקות
     };
     
     setEngagementTypes(prev => [...prev, newType]);
@@ -118,18 +124,20 @@ const EngagementTypes = () => {
     
     toast({
       title: "נוצר בהצלחה",
-      description: "סוג התקשרות חדש נוסף",
+      description: `סוג התקשרות חדש "${newTypeName}" נוסף עם 10 תחנות ריקות`,
     });
   };
 
   const handleDeleteType = (typeId: number) => {
-    setEngagementTypes(prev => prev.filter(et => et.id !== typeId));
-    setValidationErrors([]);
-    
-    toast({
-      title: "נמחק בהצלחה",
-      description: "סוג ההתקשרות הוסר",
-    });
+    if (window.confirm('האם אתה בטוח שברצונך למחוק סוג התקשרות זה?')) {
+      setEngagementTypes(prev => prev.filter(et => et.id !== typeId));
+      setValidationErrors([]);
+      
+      toast({
+        title: "נמחק בהצלחה",
+        description: "סוג ההתקשרות הוסר",
+      });
+    }
   };
 
   const handleStationActivityChange = (typeId: number, stationId: number, activityId: number | null) => {
@@ -249,9 +257,15 @@ const EngagementTypes = () => {
                   onChange={(e) => setNewTypeName(e.target.value)}
                   className="text-right w-48"
                   maxLength={15}
+                  onKeyPress={(e) => {
+                    if (e.key === 'Enter') {
+                      handleAddNewType();
+                    }
+                  }}
                 />
                 <Button onClick={handleAddNewType} size="sm">
-                  <Plus className="w-4 h-4" />
+                  <Plus className="w-4 h-4 ml-1" />
+                  חדש
                 </Button>
               </div>
             </div>
