@@ -75,132 +75,66 @@ const WorkersManagement: React.FC = () => {
       
       console.log('Loading workers management data...');
       
-      // Load workers first
-      try {
-        const workersRes = await apiRequest.get('/workers');
-        if (workersRes.ok) {
-          const workersData = await workersRes.json();
-          console.log('✅ Loaded workers:', workersData);
-          setRecords(workersData);
-        } else {
-          console.error('❌ Failed to load workers:', workersRes.status);
-          const errorText = await workersRes.text();
-          console.error('Workers error response:', errorText);
-        }
-      } catch (error) {
-        console.error('❌ Error loading workers:', error);
+      // Load workers
+      const workersRes = await apiRequest.get('/workers');
+      if (workersRes.ok) {
+        const workersData = await workersRes.json();
+        console.log('✅ Loaded workers:', workersData);
+        setRecords(workersData);
+      } else {
+        console.error('❌ Failed to load workers:', workersRes.status);
+        throw new Error('Failed to load workers');
       }
 
-      // Load organizational roles
-      try {
-        const rolesRes = await apiRequest.get('/workers/organizational-roles');
-        if (rolesRes.ok) {
-          const rolesData = await rolesRes.json();
-          console.log('✅ Loaded organizational roles:', rolesData);
-          setOrganizationalRoles(rolesData);
-        } else {
-          console.error('❌ Failed to load organizational roles:', rolesRes.status);
-          const errorText = await rolesRes.text();
-          console.error('Roles error response:', errorText);
-          
-          // Set fallback roles
-          setOrganizationalRoles([
-            { id: 1, roleCode: 1, description: 'מנהל רכש' },
-            { id: 2, roleCode: 2, description: 'ראש צוות' },
-            { id: 3, roleCode: 3, description: 'קניין' },
-            { id: 4, roleCode: 4, description: 'גורם דורש' },
-            { id: 5, roleCode: 5, description: 'מנהלן מערכת' },
-            { id: 6, roleCode: 9, description: 'גורם טכני' }
-          ]);
-        }
-      } catch (error) {
-        console.error('❌ Error loading organizational roles:', error);
-        // Set fallback roles
-        setOrganizationalRoles([
-          { id: 1, roleCode: 1, description: 'מנהל רכש' },
-          { id: 2, roleCode: 2, description: 'ראש צוות' },
-          { id: 3, roleCode: 3, description: 'קניין' },
-          { id: 4, roleCode: 4, description: 'גורם דורש' },
-          { id: 5, roleCode: 5, description: 'מנהלן מערכת' },
-          { id: 6, roleCode: 9, description: 'גורם טכני' }
-        ]);
+      // Load organizational roles - REQUIRED
+      const rolesRes = await apiRequest.get('/workers/organizational-roles');
+      if (rolesRes.ok) {
+        const rolesData = await rolesRes.json();
+        console.log('✅ Loaded organizational roles:', rolesData);
+        setOrganizationalRoles(rolesData);
+      } else {
+        console.error('❌ Failed to load organizational roles:', rolesRes.status);
+        throw new Error('Failed to load organizational roles');
       }
 
-      // Load other data with fallbacks
-      try {
-        const divisionsRes = await apiRequest.get('/workers/divisions');
-        if (divisionsRes.ok) {
-          const divisionsData = await divisionsRes.json();
-          console.log('✅ Loaded divisions:', divisionsData);
-          setDivisions(divisionsData);
-        } else {
-          console.error('❌ Failed to load divisions');
-          setDivisions([
-            { id: 1, name: 'אגף תפעול' },
-            { id: 2, name: 'אגף שיווק' },
-            { id: 3, name: 'לקוח חיצוני א' }
-          ]);
-        }
-      } catch (error) {
-        console.error('❌ Error loading divisions:', error);
-        setDivisions([
-          { id: 1, name: 'אגף תפעול' },
-          { id: 2, name: 'אגף שיווק' },
-          { id: 3, name: 'לקוח חיצוני א' }
-        ]);
+      // Load divisions
+      const divisionsRes = await apiRequest.get('/workers/divisions');
+      if (divisionsRes.ok) {
+        const divisionsData = await divisionsRes.json();
+        console.log('✅ Loaded divisions:', divisionsData);
+        setDivisions(divisionsData);
+      } else {
+        console.error('❌ Failed to load divisions');
+        throw new Error('Failed to load divisions');
       }
 
-      try {
-        const departmentsRes = await apiRequest.get('/workers/departments');
-        if (departmentsRes.ok) {
-          const departmentsData = await departmentsRes.json();
-          console.log('✅ Loaded departments:', departmentsData);
-          setDepartments(departmentsData);
-        } else {
-          console.error('❌ Failed to load departments');
-          setDepartments([
-            { id: 1, name: 'מחלקת הנדסה', divisionId: 1 },
-            { id: 2, name: 'מחלקת איכות', divisionId: 1 },
-            { id: 3, name: 'מחלקת שירות לקוחות', divisionId: 2 }
-          ]);
-        }
-      } catch (error) {
-        console.error('❌ Error loading departments:', error);
-        setDepartments([
-          { id: 1, name: 'מחלקת הנדסה', divisionId: 1 },
-          { id: 2, name: 'מחלקת איכות', divisionId: 1 },
-          { id: 3, name: 'מחלקת שירות לקוחות', divisionId: 2 }
-        ]);
+      // Load departments
+      const departmentsRes = await apiRequest.get('/workers/departments');
+      if (departmentsRes.ok) {
+        const departmentsData = await departmentsRes.json();
+        console.log('✅ Loaded departments:', departmentsData);
+        setDepartments(departmentsData);
+      } else {
+        console.error('❌ Failed to load departments');
+        throw new Error('Failed to load departments');
       }
 
-      try {
-        const teamsRes = await apiRequest.get('/workers/procurement-teams');
-        if (teamsRes.ok) {
-          const teamsData = await teamsRes.json();
-          console.log('✅ Loaded procurement teams:', teamsData);
-          setProcurementTeams(teamsData);
-        } else {
-          console.error('❌ Failed to load procurement teams');
-          setProcurementTeams([
-            { id: 1, name: 'צוות רכש א' },
-            { id: 2, name: 'צוות רכש ב' },
-            { id: 3, name: 'צוות רכש מיוחד' }
-          ]);
-        }
-      } catch (error) {
-        console.error('❌ Error loading procurement teams:', error);
-        setProcurementTeams([
-          { id: 1, name: 'צוות רכש א' },
-          { id: 2, name: 'צוות רכש ב' },
-          { id: 3, name: 'צוות רכש מיוחד' }
-        ]);
+      // Load procurement teams
+      const teamsRes = await apiRequest.get('/workers/procurement-teams');
+      if (teamsRes.ok) {
+        const teamsData = await teamsRes.json();
+        console.log('✅ Loaded procurement teams:', teamsData);
+        setProcurementTeams(teamsData);
+      } else {
+        console.error('❌ Failed to load procurement teams');
+        throw new Error('Failed to load procurement teams');
       }
 
     } catch (error) {
-      console.error('❌ General error loading data:', error);
+      console.error('❌ Error loading data:', error);
       toast({
         title: "שגיאה",
-        description: "שגיאה בטעינת הנתונים",
+        description: "שגיאה בטעינת הנתונים מהשרת",
         variant: "destructive"
       });
     } finally {
@@ -341,6 +275,11 @@ const WorkersManagement: React.FC = () => {
             title: "הצלחה",
             description: "הרשומה נוספה בהצלחה"
           });
+          
+          // Redirect to home page after adding user
+          setTimeout(() => {
+            navigate('/');
+          }, 1500);
         }
 
         setIsAddDialogOpen(false);
