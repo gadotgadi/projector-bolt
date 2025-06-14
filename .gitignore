@@ -23,8 +23,8 @@ dist-ssr
 *.sln
 *.sw?
 
-# Database files (local only)
-data/
+# Database files (only in root data directory, not src/data)
+/data/
 *.db
 *.sqlite
 *.sqlite3
@@ -36,6 +36,19 @@ data/
 .env.test.local
 .env.production.local
 
-# Server build files
-server/dist/
-server/node_modules/
+# Build outputs
+build/
+dist/
+
+# Temporary files
+tmp/
+temp/
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
