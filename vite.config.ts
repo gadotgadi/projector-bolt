@@ -16,17 +16,18 @@ export default defineConfig(({ mode }) => ({
     // Custom plugin to integrate Express server
     {
       name: 'express-server',
-      configureServer(server) {
+      async configureServer(server) {
         // Import and setup Express server
-        const { createServer } = require('./src/server/index.js');
+        const { createServer } = await import('./src/server/index.js');
         
-        createServer().then(app => {
+        try {
+          const app = await createServer();
           // Mount Express app on /api routes
           server.middlewares.use('/api', app);
           console.log('Express server integrated with Vite dev server');
-        }).catch(error => {
+        } catch (error) {
           console.error('Failed to start Express server:', error);
-        });
+        }
       }
     }
   ].filter(Boolean),

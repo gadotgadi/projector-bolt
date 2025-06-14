@@ -1,5 +1,5 @@
-const bcrypt = require('bcryptjs');
-const { getDatabase, initializeDatabase, closeDatabase } = require('../config/database');
+import bcrypt from 'bcryptjs';
+import { getDatabase, initializeDatabase, closeDatabase } from '../config/database.js';
 
 async function seedDatabase() {
   try {
@@ -140,8 +140,4 @@ async function seedDatabase() {
   }
 }
 
-if (require.main === module) {
-  seedDatabase();
-}
-
-module.exports = { seedDatabase };
+export { seedDatabase };

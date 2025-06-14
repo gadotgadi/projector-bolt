@@ -1,6 +1,6 @@
-const sqlite3 = require('sqlite3').verbose();
-const path = require('path');
-const fs = require('fs');
+import sqlite3 from 'sqlite3';
+import path from 'path';
+import fs from 'fs';
 
 const DB_PATH = process.env.DB_PATH || './data/procurement.db';
 
@@ -225,7 +225,7 @@ function closeDatabase() {
   }
 }
 
-module.exports = {
+export {
   getDatabase,
   initializeDatabase,
   closeDatabase

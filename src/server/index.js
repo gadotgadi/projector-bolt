@@ -1,14 +1,14 @@
-const express = require('express');
-const cors = require('cors');
-const helmet = require('helmet');
-const morgan = require('morgan');
-const compression = require('compression');
-const rateLimit = require('express-rate-limit');
-const bcrypt = require('bcryptjs');
-const jwt = require('jsonwebtoken');
-const { body, validationResult } = require('express-validator');
-const { initializeDatabase, getDatabase } = require('./config/database');
-const authRoutes = require('./routes/auth');
+import express from 'express';
+import cors from 'cors';
+import helmet from 'helmet';
+import morgan from 'morgan';
+import compression from 'compression';
+import rateLimit from 'express-rate-limit';
+import bcrypt from 'bcryptjs';
+import jwt from 'jsonwebtoken';
+import { body, validationResult } from 'express-validator';
+import { initializeDatabase, getDatabase } from './config/database.js';
+import authRoutes from './routes/auth.js';
 
 // Environment variables
 process.env.JWT_SECRET = process.env.JWT_SECRET || 'your-super-secret-jwt-key-change-this-in-production';
@@ -52,7 +52,7 @@ async function createServer() {
     console.log('Database initialized successfully');
     
     // Seed database
-    const { seedDatabase } = require('./scripts/seedDatabase');
+    const { seedDatabase } = await import('./scripts/seedDatabase.js');
     await seedDatabase();
   } catch (error) {
     console.error('Failed to initialize database:', error);
@@ -93,4 +93,4 @@ async function createServer() {
   return app;
 }
 
-module.exports = { createServer };
+export { createServer };

@@ -1,5 +1,5 @@
-const jwt = require('jsonwebtoken');
-const { getDatabase } = require('../config/database');
+import jwt from 'jsonwebtoken';
+import { getDatabase } from '../config/database.js';
 
 function authenticateToken(req, res, next) {
   const authHeader = req.headers['authorization'];
@@ -54,7 +54,7 @@ function validateUserExists(req, res, next) {
   );
 }
 
-module.exports = {
+export {
   authenticateToken,
   authorizeRoles,
   validateUserExists
