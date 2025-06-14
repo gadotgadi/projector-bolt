@@ -6,6 +6,7 @@ import compression from 'compression';
 import rateLimit from 'express-rate-limit';
 import { initializeDatabase } from './config/database.js';
 import authRoutes from './routes/auth.js';
+import workersRoutes from './routes/workers.js';
 
 // Environment variables
 process.env.JWT_SECRET = process.env.JWT_SECRET || 'your-super-secret-jwt-key-change-this-in-production';
@@ -74,6 +75,7 @@ async function createExpressApp() {
 
   // API Routes
   app.use('/auth', authRoutes);
+  app.use('/workers', workersRoutes);
 
   // Error handling middleware
   app.use((err, req, res, next) => {

@@ -1,5 +1,4 @@
-
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import AppLayout from '../../components/layout/AppLayout';
 import { Button } from '@/components/ui/button';
 import { ArrowRight, Plus } from 'lucide-react';
@@ -9,6 +8,7 @@ import { Dialog, DialogTrigger } from '@/components/ui/dialog';
 import { useToast } from '@/hooks/use-toast';
 import WorkerFormDialog from '../../components/workers/WorkerFormDialog';
 import WorkersTable from '../../components/workers/WorkersTable';
+import { apiRequest } from '../../utils/api';
 
 interface WorkerRecord {
   id: number;
@@ -22,6 +22,8 @@ interface WorkerRecord {
   password: string;
   availableWorkDays?: string;
   email?: string;
+  divisionName?: string;
+  departmentName?: string;
 }
 
 interface OrganizationalRole {
@@ -31,95 +33,91 @@ interface OrganizationalRole {
   permissions?: string;
 }
 
+interface Division {
+  id: number;
+  name: string;
+}
+
+interface Department {
+  id: number;
+  name: string;
+  divisionId: number;
+}
+
+interface ProcurementTeam {
+  id: number;
+  name: string;
+}
+
 const WorkersManagement: React.FC = () => {
-  console.log('WorkersManagement component rendering...');
-  
   const navigate = useNavigate();
   const { toast } = useToast();
   
-  // Mock data
-  const divisions = [
-    { id: 1, name: 'אגף תפעול' },
-    { id: 2, name: 'אגף שיווק' },
-    { id: 3, name: 'לקוח חיצוני א' }
-  ];
-  
-  const departments = [
-    { id: 1, name: 'מחלקת הנדסה', divisionId: 1 },
-    { id: 2, name: 'מחלקת איכות', divisionId: 1 },
-    { id: 3, name: 'מחלקת שירות לקוחות', divisionId: 2 }
-  ];
-
-  const procurementTeams = [
-    { id: 1, name: 'צוות רכש א' },
-    { id: 2, name: 'צוות רכש ב' },
-    { id: 3, name: 'צוות רכש מיוחד' }
-  ];
-
-  const organizationalRoles: OrganizationalRole[] = [
-    {
-      id: 1,
-      roleCode: 1,
-      description: 'מנהל רכש',
-      permissions: 'הרשאות מלאות לניהול כל תהליכי הרכש'
-    },
-    {
-      id: 2,
-      roleCode: 2,
-      description: 'ראש צוות',
-      permissions: 'ניהול צוות קניינים ומעקב משימות'
-    },
-    {
-      id: 3,
-      roleCode: 3,
-      description: 'קניין',
-      permissions: 'ביצוע פעילויות רכש ומעקב משימות'
-    },
-    {
-      id: 4,
-      roleCode: 4,
-      description: 'גורם דורש',
-      permissions: 'הגשת בקשות רכש ומעקב אחר סטטוס'
-    },
-    {
-      id: 5,
-      roleCode: 5,
-      description: 'מנהלן מערכת',
-      permissions: 'ניהול הגדרות מערכת וטבלאות עזר'
-    },
-    {
-      id: 6,
-      roleCode: 9,
-      description: 'גורם טכני',
-      permissions: 'תחזוקת תשתיות המערכת'
-    }
-  ];
-
-  const [records, setRecords] = useState<WorkerRecord[]>([
-    { 
-      id: 1, 
-      employeeId: '1001',
-      roleCode: 1,
-      fullName: 'אבי כהן', 
-      roleDescription: 'מנהל רכש', 
-      password: '123456',
-      email: 'avi@company.com'
-    },
-    { 
-      id: 2, 
-      employeeId: '1002',
-      roleCode: 2,
-      fullName: 'שרה לוי', 
-      roleDescription: 'קניין בכיר', 
-      password: '123456',
-      procurementTeam: 'צוות רכש א',
-      availableWorkDays: '20'
-    }
-  ]);
+  const [records, setRecords] = useState<WorkerRecord[]>([]);
+  const [divisions, setDivisions] = useState<Division[]>([]);
+  const [departments, setDepartments] = useState<Department[]>([]);
+  const [procurementTeams, setProcurementTeams] = useState<ProcurementTeam[]>([]);
+  const [organizationalRoles, setOrganizationalRoles] = useState<OrganizationalRole[]>([]);
+  const [loading, setLoading] = useState(true);
 
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [editingRecord, setEditingRecord] = useState<WorkerRecord | null>(null);
   const [formData, setFormData] = useState<Partial<WorkerRecord>>({});
+
+  // Load data from API
+  useEffect(() => {
+    loadData();
+  }, []);
+
+  const loadData = async () => {
+    try {
+      setLoading(true);
+      
+      // Load all data in parallel
+      const [workersRes, divisionsRes, departmentsRes, teamsRes, rolesRes] = await Promise.all([
+        apiRequest.get('/workers'),
+        apiRequest.get('/workers/divisions'),
+        apiRequest.get('/workers/departments'),
+        apiRequest.get('/workers/procurement-teams'),
+        apiRequest.get('/workers/organizational-roles')
+      ]);
+
+      if (workersRes.ok) {
+        const workersData = await workersRes.json();
+        setRecords(workersData);
+      }
+
+      if (divisionsRes.ok) {
+        const divisionsData = await divisionsRes.json();
+        setDivisions(divisionsData);
+      }
+
+      if (departmentsRes.ok) {
+        const departmentsData = await departmentsRes.json();
+        setDepartments(departmentsData);
+      }
+
+      if (teamsRes.ok) {
+        const teamsData = await teamsRes.json();
+        setProcurementTeams(teamsData);
+      }
+
+      if (rolesRes.ok) {
+        const rolesData = await rolesRes.json();
+        setOrganizationalRoles(rolesData);
+      }
+
+    } catch (error) {
+      console.error('Error loading data:', error);
+      toast({
+        title: "שגיאה",
+        description: "שגיאה בטעינת הנתונים",
+        variant: "destructive"
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const initializeForm = (record?: WorkerRecord) => {
     if (record) {
@@ -174,13 +172,13 @@ const WorkersManagement: React.FC = () => {
     if (!formData.fullName) {
       toast({
         title: "שגיאה",
-        description: "שם מלא ה וא שדה חובה",
+        description: "שם מלא הוא שדה חובה",
         variant: "destructive"
       });
       return false;
     }
 
-    if (!formData.password || formData.password.length !== 6) {
+    if (!formData.password || (formData.password !== '******' && formData.password.length !== 6)) {
       toast({
         title: "שגיאה",
         description: "סיסמה חייבת להיות בת 6 תווים בדיוק",
@@ -204,53 +202,99 @@ const WorkersManagement: React.FC = () => {
     return true;
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (!validateForm()) return;
 
-    const processedData = { ...formData };
-    
-    if (formData.roleCode !== 4 && formData.roleCode !== 5) {
-      processedData.divisionId = undefined;
-      processedData.departmentId = undefined;
-    }
-    
-    if (formData.roleCode !== 2 && formData.roleCode !== 3) {
-      processedData.procurementTeam = '';
-    }
-    
-    if (formData.roleCode !== 2 && formData.roleCode !== 3) {
-      processedData.availableWorkDays = '';
-    }
+    try {
+      const processedData = { ...formData };
+      
+      // Clear irrelevant fields based on role
+      if (formData.roleCode !== 4 && formData.roleCode !== 5) {
+        processedData.divisionId = undefined;
+        processedData.departmentId = undefined;
+      }
+      
+      if (formData.roleCode !== 2 && formData.roleCode !== 3) {
+        processedData.procurementTeam = '';
+        processedData.availableWorkDays = '';
+      }
 
-    if (editingRecord) {
-      setRecords(prev => prev.map(record => 
-        record.id === editingRecord.id ? { ...record, ...processedData } : record
-      ));
+      let response;
+      if (editingRecord) {
+        // Update existing worker
+        response = await apiRequest.put(`/workers/${editingRecord.id}`, processedData);
+      } else {
+        // Create new worker
+        response = await apiRequest.post('/workers', processedData);
+      }
+
+      if (response.ok) {
+        const savedWorker = await response.json();
+        
+        if (editingRecord) {
+          setRecords(prev => prev.map(record => 
+            record.id === editingRecord.id ? savedWorker : record
+          ));
+          toast({
+            title: "הצלחה",
+            description: "הרשומה עודכנה בהצלחה"
+          });
+        } else {
+          setRecords(prev => [...prev, savedWorker]);
+          toast({
+            title: "הצלחה",
+            description: "הרשומה נוספה בהצלחה"
+          });
+        }
+
+        setIsAddDialogOpen(false);
+        setEditingRecord(null);
+        setFormData({});
+      } else {
+        const errorData = await response.json();
+        toast({
+          title: "שגיאה",
+          description: errorData.error || "שגיאה בשמירת הנתונים",
+          variant: "destructive"
+        });
+      }
+    } catch (error) {
+      console.error('Error saving worker:', error);
       toast({
-        title: "הצלחה",
-        description: "הרשומה עודכנה בהצלחה"
-      });
-    } else {
-      const id = Math.max(...records.map(r => r.id), 0) + 1;
-      setRecords(prev => [...prev, { ...processedData, id } as WorkerRecord]);
-      toast({
-        title: "הצלחה",
-        description: "הרשומה נוספה בהצלחה"
+        title: "שגיאה",
+        description: "שגיאה בשמירת הנתונים",
+        variant: "destructive"
       });
     }
-
-    setIsAddDialogOpen(false);
-    setEditingRecord(null);
-    setFormData({});
   };
 
-  const handleDelete = (id: number) => {
+  const handleDelete = async (id: number) => {
     if (window.confirm('האם אתה בטוח שברצונך למחוק רשומה זו?')) {
-      setRecords(prev => prev.filter(record => record.id !== id));
-      toast({
-        title: "הצלחה",
-        description: "הרשומה נמחקה בהצלחה"
-      });
+      try {
+        const response = await apiRequest.delete(`/workers/${id}`);
+        
+        if (response.ok) {
+          setRecords(prev => prev.filter(record => record.id !== id));
+          toast({
+            title: "הצלחה",
+            description: "הרשומה נמחקה בהצלחה"
+          });
+        } else {
+          const errorData = await response.json();
+          toast({
+            title: "שגיאה",
+            description: errorData.error || "שגיאה במחיקת הרשומה",
+            variant: "destructive"
+          });
+        }
+      } catch (error) {
+        console.error('Error deleting worker:', error);
+        toast({
+          title: "שגיאה",
+          description: "שגיאה במחיקת הרשומה",
+          variant: "destructive"
+        });
+      }
     }
   };
 
@@ -258,19 +302,18 @@ const WorkersManagement: React.FC = () => {
     setFormData(prev => ({ ...prev, [key]: value }));
   };
 
-  // Transform records for display
-  const displayRecords = records.map(record => {
-    const division = divisions.find(div => div.id === record.divisionId);
-    const department = departments.find(dept => dept.id === record.departmentId);
-    
-    return {
-      ...record,
-      divisionName: division ? division.name : '',
-      departmentName: department ? department.name : ''
-    };
-  });
-
-  console.log('About to render WorkersManagement layout...');
+  if (loading) {
+    return (
+      <AppLayout currentRoute="/system-settings">
+        <div className="flex items-center justify-center h-64">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
+            <p className="mt-2 text-gray-600">טוען נתונים...</p>
+          </div>
+        </div>
+      </AppLayout>
+    );
+  }
 
   return (
     <AppLayout currentRoute="/system-settings">
@@ -321,7 +364,7 @@ const WorkersManagement: React.FC = () => {
             </CardHeader>
             <CardContent>
               <WorkersTable
-                records={displayRecords}
+                records={records}
                 onEdit={handleEdit}
                 onDelete={handleDelete}
                 divisions={divisions}
