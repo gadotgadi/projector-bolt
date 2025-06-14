@@ -8,28 +8,30 @@ export default defineConfig(({ mode }) => ({
   server: {
     host: "::",
     port: 8080,
+    proxy: {
+      '/api': {
+        target: 'http://localhost:3001',
+        changeOrigin: true,
+        secure: false,
+        configure: (proxy, options) => {
+          // Start the Express server when Vite starts
+          import('./src/server/index.js').then(({ createServer }) => {
+            createServer().then(app => {
+              app.listen(3001, () => {
+                console.log('Express server running on port 3001');
+              });
+            }).catch(err => {
+              console.error('Failed to start Express server:', err);
+            });
+          });
+        }
+      },
+    },
   },
   plugins: [
     react(),
     mode === 'development' &&
     componentTagger(),
-    // Custom plugin to integrate Express server
-    {
-      name: 'express-server',
-      async configureServer(server) {
-        // Import and setup Express server
-        const { createServer } = await import('./src/server/index.js');
-        
-        try {
-          const app = await createServer();
-          // Mount Express app on /api routes
-          server.middlewares.use('/api', app);
-          console.log('Express server integrated with Vite dev server');
-        } catch (error) {
-          console.error('Failed to start Express server:', error);
-        }
-      }
-    }
   ].filter(Boolean),
   resolve: {
     alias: {
