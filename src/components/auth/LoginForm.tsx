@@ -47,9 +47,12 @@ const LoginForm: React.FC<LoginFormProps> = ({ onLogin }) => {
         }),
       });
 
-      const data = await response.json();
-
+      let data;
+      
       if (response.ok) {
+        // Only parse JSON if response is successful
+        data = await response.json();
+        
         // Store the token
         localStorage.setItem('authToken', data.token);
         
@@ -71,7 +74,14 @@ const LoginForm: React.FC<LoginFormProps> = ({ onLogin }) => {
         
         onLogin(user);
       } else {
-        setError(data.error || 'שגיאה בהתחברות');
+        // Handle error responses - try to parse JSON, but fall back to generic error
+        try {
+          data = await response.json();
+          setError(data.error || 'שגיאה בהתחברות');
+        } catch (jsonError) {
+          // If JSON parsing fails, use a generic error message
+          setError('שגיאה בהתחברות. אנא נסה שוב.');
+        }
       }
     } catch (error) {
       console.error('Login error:', error);
