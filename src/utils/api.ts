@@ -1,6 +1,6 @@
 // API utility functions for making authenticated requests
 
-const API_BASE_URL = 'http://localhost:3001/api';
+const API_BASE_URL = '/api';
 
 export const getAuthToken = (): string | null => {
   return localStorage.getItem('authToken');
