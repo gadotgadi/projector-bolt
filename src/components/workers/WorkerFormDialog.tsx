@@ -87,6 +87,18 @@ const WorkerFormDialog: React.FC<WorkerFormDialogProps> = ({
   console.log('WorkerFormDialog - organizationalRoles:', organizationalRoles);
   console.log('WorkerFormDialog - formData.roleCode:', formData.roleCode);
 
+  // Fallback roles if API fails
+  const fallbackRoles = [
+    { id: 1, roleCode: 1, description: 'מנהל רכש' },
+    { id: 2, roleCode: 2, description: 'ראש צוות' },
+    { id: 3, roleCode: 3, description: 'קניין' },
+    { id: 4, roleCode: 4, description: 'גורם דורש' },
+    { id: 5, roleCode: 5, description: 'מנהלן מערכת' },
+    { id: 6, roleCode: 9, description: 'גורם טכני' }
+  ];
+
+  const rolesToUse = organizationalRoles && organizationalRoles.length > 0 ? organizationalRoles : fallbackRoles;
+
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-md max-h-[80vh] overflow-y-auto">
@@ -111,17 +123,11 @@ const WorkerFormDialog: React.FC<WorkerFormDialogProps> = ({
                 <SelectValue placeholder="בחר תפקיד" />
               </SelectTrigger>
               <SelectContent>
-                {organizationalRoles && organizationalRoles.length > 0 ? (
-                  organizationalRoles.map(role => (
-                    <SelectItem key={role.roleCode} value={role.roleCode.toString()}>
-                      {role.description}
-                    </SelectItem>
-                  ))
-                ) : (
-                  <SelectItem value="loading" disabled>
-                    טוען תפקידים...
+                {rolesToUse.map(role => (
+                  <SelectItem key={role.roleCode} value={role.roleCode.toString()}>
+                    {role.description}
                   </SelectItem>
-                )}
+                ))}
               </SelectContent>
             </Select>
           </div>
