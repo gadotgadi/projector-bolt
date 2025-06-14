@@ -3,6 +3,12 @@ import react from "@vitejs/plugin-react-swc";
 import path from "path";
 import { componentTagger } from "lovable-tagger";
 
+// Import and start the Express server
+async function startExpressServer() {
+  const { startServer } = await import('./src/server/index.js');
+  await startServer();
+}
+
 // https://vitejs.dev/config/
 export default defineConfig(({ mode }) => ({
   server: {
@@ -31,6 +37,14 @@ export default defineConfig(({ mode }) => ({
     react(),
     mode === 'development' &&
     componentTagger(),
+    // Custom plugin to start Express server
+    {
+      name: 'express-server',
+      configureServer() {
+        // Start Express server when Vite dev server starts
+        startExpressServer().catch(console.error);
+      }
+    }
   ].filter(Boolean),
   resolve: {
     alias: {
