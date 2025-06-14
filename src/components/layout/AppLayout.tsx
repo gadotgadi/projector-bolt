@@ -1,9 +1,8 @@
-
 import React from 'react';
-import { Home, Plus, BarChart3, Target, Users, UserCog, Settings, Cog, TrendingUp, Calculator } from 'lucide-react';
+import { Home, Plus, BarChart3, Target, Users, UserCog, Settings, Cog, TrendingUp, Calculator, LogOut } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { currentUser, navigationItems } from '../../data/mockData';
-import { USER_ROLES } from '../../types';
+import { useAuth } from '../auth/AuthProvider';
+import { Button } from '../ui/button';
 
 const iconMap = {
   Home,
@@ -17,6 +16,14 @@ const iconMap = {
   TrendingUp,
   Calculator
 };
+
+interface NavItem {
+  id: string;
+  label: string;
+  icon: string;
+  roles: number[];
+  route: string;
+}
 
 interface AppLayoutProps {
   children: React.ReactNode;
@@ -41,15 +48,92 @@ const getPageTitle = (route: string) => {
   return routeMap[route] || 'שולחן עבודה';
 };
 
+// Navigation items with role-based access
+const navigationItems: NavItem[] = [
+  {
+    id: '1',
+    label: 'שולחן עבודה',
+    icon: 'Home',
+    roles: [1, 2, 3, 4], // מנהל רכש, ראש צוות, קניין, גורם דורש
+    route: '/'
+  },
+  {
+    id: '2',
+    label: 'דרישה חדשה',
+    icon: 'Plus',
+    roles: [1, 4], // מנהל רכש, גורם דורש
+    route: '/new-task'
+  },
+  {
+    id: '3',
+    label: 'סוגי התקשרויות',
+    icon: 'Target',
+    roles: [1, 0], // מנהל רכש, מנהלן מערכת
+    route: '/engagement-types'
+  },
+  {
+    id: '4',
+    label: 'עובדי הרכש',
+    icon: 'Users',
+    roles: [1, 0], // מנהל רכש, מנהלן מערכת
+    route: '/procurement-staff'
+  },
+  {
+    id: '7',
+    label: 'מעקב התקדמות',
+    icon: 'BarChart3',
+    roles: [1], // מנהל רכש בלבד
+    route: '/progress-tracking'
+  },
+  {
+    id: '8',
+    label: 'התכנסות תכנון',
+    icon: 'Users',
+    roles: [1], // מנהל רכש בלבד
+    route: '/planning-convergence'
+  },
+  {
+    id: '9',
+    label: 'העמסת קניינים',
+    icon: 'TrendingUp',
+    roles: [1, 2], // מנהל רכש, ראש צוות
+    route: '/procurement-load'
+  },
+  {
+    id: '5',
+    label: 'הגדרות מערכת',
+    icon: 'Settings',
+    roles: [0, 9], // מנהלן מערכת, גורם טכני
+    route: '/system-settings'
+  },
+  {
+    id: '6',
+    label: 'תחזוקת תשתיות',
+    icon: 'Cog',
+    roles: [9], // גורם טכני בלבד
+    route: '/infrastructure-maintenance'  
+  }
+];
+
 const AppLayout: React.FC<AppLayoutProps> = ({ children, currentRoute = '/', pageTitle }) => {
   const navigate = useNavigate();
+  const { user, logout } = useAuth();
   
+  if (!user) {
+    return null; // This should not happen as the app should redirect to login
+  }
+
   const userNavItems = navigationItems.filter(item => 
-    item.roles.includes(currentUser.role)
+    item.roles.includes(user.roleCode)
   );
 
   const handleNavigation = (route: string) => {
     navigate(route);
+  };
+
+  const handleLogout = () => {
+    logout();
+    navigate('/login');
   };
 
   const displayPageTitle = pageTitle || getPageTitle(currentRoute);
@@ -60,8 +144,12 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children, currentRoute = '/', pag
       <div className="w-48 bg-white shadow-lg border-l border-gray-200">
         {/* Logo */}
         <div className="p-3 border-b border-gray-200">
-          <div className="text-lg font-bold text-blue-600 text-center">
-            PROJECTOR
+          <div className="flex justify-center">
+            <img 
+              src="/image.png" 
+              alt="PROJECTOR Logo" 
+              className="h-8 w-auto"
+            />
           </div>
         </div>
 
@@ -96,6 +184,23 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children, currentRoute = '/', pag
             })}
           </ul>
         </nav>
+
+        {/* User Info and Logout */}
+        <div className="absolute bottom-0 w-48 p-3 border-t border-gray-200 bg-white">
+          <div className="text-sm text-gray-600 mb-2 text-right">
+            <div className="font-medium">{user.fullName}</div>
+            <div className="text-xs">{user.roleDescription}</div>
+          </div>
+          <Button 
+            onClick={handleLogout}
+            variant="outline" 
+            size="sm" 
+            className="w-full flex items-center gap-2 text-sm"
+          >
+            <LogOut className="w-4 h-4" />
+            יציאה
+          </Button>
+        </div>
       </div>
 
       {/* Main Content */}
@@ -115,7 +220,7 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children, currentRoute = '/', pag
                 <option value="2025">2025</option>
                 <option value="2026">2026</option>
               </select>
-              <span className="font-medium text-gray-800">{currentUser.name}</span>
+              <span className="font-medium text-gray-800">{user.fullName}</span>
             </div>
           </div>
         </header>

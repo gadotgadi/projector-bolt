@@ -1,6 +1,8 @@
-
 import React from 'react';
-import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
+import { BrowserRouter as Router, Route, Routes, Navigate } from 'react-router-dom';
+import { AuthProvider, useAuth } from './components/auth/AuthProvider';
+import LoginForm from './components/auth/LoginForm';
+import ProtectedRoute from './components/auth/ProtectedRoute';
 import Index from './pages/Index';
 import NewTask from './pages/NewTask';
 import StationAssignment from './pages/StationAssignment';
@@ -23,35 +25,152 @@ import Permissions from './pages/infrastructure/Permissions';
 import ProgressTracking from './pages/ProgressTracking';
 import PlanningConvergence from './pages/PlanningConvergence';
 import ProcurementLoad from './pages/ProcurementLoad';
+import { getDefaultRouteForRole } from './utils/rolePermissions';
+
+const AppContent: React.FC = () => {
+  const { user, isAuthenticated, login } = useAuth();
+
+  if (!isAuthenticated) {
+    return <LoginForm onLogin={login} />;
+  }
+
+  return (
+    <Routes>
+      <Route path="/login" element={<Navigate to={getDefaultRouteForRole(user!.roleCode)} replace />} />
+      
+      <Route path="/" element={
+        <ProtectedRoute route="/">
+          <Index />
+        </ProtectedRoute>
+      } />
+      
+      <Route path="/new-task" element={
+        <ProtectedRoute route="/new-task">
+          <NewTask />
+        </ProtectedRoute>
+      } />
+      
+      <Route path="/station-assignment/:taskId" element={
+        <ProtectedRoute route="/station-assignment">
+          <StationAssignment />
+        </ProtectedRoute>
+      } />
+      
+      <Route path="/engagement-types" element={
+        <ProtectedRoute route="/engagement-types">
+          <EngagementTypes />
+        </ProtectedRoute>
+      } />
+      
+      <Route path="/procurement-staff" element={
+        <ProtectedRoute route="/procurement-staff">
+          <ProcurementStaff />
+        </ProtectedRoute>
+      } />
+      
+      <Route path="/progress-tracking" element={
+        <ProtectedRoute route="/progress-tracking">
+          <ProgressTracking />
+        </ProtectedRoute>
+      } />
+      
+      <Route path="/planning-convergence" element={
+        <ProtectedRoute route="/planning-convergence">
+          <PlanningConvergence />
+        </ProtectedRoute>
+      } />
+      
+      <Route path="/procurement-load" element={
+        <ProtectedRoute route="/procurement-load">
+          <ProcurementLoad />
+        </ProtectedRoute>
+      } />
+      
+      <Route path="/system-settings" element={
+        <ProtectedRoute route="/system-settings">
+          <SystemSettings />
+        </ProtectedRoute>
+      } />
+      
+      <Route path="/system-settings/activity-pool" element={
+        <ProtectedRoute route="/system-settings/activity-pool">
+          <ActivityPoolManagement />
+        </ProtectedRoute>
+      } />
+      
+      <Route path="/system-settings/domains" element={
+        <ProtectedRoute route="/system-settings/domains">
+          <DomainsManagement />
+        </ProtectedRoute>
+      } />
+      
+      <Route path="/system-settings/workers" element={
+        <ProtectedRoute route="/system-settings/workers">
+          <WorkersManagement />
+        </ProtectedRoute>
+      } />
+      
+      <Route path="/system-settings/divisions" element={
+        <ProtectedRoute route="/system-settings/divisions">
+          <DivisionsManagement />
+        </ProtectedRoute>
+      } />
+      
+      <Route path="/system-settings/departments" element={
+        <ProtectedRoute route="/system-settings/departments">
+          <DepartmentsManagement />
+        </ProtectedRoute>
+      } />
+      
+      <Route path="/system-settings/procurement-teams" element={
+        <ProtectedRoute route="/system-settings/procurement-teams">
+          <ProcurementTeamsManagement />
+        </ProtectedRoute>
+      } />
+      
+      <Route path="/infrastructure-maintenance" element={
+        <ProtectedRoute route="/infrastructure-maintenance">
+          <InfrastructureMaintenance />
+        </ProtectedRoute>
+      } />
+      
+      <Route path="/infrastructure-maintenance/organizational-roles" element={
+        <ProtectedRoute route="/infrastructure-maintenance/organizational-roles">
+          <OrganizationalRoles />
+        </ProtectedRoute>
+      } />
+      
+      <Route path="/infrastructure-maintenance/status-values" element={
+        <ProtectedRoute route="/infrastructure-maintenance/status-values">
+          <StatusValues />
+        </ProtectedRoute>
+      } />
+      
+      <Route path="/infrastructure-maintenance/structure-values" element={
+        <ProtectedRoute route="/infrastructure-maintenance/structure-values">
+          <StructureValues />
+        </ProtectedRoute>
+      } />
+      
+      <Route path="/infrastructure-maintenance/permissions" element={
+        <ProtectedRoute route="/infrastructure-maintenance/permissions">
+          <Permissions />
+        </ProtectedRoute>
+      } />
+      
+      <Route path="*" element={<NotFound />} />
+    </Routes>
+  );
+};
 
 function App() {
   return (
-    <Router>
-      <Routes>
-        <Route path="/" element={<Index />} />
-        <Route path="/new-task" element={<NewTask />} />
-        <Route path="/station-assignment/:taskId" element={<StationAssignment />} />
-        <Route path="/engagement-types" element={<EngagementTypes />} />
-        <Route path="/procurement-staff" element={<ProcurementStaff />} />
-        <Route path="/progress-tracking" element={<ProgressTracking />} />
-        <Route path="/planning-convergence" element={<PlanningConvergence />} />
-        <Route path="/procurement-load" element={<ProcurementLoad />} />
-        <Route path="/system-settings" element={<SystemSettings />} />
-        <Route path="/system-settings/activity-pool" element={<ActivityPoolManagement />} />
-        <Route path="/system-settings/domains" element={<DomainsManagement />} />
-        <Route path="/system-settings/workers" element={<WorkersManagement />} />
-        <Route path="/system-settings/divisions" element={<DivisionsManagement />} />
-        <Route path="/system-settings/departments" element={<DepartmentsManagement />} />
-        <Route path="/system-settings/procurement-teams" element={<ProcurementTeamsManagement />} />
-        <Route path="/infrastructure-maintenance" element={<InfrastructureMaintenance />} />
-        <Route path="/infrastructure-maintenance/organizational-roles" element={<OrganizationalRoles />} />
-        <Route path="/infrastructure-maintenance/status-values" element={<StatusValues />} />
-        <Route path="/infrastructure-maintenance/structure-values" element={<StructureValues />} />
-        <Route path="/infrastructure-maintenance/permissions" element={<Permissions />} />
-        <Route path="*" element={<NotFound />} />
-      </Routes>
-      <Toaster />
-    </Router>
+    <AuthProvider>
+      <Router>
+        <AppContent />
+        <Toaster />
+      </Router>
+    </AuthProvider>
   );
 }
 

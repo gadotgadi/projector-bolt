@@ -1,4 +1,3 @@
-
 import { NavItem, Program, User } from "../types";
 
 // Mock activity pool for demo purposes
@@ -266,79 +265,16 @@ export const mockPrograms: Program[] = [
   }
 ];
 
-// Mock current user for demo purposes - temporary user with full permissions
+// Mock current user - will be replaced by authentication system
 export const currentUser: User = {
-  id: '9',
-  name: 'אברהם',
-  role: 'technical_maintainer',
-  department: 'IT',
+  id: '1',
+  name: 'אבי כהן',
+  role: 'procurement_manager',
+  department: 'רכש',
   division: 'תפעול',
-  teamId: '123',
+  teamId: '1',
   workDaysAvailable: 200
 };
 
-export const navigationItems: NavItem[] = [
-  {
-    id: '1',
-    label: 'שולחן עבודה',
-    icon: 'Home',
-    roles: ['procurement_manager', 'team_leader', 'procurement_officer', 'requester', 'admin', 'technical_maintainer'],
-    route: '/'
-  },
-  {
-    id: '2',
-    label: 'דרישה חדשה',
-    icon: 'Plus',
-    roles: ['procurement_manager', 'team_leader', 'procurement_officer', 'requester', 'technical_maintainer'],
-    route: '/new-task'
-  },
-  {
-    id: '3',
-    label: 'סוגי התקשרויות',
-    icon: 'Target',
-    roles: ['procurement_manager', 'team_leader', 'procurement_officer', 'technical_maintainer'],
-    route: '/engagement-types'
-  },
-  {
-    id: '4',
-    label: 'עובדי הרכש',
-    icon: 'Users',
-    roles: ['procurement_manager', 'technical_maintainer'],
-    route: '/procurement-staff'
-  },
-  {
-    id: '7',
-    label: 'מעקב התקדמות',
-    icon: 'BarChart3',
-    roles: ['procurement_manager', 'technical_maintainer'],
-    route: '/progress-tracking'
-  },
-  {
-    id: '8',
-    label: 'התכנסות תכנון',
-    icon: 'Users',
-    roles: ['procurement_manager', 'technical_maintainer'],
-    route: '/planning-convergence'
-  },
-  {
-    id: '9',
-    label: 'העמסת קניינים',
-    icon: 'TrendingUp',
-    roles: ['procurement_manager', 'technical_maintainer'],
-    route: '/procurement-load'
-  },
-  {
-    id: '5',
-    label: 'הגדרות מערכת',
-    icon: 'Settings',
-    roles: ['admin', 'technical_maintainer'],
-    route: '/system-settings'
-  },
-  {
-    id: '6',
-    label: 'תחזוקת תשתיות',
-    icon: 'Cog',
-    roles: ['technical_maintainer'],
-    route: '/infrastructure-maintenance'  
-  }
-];
+// Navigation items - now handled by AppLayout based on user role
+export const navigationItems: NavItem[] = [];
