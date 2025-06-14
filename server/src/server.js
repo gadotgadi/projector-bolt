@@ -13,7 +13,6 @@ const engagementTypesRoutes = require('./routes/engagementTypes');
 const activityPoolRoutes = require('./routes/activityPool');
 const workersRoutes = require('./routes/workers');
 const systemRoutes = require('./routes/system');
-const reportsRoutes = require('./routes/reports');
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -62,7 +61,6 @@ app.use('/api/engagement-types', engagementTypesRoutes);
 app.use('/api/activity-pool', activityPoolRoutes);
 app.use('/api/workers', workersRoutes);
 app.use('/api/system', systemRoutes);
-app.use('/api/reports', reportsRoutes);
 
 // Error handling middleware
 app.use((err, req, res, next) => {
