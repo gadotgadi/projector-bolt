@@ -12,9 +12,10 @@ import workersRoutes from './routes/workers.js';
 process.env.JWT_SECRET = process.env.JWT_SECRET || 'your-super-secret-jwt-key-change-this-in-production';
 process.env.JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN || '24h';
 process.env.BCRYPT_ROUNDS = process.env.BCRYPT_ROUNDS || '12';
-process.env.DB_PATH = process.env.DB_PATH || './data/procurement.db';
+process.env.DB_PATH = process.env.DB_PATH || './src/server/data/procurement.db';
 
 let expressApp = null;
+let isInitialized = false;
 
 async function createExpressApp() {
   if (expressApp) {
@@ -32,7 +33,7 @@ async function createExpressApp() {
   // Rate limiting
   const limiter = rateLimit({
     windowMs: 15 * 60 * 1000, // 15 minutes
-    max: 100, // limit each IP to 100 requests per windowMs
+    max: 1000, // Increased limit for development
     message: { error: 'Too many requests from this IP, please try again later.' }
   });
   app.use(limiter);
@@ -40,7 +41,9 @@ async function createExpressApp() {
   // CORS configuration
   app.use(cors({
     origin: true, // Allow all origins in development
-    credentials: true
+    credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization']
   }));
 
   // Body parsing middleware
@@ -49,19 +52,24 @@ async function createExpressApp() {
 
   // Logging
   if (process.env.NODE_ENV !== 'test') {
-    app.use(morgan('combined'));
+    app.use(morgan('dev'));
   }
 
-  // Initialize database
-  try {
-    await initializeDatabase();
-    console.log('Database initialized successfully');
-    
-    // Seed database
-    const { seedDatabase } = await import('./scripts/seedDatabase.js');
-    await seedDatabase();
-  } catch (error) {
-    console.error('Failed to initialize database:', error);
+  // Initialize database only once
+  if (!isInitialized) {
+    try {
+      await initializeDatabase();
+      console.log('✅ Database initialized successfully');
+      
+      // Seed database
+      const { seedDatabase } = await import('./scripts/seedDatabase.js');
+      await seedDatabase();
+      console.log('✅ Database seeded successfully');
+      
+      isInitialized = true;
+    } catch (error) {
+      console.error('❌ Failed to initialize database:', error);
+    }
   }
 
   // Health check endpoint
@@ -98,6 +106,7 @@ async function createExpressApp() {
   });
 
   expressApp = app;
+  console.log('✅ Express app created and configured');
   return app;
 }
 
