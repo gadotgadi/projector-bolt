@@ -17,16 +17,6 @@ const LoginForm: React.FC<LoginFormProps> = ({ onLogin }) => {
   const [error, setError] = useState('');
   const { toast } = useToast();
 
-  // Mock users data - in production this would come from the server
-  const mockUsers = [
-    { id: 1, employeeId: '1001', password: '123456', fullName: 'אבי כהן', roleCode: 1, roleDescription: 'מנהל רכש' },
-    { id: 2, employeeId: '1002', password: '123456', fullName: 'שרה לוי', roleCode: 2, roleDescription: 'ראש צוות' },
-    { id: 3, employeeId: '1003', password: '123456', fullName: 'דוד ישראל', roleCode: 3, roleDescription: 'קניין' },
-    { id: 4, employeeId: '1004', password: '123456', fullName: 'רחל כהן', roleCode: 4, roleDescription: 'גורם דורש' },
-    { id: 5, employeeId: '0000', password: '123456', fullName: 'מנהלן מערכת', roleCode: 0, roleDescription: 'מנהלן מערכת' },
-    { id: 6, employeeId: '9999', password: '123456', fullName: 'גורם טכני', roleCode: 9, roleDescription: 'גורם טכני' }
-  ];
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
@@ -45,22 +35,50 @@ const LoginForm: React.FC<LoginFormProps> = ({ onLogin }) => {
       return;
     }
 
-    // Simulate API call delay
-    setTimeout(() => {
-      const user = mockUsers.find(u => u.employeeId === employeeId && u.password === password);
-      
-      if (user) {
+    try {
+      const response = await fetch('http://localhost:3001/api/auth/login', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          employeeId,
+          password,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        // Store the token
+        localStorage.setItem('authToken', data.token);
+        
+        // Transform the user data to match our frontend format
+        const user = {
+          id: data.user.id,
+          employeeId: data.user.employeeId,
+          fullName: data.user.fullName,
+          roleCode: data.user.roleCode,
+          roleDescription: data.user.roleDescription,
+          procurementTeam: data.user.procurementTeam,
+          email: data.user.email
+        };
+
         toast({
           title: "התחברות הצליחה",
           description: `ברוך הבא ${user.fullName}`,
         });
+        
         onLogin(user);
       } else {
-        setError('קוד משתמש או סיסמה שגויים');
+        setError(data.error || 'שגיאה בהתחברות');
       }
-      
+    } catch (error) {
+      console.error('Login error:', error);
+      setError('שגיאה בחיבור לשרת. אנא נסה שוב.');
+    } finally {
       setIsLoading(false);
-    }, 1000);
+    }
   };
 
   return (
@@ -133,12 +151,8 @@ const LoginForm: React.FC<LoginFormProps> = ({ onLogin }) => {
             <div className="border-t pt-4">
               <p className="font-medium mb-2">משתמשים לדוגמה:</p>
               <div className="space-y-1 text-xs">
+                <p>מנהל מערכת: 9999 / 123456</p>
                 <p>מנהל רכש: 1001 / 123456</p>
-                <p>ראש צוות: 1002 / 123456</p>
-                <p>קניין: 1003 / 123456</p>
-                <p>גורם דורש: 1004 / 123456</p>
-                <p>מנהלן מערכת: 0000 / 123456</p>
-                <p>גורם טכני: 9999 / 123456</p>
               </div>
             </div>
           </div>
