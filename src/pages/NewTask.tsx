@@ -5,8 +5,6 @@ import AppLayout from '../components/layout/AppLayout';
 import NewTaskForm from '../components/task/NewTaskForm';
 import { Program } from '../types';
 import { useToast } from '../components/ui/use-toast';
-import { Button } from '../components/ui/button';
-import { ArrowRight } from 'lucide-react';
 
 const NewTask = () => {
   const navigate = useNavigate();
@@ -31,20 +29,8 @@ const NewTask = () => {
 
   return (
     <AppLayout currentRoute="/new-task">
-      <div className="space-y-6">
-        {/* Header */}
-        <div className="flex items-center gap-4">
-          <Button variant="outline" onClick={handleCancel} className="flex items-center gap-2">
-            <ArrowRight className="w-4 h-4" />
-            חזרה לשולחן העבודה
-          </Button>
-          <h1 className="text-2xl font-bold">דרישה חדשה</h1>
-        </div>
-
-        {/* Form */}
-        <div className="max-w-4xl">
-          <NewTaskForm onSave={handleSave} onCancel={handleCancel} />
-        </div>
+      <div className="max-w-4xl">
+        <NewTaskForm onSave={handleSave} onCancel={handleCancel} />
       </div>
     </AppLayout>
   );

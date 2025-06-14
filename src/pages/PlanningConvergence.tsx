@@ -84,7 +84,7 @@ const PlanningConvergence: React.FC = () => {
       tasks: [
         { complexity: 'מורכב (3)', count: '(3) days בינוני', value: 0 },
         { complexity: 'בינוני (2)', count: '(2) days פשוט', value: 0 },
-        { complexity: 'פשוט (1)', count: '(1) days', value: 0 }
+        { complexity: 'פשوט (1)', count: '(1) days', value: 0 }
       ]
     },
     {
@@ -108,25 +108,6 @@ const PlanningConvergence: React.FC = () => {
   return (
     <AppLayout currentRoute="/planning-convergence">
       <div className="space-y-6">
-        {/* Header */}
-        <div className="flex justify-between items-center">
-          <div className="text-right">
-            <h1 className="text-2xl font-bold text-gray-900">התכנסות תכנון</h1>
-            <p className="text-gray-600 mt-1">
-              השוואת משאבי קניינים מול היקף המשאבים הנדרש לביצוע המשימות
-            </p>
-          </div>
-          <div className="flex items-center gap-4">
-            <div className="text-sm text-gray-600">
-              משאבים זמינים לביצוע משימות - מאזן לא זמינים
-            </div>
-            <select className="border border-gray-300 rounded-lg px-3 py-2 text-sm">
-              <option value="2024">שנה: 2024</option>
-              <option value="2025">שנה: 2025</option>
-            </select>
-          </div>
-        </div>
-
         {/* Navigation arrows */}
         <div className="flex justify-between items-center">
           <button className="flex items-center gap-2 px-4 py-2 text-gray-600 hover:text-gray-800">

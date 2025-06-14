@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Program, TaskStatus, PLANNING_SOURCE_CONFIG, CURRENCY_CONFIG } from '../../types';
 import { Button } from '../ui/button';
@@ -92,26 +91,31 @@ const NewTaskForm: React.FC<NewTaskFormProps> = ({ onSave, onCancel }) => {
 
   return (
     <div className="bg-white rounded-lg border shadow-sm">
-      {/* Header Section */}
-      <div className="border-b bg-gray-50 px-6 py-4">
-        <h2 className="text-xl font-bold text-gray-900">דרישה חדשה</h2>
+      {/* Header Section with Actions */}
+      <div className="border-b bg-gray-50 px-6 py-4 flex justify-between items-center">
+        <div className="flex items-center gap-4">
+          <div>
+            <Label className="block text-sm font-medium text-gray-700 mb-1">מספר משימה</Label>
+            <div className="text-sm text-gray-500 bg-gray-100 px-3 py-1 rounded">
+              יקבע אוטומטית עם השמירה
+            </div>
+          </div>
+        </div>
+        
+        <div className="flex items-center gap-2">
+          <Button type="button" variant="outline" onClick={onCancel} className="px-6">
+            ביטול
+          </Button>
+          <Button type="submit" form="task-form" className="bg-green-600 hover:bg-green-700 px-6 text-white">
+            שמור
+          </Button>
+        </div>
       </div>
 
-      <form onSubmit={handleSubmit} className="p-6">
+      <form id="task-form" onSubmit={handleSubmit} className="p-6">
         {/* Basic Information */}
         <div className="mb-6">
           <div className="grid grid-cols-4 gap-4 mb-4">
-            <div>
-              <Label htmlFor="taskNumber" className="block text-sm font-medium text-gray-700 mb-1">מספר משימה</Label>
-              <Input
-                id="taskNumber"
-                value=""
-                placeholder="יקבע אוטומטית עם השמירה"
-                className="text-right h-8 text-sm bg-gray-50"
-                disabled
-              />
-            </div>
-
             <div>
               <Label htmlFor="title" className="block text-sm font-medium text-gray-700 mb-1">כותרת</Label>
               <Input
@@ -145,6 +149,16 @@ const NewTaskForm: React.FC<NewTaskFormProps> = ({ onSave, onCancel }) => {
                   <option key={quarter} value={quarter}>{quarter}</option>
                 ))}
               </select>
+            </div>
+
+            <div>
+              <Label htmlFor="lastUpdate" className="block text-sm font-medium text-gray-700 mb-1">מועד עדכון אחרון</Label>
+              <Input
+                id="lastUpdate"
+                value={`${new Date().toLocaleDateString('he-IL')} ${new Date().toLocaleTimeString('he-IL', { hour: '2-digit', minute: '2-digit' })}`}
+                className="text-right h-8 text-sm bg-gray-50"
+                disabled
+              />
             </div>
           </div>
 
@@ -220,17 +234,7 @@ const NewTaskForm: React.FC<NewTaskFormProps> = ({ onSave, onCancel }) => {
               </div>
             </div>
 
-            <div>
-              <Label htmlFor="lastUpdate" className="block text-sm font-medium text-gray-700 mb-1">מועד עדכון אחרון</Label>
-              <Input
-                id="lastUpdate"
-                value={`${new Date().toLocaleDateString('he-IL')} ${new Date().toLocaleTimeString('he-IL', { hour: '2-digit', minute: '2-digit' })}`}
-                className="text-right h-8 text-sm bg-gray-50"
-                disabled
-              />
-            </div>
-
-            <div className="col-span-2">
+            <div className="col-span-3">
               {/* Empty space for layout */}
             </div>
           </div>
@@ -266,18 +270,6 @@ const NewTaskForm: React.FC<NewTaskFormProps> = ({ onSave, onCancel }) => {
             <div className="text-sm text-gray-600 mb-2">
               הודעות מערכת יוצגו כאן (שגיאות או הודעות הצלחה)
             </div>
-          </div>
-        </div>
-
-        {/* Bottom Section */}
-        <div className="border-t pt-4">
-          <div className="flex items-center justify-end gap-2">
-            <Button type="button" variant="outline" onClick={onCancel} className="px-6">
-              ביטול
-            </Button>
-            <Button type="submit" className="bg-green-600 hover:bg-green-700 px-6 text-white">
-              שמור
-            </Button>
           </div>
         </div>
       </form>

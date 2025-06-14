@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import AppLayout from '../components/layout/AppLayout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -162,14 +163,6 @@ const ProcurementStaff: React.FC = () => {
     <AppLayout currentRoute="/procurement-staff">
       <div className="space-y-6">
         <Card>
-          <CardHeader className="text-right">
-            <CardTitle className="text-2xl font-bold text-gray-900">
-              עובדי הרכש
-            </CardTitle>
-            <p className="text-gray-600 mt-2">
-              ניהול פרטי עובדי יחידת הרכש ותכנון תפוסת העבודה - עדכון פרטי ראשי צוותים וקניינים ביחידת הרכש
-            </p>
-          </CardHeader>
           <CardContent>
             <ProcurementStaffTable
               workers={workers}

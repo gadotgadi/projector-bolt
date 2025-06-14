@@ -21,9 +21,27 @@ const iconMap = {
 interface AppLayoutProps {
   children: React.ReactNode;
   currentRoute?: string;
+  pageTitle?: string;
 }
 
-const AppLayout: React.FC<AppLayoutProps> = ({ children, currentRoute = '/' }) => {
+const getPageTitle = (route: string) => {
+  const routeMap: { [key: string]: string } = {
+    '/': 'שולחן עבודה',
+    '/new-task': 'דרישה חדשה',
+    '/station-assignment': 'עדכון משימה',
+    '/engagement-types': 'סוגי התקשרויות',
+    '/procurement-staff': 'עובדי רכש',
+    '/progress-tracking': 'מעקב התקדמות',
+    '/planning-convergence': 'התקבצות תכנון',
+    '/procurement-load': 'עומסת קניינים',
+    '/system-settings': 'הגדרות מערכת',
+    '/infrastructure-maintenance': 'תחזוקת תשתיות'
+  };
+  
+  return routeMap[route] || 'שולחן עבודה';
+};
+
+const AppLayout: React.FC<AppLayoutProps> = ({ children, currentRoute = '/', pageTitle }) => {
   const navigate = useNavigate();
   
   const userNavItems = navigationItems.filter(item => 
@@ -33,6 +51,8 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children, currentRoute = '/' }) =
   const handleNavigation = (route: string) => {
     navigate(route);
   };
+
+  const displayPageTitle = pageTitle || getPageTitle(currentRoute);
 
   return (
     <div className="min-h-screen bg-gray-50 flex w-full" dir="rtl">
@@ -83,20 +103,19 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children, currentRoute = '/' }) =
         {/* Header */}
         <header className="bg-white shadow-sm border-b border-gray-200">
           <div className="px-6 py-4 flex justify-between items-center">
-            <div className="text-right">
-              <span className="text-sm text-gray-600">משתמש: </span>
-              <span className="font-medium text-gray-800">{currentUser.name}</span>
-              <span className="text-sm text-gray-500 mr-2">
-                ({USER_ROLES[currentUser.role]})
+            <div className="flex items-center gap-4">
+              <span className="text-lg font-bold text-gray-800">
+                {displayPageTitle}
               </span>
             </div>
             
             <div className="flex items-center gap-4">
               <select className="border border-gray-300 rounded-lg px-3 py-2 text-sm">
-                <option value="2024">שנת עבודה: 2024</option>
-                <option value="2025">שנת עבודה: 2025</option>
-                <option value="2026">שנת עבודה: 2026</option>
+                <option value="2024">2024</option>
+                <option value="2025">2025</option>
+                <option value="2026">2026</option>
               </select>
+              <span className="font-medium text-gray-800">{currentUser.name}</span>
             </div>
           </div>
         </header>

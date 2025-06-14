@@ -2,12 +2,9 @@
 import React, { useState } from 'react';
 import AppLayout from '../components/layout/AppLayout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, ResponsiveContainer, PieChart, Pie, Cell, Tooltip } from 'recharts';
 
 const ProgressTracking: React.FC = () => {
-  const [selectedTeam, setSelectedTeam] = useState<string>('all');
-
   // Mock data for status distribution
   const statusData = [
     { name: 'Open', value: 23, color: '#3b82f6' },
@@ -38,52 +35,15 @@ const ProgressTracking: React.FC = () => {
     { team: 'הנדסי', moreThan30: 7, between15to30: 2, between5to15: 16, lessThan5: 'הנדסי' }
   ];
 
-  const teams = ['יעודי', 'ביטחוני', 'לוגיסטי', 'טכנולוגי', 'מחשוב', 'הנדסי'];
-
   return (
     <AppLayout currentRoute="/progress-tracking">
       <div className="space-y-6">
-        {/* Header */}
-        <div className="flex justify-between items-center">
-          <div className="text-right">
-            <h1 className="text-2xl font-bold text-gray-900">מעקב התקדמות</h1>
-            <p className="text-gray-600 mt-1">
-              מדדים להצפת נקודות בעייתיות והתערבות לקידום טיפולים
-            </p>
-          </div>
-          <div className="flex items-center gap-4">
-            <Select value={selectedTeam} onValueChange={setSelectedTeam}>
-              <SelectTrigger className="w-40">
-                <SelectValue placeholder="בחר צוות" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">כל הצוותים</SelectItem>
-                {teams.map(team => (
-                  <SelectItem key={team} value={team}>{team}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            <Select defaultValue="2024">
-              <SelectTrigger className="w-32">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="2024">2024</SelectItem>
-                <SelectItem value="2025">2025</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-        </div>
-
         {/* Dashboard Cards */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Status Distribution */}
           <Card>
             <CardHeader className="text-right">
               <CardTitle className="text-lg">התפלגות משימות לפי סטטוס</CardTitle>
-              <p className="text-sm text-gray-600">
-                {selectedTeam === 'all' ? 'כלל הצוותים' : `צוות ${selectedTeam}`}
-              </p>
             </CardHeader>
             <CardContent>
               <div className="h-64">
@@ -154,7 +114,7 @@ const ProgressTracking: React.FC = () => {
           {/* Progress Analysis */}
           <Card>
             <CardHeader className="text-right">
-              <CardTitle className="text-lg">זמן המתנה באות תחנה</CardTitle>
+              <CardTitle className="text-lg">זמן המתנה באותה תחנה</CardTitle>
               <p className="text-sm text-gray-600">משימות בסטטוס In Progress</p>
             </CardHeader>
             <CardContent>

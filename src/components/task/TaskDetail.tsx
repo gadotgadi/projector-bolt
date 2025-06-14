@@ -43,7 +43,6 @@ const TaskDetail: React.FC<TaskDetailProps> = ({ task, onBack, onTaskUpdate }) =
             <ArrowRight className="w-4 h-4" />
             חזרה לשולחן העבודה
           </Button>
-          <h1 className="text-2xl font-bold">משימה #{task.taskId}</h1>
         </div>
         
         {canEdit && !isEditing && (

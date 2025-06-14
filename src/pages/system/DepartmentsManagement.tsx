@@ -70,9 +70,6 @@ const DepartmentsManagement: React.FC = () => {
               <ArrowRight className="w-4 h-4" />
               חזרה להגדרות מערכת
             </Button>
-            <h1 className="text-2xl font-bold text-gray-900 text-right">
-              ניהול מחלקות
-            </h1>
           </div>
           
           <SystemTableManager

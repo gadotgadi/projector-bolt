@@ -84,14 +84,9 @@ const DashboardFilters: React.FC<DashboardFiltersProps> = ({
 
   return (
     <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-6">
-      <h2 className="text-lg font-bold text-gray-800 mb-4 text-right">סינון משימות</h2>
-      
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
         {/* Status Filter */}
-        <div className="space-y-3">
-          <label className="block text-sm font-medium text-gray-700 text-right">
-            סטטוס משימה
-          </label>
+        <div>
           <Collapsible open={openSections.status} onOpenChange={(isOpen) => setOpenSections(prev => ({ ...prev, status: isOpen }))}>
             <CollapsibleTrigger asChild>
               <Button
@@ -119,10 +114,7 @@ const DashboardFilters: React.FC<DashboardFiltersProps> = ({
         </div>
 
         {/* Officer Filter */}
-        <div className="space-y-3">
-          <label className="block text-sm font-medium text-gray-700 text-right">
-            קניין מטפל
-          </label>
+        <div>
           <Collapsible open={openSections.assignedOfficer} onOpenChange={(isOpen) => setOpenSections(prev => ({ ...prev, assignedOfficer: isOpen }))}>
             <CollapsibleTrigger asChild>
               <Button
@@ -150,10 +142,7 @@ const DashboardFilters: React.FC<DashboardFiltersProps> = ({
         </div>
 
         {/* Domain Filter */}
-        <div className="space-y-3">
-          <label className="block text-sm font-medium text-gray-700 text-right">
-            תחום רכש
-          </label>
+        <div>
           <Collapsible open={openSections.domain} onOpenChange={(isOpen) => setOpenSections(prev => ({ ...prev, domain: isOpen }))}>
             <CollapsibleTrigger asChild>
               <Button
@@ -181,10 +170,7 @@ const DashboardFilters: React.FC<DashboardFiltersProps> = ({
         </div>
 
         {/* Complexity Filter */}
-        <div className="space-y-3">
-          <label className="block text-sm font-medium text-gray-700 text-right">
-            רמת מורכבות
-          </label>
+        <div>
           <Collapsible open={openSections.complexity} onOpenChange={(isOpen) => setOpenSections(prev => ({ ...prev, complexity: isOpen }))}>
             <CollapsibleTrigger asChild>
               <Button

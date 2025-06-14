@@ -9,6 +9,7 @@ import { useToast } from '../components/ui/use-toast';
 import ProgramForm from '../components/program/ProgramForm';
 import StationAssignmentForm from '../components/stations/StationAssignmentForm';
 import StatusBadge from '../components/common/StatusBadge';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '../components/ui/dialog';
 
 // Declare global validation function
 declare global {
@@ -21,6 +22,7 @@ const StationAssignment = () => {
   const navigate = useNavigate();
   const { taskId } = useParams();
   const { toast } = useToast();
+  const [showPermissionDialog, setShowPermissionDialog] = useState(false);
 
   // Find program from mock data
   const initialProgram = mockPrograms.find(p => p.taskId === Number(taskId));
@@ -79,8 +81,8 @@ const StationAssignment = () => {
     setProgram(updatedProgram);
   };
 
-  // Check permissions
-  const canEdit = currentUser.role === 'procurement_manager';
+  // Check permissions - allowing full access for technical users and procurement managers
+  const canEdit = currentUser.role === 'procurement_manager' || currentUser.role === 'technical_maintainer';
   const canSave = canEdit || 
     (currentUser.role === 'requester' && program.status === 'Open') ||
     (['procurement_officer', 'team_leader'].includes(currentUser.role) && 
@@ -89,22 +91,17 @@ const StationAssignment = () => {
   const canView = canEdit || 
     (currentUser.role === 'requester') ||
     (['procurement_officer', 'team_leader'].includes(currentUser.role) && 
-     ['Plan', 'In Progress'].includes(program.status));
+     ['Open', 'Plan', 'In Progress'].includes(program.status));
 
   const canFreeze = canEdit && ['Open', 'Plan'].includes(program.status);
 
-  if (!canView) {
-    return (
-      <AppLayout currentRoute="/station-assignment">
-        <div className="text-center py-12">
-          <p className="text-gray-500">אין לך הרשאה לצפות במשימה זו</p>
-        </div>
-      </AppLayout>
-    );
-  }
+  // Show permission dialog instead of blocking access
+  const handlePermissionDenied = () => {
+    setShowPermissionDialog(true);
+  };
 
   return (
-    <AppLayout currentRoute="/station-assignment">
+    <AppLayout currentRoute="/station-assignment" pageTitle={`עדכון משימה #${program.taskId}`}>
       <div className="min-h-screen bg-gray-50" style={{ transform: 'scale(0.75)', transformOrigin: 'top right' }}>
         {/* Header */}
         <div className="bg-white border-b px-6 py-3">
@@ -114,19 +111,28 @@ const StationAssignment = () => {
                 <ArrowRight className="w-3 h-3" />
                 חזרה
               </Button>
-              <h1 className="text-lg font-bold">משימה #{program.taskId}</h1>
             </div>
             
             <div className="flex items-center gap-3">
               <StatusBadge status={program.status} size="md" />
-              {canSave && (
+              {canSave ? (
                 <Button onClick={handleSave} className="flex items-center gap-2 text-sm px-3 py-1.5">
                   <Save className="w-3 h-3" />
                   שמירה
                 </Button>
+              ) : (
+                <Button onClick={handlePermissionDenied} className="flex items-center gap-2 text-sm px-3 py-1.5">
+                  <Save className="w-3 h-3" />
+                  שמירה
+                </Button>
               )}
-              {canFreeze && (
+              {canFreeze ? (
                 <Button onClick={handleFreeze} variant="secondary" className="flex items-center gap-2 text-sm px-3 py-1.5">
+                  <Lock className="w-3 h-3" />
+                  קיבוע
+                </Button>
+              ) : (
+                <Button onClick={handlePermissionDenied} variant="secondary" className="flex items-center gap-2 text-sm px-3 py-1.5">
                   <Lock className="w-3 h-3" />
                   קיבוע
                 </Button>
@@ -137,7 +143,7 @@ const StationAssignment = () => {
 
         {/* Main Content */}
         <div className="flex" style={{ height: 'calc(100vh - 60px)' }}>
-          {/* Left Side - Program Details (close to main menu) */}
+          {/* Left Side - Program Details */}
           <div className="w-1/3 p-4 overflow-y-auto bg-white border-r">
             <ProgramForm 
               program={program}
@@ -149,7 +155,7 @@ const StationAssignment = () => {
             />
           </div>
 
-          {/* Right Side - Station Assignment (far from main menu) */}
+          {/* Right Side - Station Assignment */}
           <div className="w-2/3 p-4 overflow-y-auto bg-gray-50">
             <StationAssignmentForm 
               program={program}
@@ -159,6 +165,23 @@ const StationAssignment = () => {
             />
           </div>
         </div>
+
+        {/* Permission Dialog */}
+        <Dialog open={showPermissionDialog} onOpenChange={setShowPermissionDialog}>
+          <DialogContent className="text-right">
+            <DialogHeader>
+              <DialogTitle>אין הרשאה</DialogTitle>
+              <DialogDescription>
+                אין לך הרשאה לבצע פעולה זו. פנה למנהל המערכת לקבלת הרשאות נוספות.
+              </DialogDescription>
+            </DialogHeader>
+            <div className="flex justify-end mt-4">
+              <Button onClick={() => setShowPermissionDialog(false)}>
+                סגור
+              </Button>
+            </div>
+          </DialogContent>
+        </Dialog>
       </div>
     </AppLayout>
   );

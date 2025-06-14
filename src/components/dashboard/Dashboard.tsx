@@ -51,14 +51,6 @@ const Dashboard = () => {
 
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div className="text-right">
-        <h1 className="text-2xl font-bold text-gray-800 mb-2">שולחן עבודה</h1>
-        <p className="text-gray-600">
-          ברוך הבא, {currentUser.name} | סה"כ משימות: {filteredPrograms.length}
-        </p>
-      </div>
-
       {/* Filters */}
       <DashboardFilters 
         filters={filters}
@@ -66,8 +58,8 @@ const Dashboard = () => {
         programs={programs}
       />
 
-      {/* Programs Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+      {/* Programs Grid - 3 columns for wider cards */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
         {filteredPrograms.map(program => (
           <TaskCard 
             key={program.taskId} 
