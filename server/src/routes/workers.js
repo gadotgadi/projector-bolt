@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const { authenticateToken, requireRole } = require('../middleware/auth');
+const { authenticateToken, authorizeRoles } = require('../middleware/auth');
 
 // Mock data - in production this would come from a database
 let workers = [
@@ -59,7 +59,7 @@ router.get('/:id', authenticateToken, (req, res) => {
 });
 
 // Create new worker
-router.post('/', authenticateToken, requireRole(['admin', 'technical_maintainer']), (req, res) => {
+router.post('/', authenticateToken, authorizeRoles('admin', 'technical_maintainer'), (req, res) => {
   try {
     const {
       employeeId,
@@ -123,7 +123,7 @@ router.post('/', authenticateToken, requireRole(['admin', 'technical_maintainer'
 });
 
 // Update worker
-router.put('/:id', authenticateToken, requireRole(['admin', 'technical_maintainer']), (req, res) => {
+router.put('/:id', authenticateToken, authorizeRoles('admin', 'technical_maintainer'), (req, res) => {
   try {
     const workerId = parseInt(req.params.id);
     const workerIndex = workers.findIndex(w => w.id === workerId);
@@ -192,7 +192,7 @@ router.put('/:id', authenticateToken, requireRole(['admin', 'technical_maintaine
 });
 
 // Delete worker
-router.delete('/:id', authenticateToken, requireRole(['admin', 'technical_maintainer']), (req, res) => {
+router.delete('/:id', authenticateToken, authorizeRoles('admin', 'technical_maintainer'), (req, res) => {
   try {
     const workerId = parseInt(req.params.id);
     const workerIndex = workers.findIndex(w => w.id === workerId);
