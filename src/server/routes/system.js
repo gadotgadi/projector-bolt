@@ -6,7 +6,7 @@ import { seedDatabase } from '../scripts/seedDatabase.js';
 const router = express.Router();
 
 // Seed database endpoint - publicly available without authentication
-router.post('/seed_db', async (req, res) => {
+router.get('/seed_db', async (req, res) => {
   try {
     console.log('🌱 Manual database seeding requested (public endpoint)');
     
