@@ -160,6 +160,11 @@ router.post('/', authenticateToken, requireRole([1, 4]), (req, res) => {
 
     const newTaskId = (row.maxId || 0) + 1;
 
+    // Convert undefined values to null for SQLite compatibility
+    const safeEstimatedAmount = estimatedAmount !== undefined ? estimatedAmount : null;
+    const safeCurrency = currency !== undefined ? currency : null;
+    const safeComplexity = complexity !== undefined ? complexity : null;
+
     db.run(
       `INSERT INTO programs 
        (task_id, work_year, required_quarter, title, description, requester_name, 
@@ -167,8 +172,8 @@ router.post('/', authenticateToken, requireRole([1, 4]), (req, res) => {
         supplier_list, justification, planning_source, complexity, status) 
        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [newTaskId, workYear, requiredQuarter, title, description, requesterName,
-       divisionName, departmentName, domainName, estimatedAmount, currency,
-       supplierList, justification, planningSource, complexity, 'Open'],
+       divisionName, departmentName, domainName, safeEstimatedAmount, safeCurrency,
+       supplierList, justification, planningSource, safeComplexity, 'Open'],
       function(err) {
         if (err) {
           console.error('Error creating program:', err);
@@ -276,7 +281,9 @@ router.put('/:id', authenticateToken, (req, res) => {
   Object.keys(updateData).forEach(key => {
     if (fieldMapping[key]) {
       fields.push(`${fieldMapping[key]} = ?`);
-      values.push(updateData[key]);
+      // Convert undefined to null for SQLite compatibility
+      const value = updateData[key] !== undefined ? updateData[key] : null;
+      values.push(value);
     }
   });
 
