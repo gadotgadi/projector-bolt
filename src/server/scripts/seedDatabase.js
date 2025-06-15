@@ -8,7 +8,7 @@ async function seedDatabase() {
     
     console.log('Seeding database with initial data...');
     
-    // Seed organizational roles
+    // Seed organizational roles first
     const roles = [
       { roleCode: 0, description: 'מנהלן מערכת', permissions: 'הרשאות מלאות לניהול המערכת' },
       { roleCode: 1, description: 'מנהל רכש', permissions: 'הרשאות מלאות לניהול כל תהליכי הרכש' },
@@ -19,12 +19,18 @@ async function seedDatabase() {
       { roleCode: 9, description: 'גורם טכני', permissions: 'תחזוקת תשתיות המערכת' }
     ];
     
-    for (const role of roles) {
-      db.run(
-        'INSERT OR IGNORE INTO organizational_roles (role_code, description, permissions) VALUES (?, ?, ?)',
-        [role.roleCode, role.description, role.permissions]
-      );
-    }
+    await new Promise((resolve, reject) => {
+      db.serialize(() => {
+        const stmt = db.prepare('INSERT OR IGNORE INTO organizational_roles (role_code, description, permissions) VALUES (?, ?, ?)');
+        for (const role of roles) {
+          stmt.run([role.roleCode, role.description, role.permissions]);
+        }
+        stmt.finalize((err) => {
+          if (err) reject(err);
+          else resolve();
+        });
+      });
+    });
     
     // Seed divisions
     const divisions = [
@@ -33,35 +39,56 @@ async function seedDatabase() {
       { name: 'לקוח חיצוני א', isInternal: false }
     ];
     
-    for (const division of divisions) {
-      db.run(
-        'INSERT OR IGNORE INTO divisions (name, is_internal) VALUES (?, ?)',
-        [division.name, division.isInternal]
-      );
-    }
+    await new Promise((resolve, reject) => {
+      db.serialize(() => {
+        const stmt = db.prepare('INSERT OR IGNORE INTO divisions (name, is_internal) VALUES (?, ?)');
+        for (const division of divisions) {
+          stmt.run([division.name, division.isInternal]);
+        }
+        stmt.finalize((err) => {
+          if (err) reject(err);
+          else resolve();
+        });
+      });
+    });
     
-    // Seed departments
+    // Seed departments (after divisions)
     const departments = [
       { name: 'מחלקת הנדסה', divisionId: 1 },
       { name: 'מחלקת איכות', divisionId: 1 },
       { name: 'מחלקת שירות לקוחות', divisionId: 2 }
     ];
     
-    for (const dept of departments) {
-      db.run(
-        'INSERT OR IGNORE INTO departments (name, division_id) VALUES (?, ?)',
-        [dept.name, dept.divisionId]
-      );
-    }
+    await new Promise((resolve, reject) => {
+      db.serialize(() => {
+        const stmt = db.prepare('INSERT OR IGNORE INTO departments (name, division_id) VALUES (?, ?)');
+        for (const dept of departments) {
+          stmt.run([dept.name, dept.divisionId]);
+        }
+        stmt.finalize((err) => {
+          if (err) reject(err);
+          else resolve();
+        });
+      });
+    });
     
     // Seed procurement teams
     const teams = [
       'יעודי', 'טכנולוגי', 'לוגיסטי', 'מחשוב', 'הנדסי', 'ביטחוני'
     ];
     
-    for (const team of teams) {
-      db.run('INSERT OR IGNORE INTO procurement_teams (name) VALUES (?)', [team]);
-    }
+    await new Promise((resolve, reject) => {
+      db.serialize(() => {
+        const stmt = db.prepare('INSERT OR IGNORE INTO procurement_teams (name) VALUES (?)');
+        for (const team of teams) {
+          stmt.run([team]);
+        }
+        stmt.finalize((err) => {
+          if (err) reject(err);
+          else resolve();
+        });
+      });
+    });
     
     // Seed domains
     const domains = [
@@ -70,9 +97,18 @@ async function seedDatabase() {
       'רכש ציוד משרדי'
     ];
     
-    for (const domain of domains) {
-      db.run('INSERT OR IGNORE INTO domains (description) VALUES (?)', [domain]);
-    }
+    await new Promise((resolve, reject) => {
+      db.serialize(() => {
+        const stmt = db.prepare('INSERT OR IGNORE INTO domains (description) VALUES (?)');
+        for (const domain of domains) {
+          stmt.run([domain]);
+        }
+        stmt.finalize((err) => {
+          if (err) reject(err);
+          else resolve();
+        });
+      });
+    });
     
     // Seed activity pool
     const activities = [
@@ -89,12 +125,18 @@ async function seedDatabase() {
       { name: 'דוח סיכום', tools: 'תבנית דוח' }
     ];
     
-    for (const activity of activities) {
-      db.run(
-        'INSERT OR IGNORE INTO activity_pool (name, tools_and_resources) VALUES (?, ?)',
-        [activity.name, activity.tools]
-      );
-    }
+    await new Promise((resolve, reject) => {
+      db.serialize(() => {
+        const stmt = db.prepare('INSERT OR IGNORE INTO activity_pool (name, tools_and_resources) VALUES (?, ?)');
+        for (const activity of activities) {
+          stmt.run([activity.name, activity.tools]);
+        }
+        stmt.finalize((err) => {
+          if (err) reject(err);
+          else resolve();
+        });
+      });
+    });
     
     // Seed engagement types
     const engagementTypes = [
@@ -104,15 +146,29 @@ async function seedDatabase() {
       'רכש השוואתי'
     ];
     
-    for (const type of engagementTypes) {
-      db.run('INSERT OR IGNORE INTO engagement_types (name) VALUES (?)', [type]);
-    }
+    await new Promise((resolve, reject) => {
+      db.serialize(() => {
+        const stmt = db.prepare('INSERT OR IGNORE INTO engagement_types (name) VALUES (?)');
+        for (const type of engagementTypes) {
+          stmt.run([type]);
+        }
+        stmt.finalize((err) => {
+          if (err) reject(err);
+          else resolve();
+        });
+      });
+    });
 
     // Seed complexity estimates (single record)
-    db.run(`
-      INSERT OR IGNORE INTO complexity_estimates (id, estimate_level_1, estimate_level_2, estimate_level_3) 
-      VALUES (1, 5, 10, 20)
-    `);
+    await new Promise((resolve, reject) => {
+      db.run(`
+        INSERT OR IGNORE INTO complexity_estimates (id, estimate_level_1, estimate_level_2, estimate_level_3) 
+        VALUES (1, 5, 10, 20)
+      `, (err) => {
+        if (err) reject(err);
+        else resolve();
+      });
+    });
 
     // Seed acceptance options
     const acceptanceOptions = [
@@ -130,32 +186,53 @@ async function seedDatabase() {
       }
     ];
 
-    for (const option of acceptanceOptions) {
-      db.run(`
-        INSERT OR IGNORE INTO acceptance_options (year_id, upload_code, upload_code_description, broad_meaning) 
-        VALUES (?, ?, ?, ?)
-      `, [option.yearId, option.uploadCode, option.uploadCodeDescription, option.broadMeaning]);
-    }
+    await new Promise((resolve, reject) => {
+      db.serialize(() => {
+        const stmt = db.prepare(`
+          INSERT OR IGNORE INTO acceptance_options (year_id, upload_code, upload_code_description, broad_meaning) 
+          VALUES (?, ?, ?, ?)
+        `);
+        for (const option of acceptanceOptions) {
+          stmt.run([option.yearId, option.uploadCode, option.uploadCodeDescription, option.broadMeaning]);
+        }
+        stmt.finalize((err) => {
+          if (err) reject(err);
+          else resolve();
+        });
+      });
+    });
     
-    // Create default admin user
+    // Create default admin user (after organizational_roles is populated)
     const adminPassword = await bcrypt.hash('123456', 12);
-    db.run(
-      `INSERT OR IGNORE INTO users (
-        employee_id, full_name, role_code, role_description, 
-        password_hash, email
-      ) VALUES (?, ?, ?, ?, ?, ?)`,
-      ['9999', 'מנהל מערכת', 9, 'גורם טכני', adminPassword, 'admin@system.com']
-    );
+    await new Promise((resolve, reject) => {
+      db.run(
+        `INSERT OR IGNORE INTO users (
+          employee_id, full_name, role_code, role_description, 
+          password_hash, email
+        ) VALUES (?, ?, ?, ?, ?, ?)`,
+        ['9999', 'מנהל מערכת', 9, 'גורם טכני', adminPassword, 'admin@system.com'],
+        (err) => {
+          if (err) reject(err);
+          else resolve();
+        }
+      );
+    });
     
-    // Create sample procurement manager
+    // Create sample procurement manager (after organizational_roles is populated)
     const managerPassword = await bcrypt.hash('123456', 12);
-    db.run(
-      `INSERT OR IGNORE INTO users (
-        employee_id, full_name, role_code, role_description, 
-        password_hash, procurement_team, available_work_days
-      ) VALUES (?, ?, ?, ?, ?, ?, ?)`,
-      ['1001', 'אברהם מנהל', 1, 'מנהל רכש', managerPassword, 'יעודי', 200]
-    );
+    await new Promise((resolve, reject) => {
+      db.run(
+        `INSERT OR IGNORE INTO users (
+          employee_id, full_name, role_code, role_description, 
+          password_hash, procurement_team, available_work_days
+        ) VALUES (?, ?, ?, ?, ?, ?, ?)`,
+        ['1001', 'אברהם מנהל', 1, 'מנהל רכש', managerPassword, 'יעודי', 200],
+        (err) => {
+          if (err) reject(err);
+          else resolve();
+        }
+      );
+    });
     
     console.log('Database seeded successfully!');
     console.log('Default users created:');
