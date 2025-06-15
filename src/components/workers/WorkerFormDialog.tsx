@@ -101,10 +101,10 @@ const WorkerFormDialog: React.FC<WorkerFormDialogProps> = ({
               תפקיד <span className="text-red-500">*</span>
             </Label>
             <Select
-              value={formData.roleCode ? formData.roleCode.toString() : ''}
+              value={formData.roleCode ? formData.roleCode.toString() : 'null-value'}
               onValueChange={(value) => {
                 console.log('Role selected:', value);
-                onInputChange('roleCode', parseInt(value));
+                onInputChange('roleCode', value === 'null-value' ? undefined : parseInt(value));
               }}
             >
               <SelectTrigger className="text-right">
@@ -120,7 +120,7 @@ const WorkerFormDialog: React.FC<WorkerFormDialogProps> = ({
                       </SelectItem>
                     ))
                 ) : (
-                  <SelectItem value="" disabled>
+                  <SelectItem value="loading" disabled>
                     טוען תפקידים...
                   </SelectItem>
                 )}
@@ -177,14 +177,14 @@ const WorkerFormDialog: React.FC<WorkerFormDialogProps> = ({
                 שייכות לאגף (רק לתפקידים 4,5)
               </Label>
               <Select
-                value={formData.divisionId ? formData.divisionId.toString() : ''}
-                onValueChange={(value) => onInputChange('divisionId', value ? parseInt(value) : undefined)}
+                value={formData.divisionId ? formData.divisionId.toString() : 'null-value'}
+                onValueChange={(value) => onInputChange('divisionId', value === 'null-value' ? undefined : parseInt(value))}
               >
                 <SelectTrigger className="text-right">
                   <SelectValue placeholder="בחר אגף" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">ללא אגף</SelectItem>
+                  <SelectItem value="null-value">ללא אגף</SelectItem>
                   {divisions.map(div => (
                     <SelectItem key={div.id} value={div.id.toString()}>
                       {div.name}
@@ -201,14 +201,14 @@ const WorkerFormDialog: React.FC<WorkerFormDialogProps> = ({
                 שייכות למחלקה (רק לתפקידים 4,5)
               </Label>
               <Select
-                value={formData.departmentId ? formData.departmentId.toString() : ''}
-                onValueChange={(value) => onInputChange('departmentId', value ? parseInt(value) : undefined)}
+                value={formData.departmentId ? formData.departmentId.toString() : 'null-value'}
+                onValueChange={(value) => onInputChange('departmentId', value === 'null-value' ? undefined : parseInt(value))}
               >
                 <SelectTrigger className="text-right">
                   <SelectValue placeholder="בחר מחלקה" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">ללא מחלקה</SelectItem>
+                  <SelectItem value="null-value">ללא מחלקה</SelectItem>
                   {departments
                     .filter(dept => !formData.divisionId || dept.divisionId === formData.divisionId)
                     .map(dept => (
@@ -227,14 +227,14 @@ const WorkerFormDialog: React.FC<WorkerFormDialogProps> = ({
                 צוות רכש (רק לתפקידים 2,3)
               </Label>
               <Select
-                value={formData.procurementTeam || ''}
-                onValueChange={(value) => onInputChange('procurementTeam', value)}
+                value={formData.procurementTeam || 'null-value'}
+                onValueChange={(value) => onInputChange('procurementTeam', value === 'null-value' ? undefined : value)}
               >
                 <SelectTrigger className="text-right">
                   <SelectValue placeholder="בחר צוות רכש" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">ללא צוות</SelectItem>
+                  <SelectItem value="null-value">ללא צוות</SelectItem>
                   {procurementTeams.map(team => (
                     <SelectItem key={team.id} value={team.name}>
                       {team.name}
