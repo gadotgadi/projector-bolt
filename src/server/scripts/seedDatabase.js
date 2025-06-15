@@ -9,7 +9,47 @@ export async function seedDatabase() {
     
     db.serialize(async () => {
       try {
-        // Check if data already exists
+        // Always ensure default users exist (upsert approach)
+        console.log('Ensuring default users exist...');
+        
+        const defaultPassword = '123456';
+        const hashedPassword = bcrypt.hashSync(defaultPassword, 12);
+
+        const defaultUsers = [
+          {
+            employee_id: '9999',
+            role_code: 0,
+            full_name: 'מנהל מערכת',
+            role_description: 'מנהלן מערכת',
+            password: hashedPassword
+          },
+          {
+            employee_id: '1001',
+            role_code: 1,
+            full_name: 'מנהל רכש',
+            role_description: 'מנהל רכש ראשי',
+            password: hashedPassword
+          }
+        ];
+
+        // Insert or update default users
+        defaultUsers.forEach((user) => {
+          db.run(
+            `INSERT OR REPLACE INTO workers 
+             (employee_id, role_code, full_name, role_description, password) 
+             VALUES (?, ?, ?, ?, ?)`,
+            [user.employee_id, user.role_code, user.full_name, user.role_description, user.password],
+            function(err) {
+              if (err) {
+                console.error('❌ Error ensuring user exists:', user.employee_id, err);
+              } else {
+                console.log('✅ Ensured user exists:', user.employee_id);
+              }
+            }
+          );
+        });
+
+        // Check if other data already exists to avoid duplicates
         db.get('SELECT COUNT(*) as count FROM organizational_roles', (err, row) => {
           if (err) {
             reject(err);
@@ -17,7 +57,7 @@ export async function seedDatabase() {
           }
           
           if (row.count > 0) {
-            console.log('Database already seeded, skipping...');
+            console.log('Basic data already exists, only ensuring default users...');
             resolve();
             return;
           }
@@ -124,72 +164,17 @@ export async function seedDatabase() {
             );
           });
 
-          // Create default users with proper password hashing
-          const defaultPassword = '123456';
-          console.log('🔍 Creating default users with password:', defaultPassword);
+          // Seed complexity estimates
+          db.run(
+            'INSERT OR IGNORE INTO complexity_estimates (id, estimate_level_1, estimate_level_2, estimate_level_3) VALUES (1, 5, 10, 20)'
+          );
+
+          console.log('✅ Database seeded successfully!');
+          console.log('Default users available:');
+          console.log('- Admin: 9999 / 123456');
+          console.log('- Manager: 1001 / 123456');
           
-          // Hash the password synchronously to ensure it's ready
-          const hashedPassword = bcrypt.hashSync(defaultPassword, 12);
-          console.log('🔍 Hashed password created, length:', hashedPassword.length);
-
-          const defaultUsers = [
-            {
-              employee_id: '9999',
-              role_code: 0,
-              full_name: 'מנהל מערכת',
-              role_description: 'מנהלן מערכת',
-              password: hashedPassword
-            },
-            {
-              employee_id: '1001',
-              role_code: 1,
-              full_name: 'מנהל רכש',
-              role_description: 'מנהל רכש ראשי',
-              password: hashedPassword
-            }
-          ];
-
-          // Insert users one by one to ensure they're created
-          let usersCreated = 0;
-          defaultUsers.forEach((user, index) => {
-            db.run(
-              `INSERT OR REPLACE INTO workers 
-               (employee_id, role_code, full_name, role_description, password) 
-               VALUES (?, ?, ?, ?, ?)`,
-              [user.employee_id, user.role_code, user.full_name, user.role_description, user.password],
-              function(err) {
-                if (err) {
-                  console.error('❌ Error creating user:', user.employee_id, err);
-                } else {
-                  console.log('✅ Created user:', user.employee_id, 'with ID:', this.lastID);
-                }
-                
-                usersCreated++;
-                if (usersCreated === defaultUsers.length) {
-                  // Verify users were created
-                  db.all('SELECT employee_id, full_name, role_code FROM workers', (err, rows) => {
-                    if (err) {
-                      console.error('❌ Error verifying users:', err);
-                    } else {
-                      console.log('✅ Users in database after seeding:', rows);
-                    }
-                  });
-                  
-                  // Seed complexity estimates
-                  db.run(
-                    'INSERT OR IGNORE INTO complexity_estimates (id, estimate_level_1, estimate_level_2, estimate_level_3) VALUES (1, 5, 10, 20)'
-                  );
-
-                  console.log('✅ Database seeded successfully!');
-                  console.log('Default users created:');
-                  console.log('- Admin: 9999 / 123456');
-                  console.log('- Manager: 1001 / 123456');
-                  
-                  resolve();
-                }
-              }
-            );
-          });
+          resolve();
         });
       } catch (error) {
         console.error('❌ Error seeding database:', error);

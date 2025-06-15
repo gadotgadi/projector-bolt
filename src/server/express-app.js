@@ -63,7 +63,7 @@ async function createExpressApp() {
       await initializeDatabase();
       console.log('✅ Database initialized successfully');
       
-      // Seed database
+      // Always seed database to ensure default users exist
       const { seedDatabase } = await import('./scripts/seedDatabase.js');
       await seedDatabase();
       console.log('✅ Database seeded successfully');
