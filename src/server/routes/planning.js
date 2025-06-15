@@ -1,31 +1,25 @@
 import express from 'express';
-import { body, validationResult } from 'express-validator';
 import { getDatabase } from '../config/database.js';
-import { authenticateToken, authorizeRoles } from '../middleware/auth.js';
+import { authenticateToken, requireRole } from '../middleware/auth.js';
 
 const router = express.Router();
 
-// ===== COMPLEXITY ESTIMATES ROUTES =====
-
 // Get complexity estimates
-router.get('/complexity-estimates', authenticateToken, (req, res) => {
+router.get('/complexity-estimates', authenticateToken, requireRole([0, 1, 9]), (req, res) => {
   const db = getDatabase();
   
-  db.get('SELECT * FROM complexity_estimates ORDER BY id DESC LIMIT 1', (err, estimates) => {
+  db.get('SELECT * FROM complexity_estimates ORDER BY id DESC LIMIT 1', (err, row) => {
     if (err) {
       console.error('Error fetching complexity estimates:', err);
-      return res.status(500).json({ error: 'Failed to fetch complexity estimates' });
+      return res.status(500).json({ error: 'Database error' });
     }
     
-    // If no estimates exist, return default values
-    if (!estimates) {
-      estimates = {
-        id: 1,
-        estimate_level_1: 5,
-        estimate_level_2: 10,
-        estimate_level_3: 20
-      };
-    }
+    // Return default values if no record exists
+    const estimates = row || {
+      estimateLevel1: 5,
+      estimateLevel2: 10,
+      estimateLevel3: 20
+    };
     
     res.json({
       estimateLevel1: estimates.estimate_level_1,
@@ -36,44 +30,28 @@ router.get('/complexity-estimates', authenticateToken, (req, res) => {
 });
 
 // Update complexity estimates
-router.put('/complexity-estimates', [
-  authenticateToken,
-  authorizeRoles(0, 1), // Admin and Procurement Manager
-  body('estimateLevel1').isInt({ min: 1, max: 365 }).withMessage('Level 1 estimate must be between 1-365'),
-  body('estimateLevel2').isInt({ min: 1, max: 365 }).withMessage('Level 2 estimate must be between 1-365'),
-  body('estimateLevel3').isInt({ min: 1, max: 365 }).withMessage('Level 3 estimate must be between 1-365')
-], (req, res) => {
-  const errors = validationResult(req);
-  if (!errors.isEmpty()) {
-    return res.status(400).json({ errors: errors.array() });
-  }
-
+router.put('/complexity-estimates', authenticateToken, requireRole([0, 1, 9]), (req, res) => {
   const { estimateLevel1, estimateLevel2, estimateLevel3 } = req.body;
   const db = getDatabase();
 
-  // First check if record exists
-  db.get('SELECT id FROM complexity_estimates LIMIT 1', (err, existing) => {
+  // First check if a record exists
+  db.get('SELECT id FROM complexity_estimates LIMIT 1', (err, row) => {
     if (err) {
       console.error('Error checking complexity estimates:', err);
       return res.status(500).json({ error: 'Database error' });
     }
 
-    if (existing) {
+    if (row) {
       // Update existing record
       db.run(
         'UPDATE complexity_estimates SET estimate_level_1 = ?, estimate_level_2 = ?, estimate_level_3 = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?',
-        [estimateLevel1, estimateLevel2, estimateLevel3, existing.id],
+        [estimateLevel1, estimateLevel2, estimateLevel3, row.id],
         function(err) {
           if (err) {
             console.error('Error updating complexity estimates:', err);
-            return res.status(500).json({ error: 'Failed to update complexity estimates' });
+            return res.status(500).json({ error: 'Database error' });
           }
-
-          res.json({
-            estimateLevel1,
-            estimateLevel2,
-            estimateLevel3
-          });
+          res.json({ message: 'Complexity estimates updated successfully' });
         }
       );
     } else {
@@ -84,192 +62,146 @@ router.put('/complexity-estimates', [
         function(err) {
           if (err) {
             console.error('Error creating complexity estimates:', err);
-            return res.status(500).json({ error: 'Failed to create complexity estimates' });
+            return res.status(500).json({ error: 'Database error' });
           }
-
-          res.json({
-            estimateLevel1,
-            estimateLevel2,
-            estimateLevel3
-          });
+          res.json({ message: 'Complexity estimates created successfully' });
         }
       );
     }
   });
 });
 
-// ===== ACCEPTANCE OPTIONS ROUTES =====
-
-// Get all acceptance options
-router.get('/acceptance-options', authenticateToken, (req, res) => {
+// Get acceptance options
+router.get('/acceptance-options', authenticateToken, requireRole([0, 1, 9]), (req, res) => {
   const db = getDatabase();
   
-  db.all('SELECT * FROM acceptance_options ORDER BY year_id DESC', (err, options) => {
+  db.all('SELECT * FROM acceptance_options ORDER BY year_id DESC', (err, rows) => {
     if (err) {
       console.error('Error fetching acceptance options:', err);
-      return res.status(500).json({ error: 'Failed to fetch acceptance options' });
+      return res.status(500).json({ error: 'Database error' });
     }
     
-    // Transform to match frontend format
-    const transformedOptions = options.map(option => ({
-      id: option.id,
-      yearId: option.year_id,
-      uploadCode: option.upload_code,
-      uploadCodeDescription: option.upload_code_description,
-      broadMeaning: option.broad_meaning
+    // Transform data to match frontend format
+    const options = rows.map(row => ({
+      id: row.id,
+      yearId: row.year_id,
+      uploadCode: row.upload_code,
+      uploadCodeDescription: row.upload_code_description,
+      broadMeaning: row.broad_meaning
     }));
     
-    res.json(transformedOptions);
+    res.json(options);
   });
 });
 
 // Create acceptance option
-router.post('/acceptance-options', [
-  authenticateToken,
-  authorizeRoles(0, 1), // Admin and Procurement Manager
-  body('yearId').isInt({ min: 2020, max: 2050 }).withMessage('Year must be between 2020-2050'),
-  body('uploadCode').isIn(['Plan', 'Late', 'Block', 'Finish']).withMessage('Invalid upload code')
-], (req, res) => {
-  const errors = validationResult(req);
-  if (!errors.isEmpty()) {
-    return res.status(400).json({ errors: errors.array() });
-  }
-
+router.post('/acceptance-options', authenticateToken, requireRole([0, 1, 9]), (req, res) => {
   const { yearId, uploadCode, broadMeaning } = req.body;
   const db = getDatabase();
 
-  // Check if year already exists
-  db.get('SELECT id FROM acceptance_options WHERE year_id = ?', [yearId], (err, existing) => {
-    if (err) {
-      console.error('Error checking existing year:', err);
-      return res.status(500).json({ error: 'Database error' });
-    }
+  // Map upload codes to descriptions
+  const uploadCodeDescriptions = {
+    'Plan': 'מתוכנן',
+    'Late': 'מאחר',
+    'Block': 'חסום',
+    'Finish': 'הסתיים'
+  };
 
-    if (existing) {
-      return res.status(400).json({ error: `Year ${yearId} already exists` });
-    }
+  const uploadCodeDescription = uploadCodeDescriptions[uploadCode];
 
-    // Get upload code description
-    const uploadCodeDescriptions = {
-      'Plan': 'מתוכנן',
-      'Late': 'מאחר',
-      'Block': 'חסום',
-      'Finish': 'הסתיים'
-    };
-
-    const uploadCodeDescription = uploadCodeDescriptions[uploadCode];
-
-    db.run(
-      'INSERT INTO acceptance_options (year_id, upload_code, upload_code_description, broad_meaning) VALUES (?, ?, ?, ?)',
-      [yearId, uploadCode, uploadCodeDescription, broadMeaning || null],
-      function(err) {
-        if (err) {
-          console.error('Error creating acceptance option:', err);
-          return res.status(500).json({ error: 'Failed to create acceptance option' });
+  db.run(
+    'INSERT INTO acceptance_options (year_id, upload_code, upload_code_description, broad_meaning) VALUES (?, ?, ?, ?)',
+    [yearId, uploadCode, uploadCodeDescription, broadMeaning],
+    function(err) {
+      if (err) {
+        console.error('Error creating acceptance option:', err);
+        if (err.message.includes('UNIQUE constraint failed')) {
+          return res.status(400).json({ error: 'Acceptance option for this year already exists' });
         }
-
-        db.get('SELECT * FROM acceptance_options WHERE id = ?', [this.lastID], (err, option) => {
-          if (err) {
-            return res.status(500).json({ error: 'Failed to fetch created option' });
-          }
-
-          const transformedOption = {
-            id: option.id,
-            yearId: option.year_id,
-            uploadCode: option.upload_code,
-            uploadCodeDescription: option.upload_code_description,
-            broadMeaning: option.broad_meaning
-          };
-
-          res.status(201).json(transformedOption);
-        });
+        return res.status(500).json({ error: 'Database error' });
       }
-    );
-  });
+
+      db.get('SELECT * FROM acceptance_options WHERE id = ?', [this.lastID], (err, row) => {
+        if (err) {
+          console.error('Error fetching created acceptance option:', err);
+          return res.status(500).json({ error: 'Database error' });
+        }
+        
+        const option = {
+          id: row.id,
+          yearId: row.year_id,
+          uploadCode: row.upload_code,
+          uploadCodeDescription: row.upload_code_description,
+          broadMeaning: row.broad_meaning
+        };
+        
+        res.status(201).json(option);
+      });
+    }
+  );
 });
 
 // Update acceptance option
-router.put('/acceptance-options/:id', [
-  authenticateToken,
-  authorizeRoles(0, 1), // Admin and Procurement Manager
-  body('yearId').isInt({ min: 2020, max: 2050 }).withMessage('Year must be between 2020-2050'),
-  body('uploadCode').isIn(['Plan', 'Late', 'Block', 'Finish']).withMessage('Invalid upload code')
-], (req, res) => {
-  const errors = validationResult(req);
-  if (!errors.isEmpty()) {
-    return res.status(400).json({ errors: errors.array() });
-  }
-
+router.put('/acceptance-options/:id', authenticateToken, requireRole([0, 1, 9]), (req, res) => {
   const { id } = req.params;
   const { yearId, uploadCode, broadMeaning } = req.body;
   const db = getDatabase();
 
-  // Check if year already exists for different record
-  db.get('SELECT id FROM acceptance_options WHERE year_id = ? AND id != ?', [yearId, id], (err, existing) => {
-    if (err) {
-      console.error('Error checking existing year:', err);
-      return res.status(500).json({ error: 'Database error' });
-    }
+  // Map upload codes to descriptions
+  const uploadCodeDescriptions = {
+    'Plan': 'מתוכנן',
+    'Late': 'מאחר',
+    'Block': 'חסום',
+    'Finish': 'הסתיים'
+  };
 
-    if (existing) {
-      return res.status(400).json({ error: `Year ${yearId} already exists` });
-    }
+  const uploadCodeDescription = uploadCodeDescriptions[uploadCode];
 
-    // Get upload code description
-    const uploadCodeDescriptions = {
-      'Plan': 'מתוכנן',
-      'Late': 'מאחר',
-      'Block': 'חסום',
-      'Finish': 'הסתיים'
-    };
-
-    const uploadCodeDescription = uploadCodeDescriptions[uploadCode];
-
-    db.run(
-      'UPDATE acceptance_options SET year_id = ?, upload_code = ?, upload_code_description = ?, broad_meaning = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?',
-      [yearId, uploadCode, uploadCodeDescription, broadMeaning || null, id],
-      function(err) {
-        if (err) {
-          console.error('Error updating acceptance option:', err);
-          return res.status(500).json({ error: 'Failed to update acceptance option' });
+  db.run(
+    'UPDATE acceptance_options SET year_id = ?, upload_code = ?, upload_code_description = ?, broad_meaning = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?',
+    [yearId, uploadCode, uploadCodeDescription, broadMeaning, id],
+    function(err) {
+      if (err) {
+        console.error('Error updating acceptance option:', err);
+        if (err.message.includes('UNIQUE constraint failed')) {
+          return res.status(400).json({ error: 'Acceptance option for this year already exists' });
         }
-
-        if (this.changes === 0) {
-          return res.status(404).json({ error: 'Acceptance option not found' });
-        }
-
-        db.get('SELECT * FROM acceptance_options WHERE id = ?', [id], (err, option) => {
-          if (err) {
-            return res.status(500).json({ error: 'Failed to fetch updated option' });
-          }
-
-          const transformedOption = {
-            id: option.id,
-            yearId: option.year_id,
-            uploadCode: option.upload_code,
-            uploadCodeDescription: option.upload_code_description,
-            broadMeaning: option.broad_meaning
-          };
-
-          res.json(transformedOption);
-        });
+        return res.status(500).json({ error: 'Database error' });
       }
-    );
-  });
+
+      if (this.changes === 0) {
+        return res.status(404).json({ error: 'Acceptance option not found' });
+      }
+
+      db.get('SELECT * FROM acceptance_options WHERE id = ?', [id], (err, row) => {
+        if (err) {
+          console.error('Error fetching updated acceptance option:', err);
+          return res.status(500).json({ error: 'Database error' });
+        }
+        
+        const option = {
+          id: row.id,
+          yearId: row.year_id,
+          uploadCode: row.upload_code,
+          uploadCodeDescription: row.upload_code_description,
+          broadMeaning: row.broad_meaning
+        };
+        
+        res.json(option);
+      });
+    }
+  );
 });
 
 // Delete acceptance option
-router.delete('/acceptance-options/:id', [
-  authenticateToken,
-  authorizeRoles(0, 1) // Admin and Procurement Manager
-], (req, res) => {
+router.delete('/acceptance-options/:id', authenticateToken, requireRole([0, 1, 9]), (req, res) => {
   const { id } = req.params;
   const db = getDatabase();
 
   db.run('DELETE FROM acceptance_options WHERE id = ?', [id], function(err) {
     if (err) {
       console.error('Error deleting acceptance option:', err);
-      return res.status(500).json({ error: 'Failed to delete acceptance option' });
+      return res.status(500).json({ error: 'Database error' });
     }
 
     if (this.changes === 0) {

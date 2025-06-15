@@ -1,7 +1,7 @@
 import jwt from 'jsonwebtoken';
 import { getDatabase } from '../config/database.js';
 
-function authenticateToken(req, res, next) {
+export const authenticateToken = (req, res, next) => {
   const authHeader = req.headers['authorization'];
   const token = authHeader && authHeader.split(' ')[1];
 
@@ -11,51 +11,52 @@ function authenticateToken(req, res, next) {
 
   jwt.verify(token, process.env.JWT_SECRET, (err, user) => {
     if (err) {
+      console.error('Token verification failed:', err);
       return res.status(403).json({ error: 'Invalid or expired token' });
     }
+    
     req.user = user;
     next();
   });
-}
+};
 
-function authorizeRoles(...roles) {
+export const requireRole = (allowedRoles) => {
   return (req, res, next) => {
     if (!req.user) {
       return res.status(401).json({ error: 'Authentication required' });
     }
 
-    if (!roles.includes(req.user.roleCode)) {
+    if (!allowedRoles.includes(req.user.roleCode)) {
       return res.status(403).json({ error: 'Insufficient permissions' });
     }
 
     next();
   };
-}
+};
 
-function validateUserExists(req, res, next) {
-  const db = getDatabase();
-  const userId = req.user.id;
-
-  db.get(
-    'SELECT id, employee_id, full_name, role_code FROM users WHERE id = ?',
-    [userId],
-    (err, user) => {
-      if (err) {
-        return res.status(500).json({ error: 'Database error' });
-      }
-      
-      if (!user) {
-        return res.status(404).json({ error: 'User not found' });
-      }
-      
-      req.user.currentUser = user;
-      next();
-    }
-  );
-}
-
-export {
-  authenticateToken,
-  authorizeRoles,
-  validateUserExists
+export const getUserFromToken = async (token) => {
+  try {
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    const db = getDatabase();
+    
+    return new Promise((resolve, reject) => {
+      db.get(
+        `SELECT w.*, d.name as division_name, dept.name as department_name 
+         FROM workers w 
+         LEFT JOIN divisions d ON w.division_id = d.id 
+         LEFT JOIN departments dept ON w.department_id = dept.id 
+         WHERE w.id = ?`,
+        [decoded.id],
+        (err, row) => {
+          if (err) {
+            reject(err);
+          } else {
+            resolve(row);
+          }
+        }
+      );
+    });
+  } catch (error) {
+    throw new Error('Invalid token');
+  }
 };

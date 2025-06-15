@@ -1,63 +1,66 @@
 import sqlite3 from 'sqlite3';
 import path from 'path';
-import fs from 'fs';
+import { fileURLToPath } from 'url';
 
-// Use the environment variable set in vite.config.ts, with fallback
-const DB_PATH = process.env.DB_PATH || './src/server/data/procurement.db';
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
-// Ensure data directory exists
-const dataDir = path.dirname(DB_PATH);
-if (!fs.existsSync(dataDir)) {
-  console.log('Creating data directory:', dataDir);
-  fs.mkdirSync(dataDir, { recursive: true });
-}
+// Use environment variable or default path
+const DB_PATH = process.env.DB_PATH || path.join(__dirname, '../data/procurement.db');
 
-let db = null;
-let isInitialized = false;
+let dbInstance = null;
 
-function getDatabase() {
-  if (!db) {
+export function getDatabase() {
+  if (!dbInstance) {
     console.log('Initializing database at:', DB_PATH);
-    db = new sqlite3.Database(DB_PATH, (err) => {
+    dbInstance = new sqlite3.Database(DB_PATH, (err) => {
       if (err) {
         console.error('Error opening database:', err);
         throw err;
       }
       console.log('Connected to SQLite database at:', DB_PATH);
     });
-    
+
     // Enable foreign keys
-    db.run('PRAGMA foreign_keys = ON');
+    dbInstance.run('PRAGMA foreign_keys = ON');
   }
-  return db;
+  return dbInstance;
 }
 
-async function initializeDatabase() {
-  // Prevent multiple initializations
-  if (isInitialized) {
-    console.log('Database already initialized, skipping...');
-    return;
+export function closeDatabase() {
+  if (dbInstance) {
+    dbInstance.close((err) => {
+      if (err) {
+        console.error('Error closing database:', err);
+      } else {
+        console.log('Database connection closed');
+      }
+    });
+    dbInstance = null;
   }
+}
 
-  // In development, delete existing database file to ensure clean state
-  const isDevelopment = process.env.NODE_ENV !== 'production' && process.env.NODE_ENV !== 'test';
-  if (isDevelopment && fs.existsSync(DB_PATH)) {
-    console.log('Development mode: Removing existing database file for clean initialization...');
-    // Close existing connection if any
-    if (db) {
-      db.close();
-      db = null;
-    }
-    fs.unlinkSync(DB_PATH);
-  }
+// Graceful shutdown
+process.on('SIGINT', () => {
+  console.log('Received SIGINT, closing database...');
+  closeDatabase();
+  process.exit(0);
+});
 
-  getDatabase();
+process.on('SIGTERM', () => {
+  console.log('Received SIGTERM, closing database...');
+  closeDatabase();
+  process.exit(0);
+});
+
+export async function initializeDatabase() {
+  const db = getDatabase();
   
   return new Promise((resolve, reject) => {
+    console.log('Creating database tables...');
+    
     db.serialize(() => {
-      console.log('Creating database tables...');
-      
-      // Organizational roles table (must be created before users)
+      // Create organizational_roles table
       db.run(`
         CREATE TABLE IF NOT EXISTS organizational_roles (
           id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -67,7 +70,7 @@ async function initializeDatabase() {
         )
       `);
 
-      // Divisions table (must be created before users and departments)
+      // Create divisions table
       db.run(`
         CREATE TABLE IF NOT EXISTS divisions (
           id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -76,7 +79,7 @@ async function initializeDatabase() {
         )
       `);
 
-      // Departments table (must be created before users)
+      // Create departments table
       db.run(`
         CREATE TABLE IF NOT EXISTS departments (
           id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -86,27 +89,27 @@ async function initializeDatabase() {
         )
       `);
 
-      // Procurement teams table (must be created before users)
+      // Create procurement_teams table
       db.run(`
         CREATE TABLE IF NOT EXISTS procurement_teams (
           id INTEGER PRIMARY KEY AUTOINCREMENT,
-          name TEXT NOT NULL
+          name TEXT NOT NULL UNIQUE
         )
       `);
 
-      // Users table (with proper foreign key constraints)
+      // Create workers table
       db.run(`
-        CREATE TABLE IF NOT EXISTS users (
+        CREATE TABLE IF NOT EXISTS workers (
           id INTEGER PRIMARY KEY AUTOINCREMENT,
           employee_id TEXT UNIQUE NOT NULL,
-          full_name TEXT NOT NULL,
           role_code INTEGER NOT NULL,
+          full_name TEXT NOT NULL,
           role_description TEXT,
           division_id INTEGER,
           department_id INTEGER,
           procurement_team TEXT,
-          password_hash TEXT NOT NULL,
-          available_work_days INTEGER,
+          password TEXT NOT NULL,
+          available_work_days TEXT,
           email TEXT,
           created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
           updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
@@ -116,15 +119,7 @@ async function initializeDatabase() {
         )
       `);
 
-      // Domains table
-      db.run(`
-        CREATE TABLE IF NOT EXISTS domains (
-          id INTEGER PRIMARY KEY AUTOINCREMENT,
-          description TEXT NOT NULL
-        )
-      `);
-
-      // Activity pool table
+      // Create activity_pool table
       db.run(`
         CREATE TABLE IF NOT EXISTS activity_pool (
           id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -133,34 +128,21 @@ async function initializeDatabase() {
         )
       `);
 
-      // Engagement types table
+      // Create domains table
       db.run(`
-        CREATE TABLE IF NOT EXISTS engagement_types (
+        CREATE TABLE IF NOT EXISTS domains (
           id INTEGER PRIMARY KEY AUTOINCREMENT,
-          name TEXT NOT NULL
+          description TEXT NOT NULL
         )
       `);
 
-      // Engagement type processes table
-      db.run(`
-        CREATE TABLE IF NOT EXISTS engagement_type_processes (
-          id INTEGER PRIMARY KEY AUTOINCREMENT,
-          engagement_type_id INTEGER NOT NULL,
-          station_id INTEGER NOT NULL,
-          activity_id INTEGER NOT NULL,
-          FOREIGN KEY (engagement_type_id) REFERENCES engagement_types(id),
-          FOREIGN KEY (activity_id) REFERENCES activity_pool(id),
-          UNIQUE(engagement_type_id, station_id)
-        )
-      `);
-
-      // Programs table
+      // Create programs table (main tasks)
       db.run(`
         CREATE TABLE IF NOT EXISTS programs (
           id INTEGER PRIMARY KEY AUTOINCREMENT,
           task_id INTEGER UNIQUE NOT NULL,
           work_year INTEGER NOT NULL,
-          required_quarter DATE NOT NULL,
+          required_quarter DATE,
           title TEXT NOT NULL,
           description TEXT,
           requester_id INTEGER,
@@ -171,11 +153,11 @@ async function initializeDatabase() {
           department_name TEXT,
           domain_id INTEGER,
           domain_name TEXT,
-          estimated_amount DECIMAL(15,2),
+          estimated_amount REAL,
           currency TEXT,
           supplier_list TEXT,
           justification TEXT,
-          planning_source TEXT NOT NULL,
+          planning_source TEXT NOT NULL DEFAULT 'annual_planning',
           complexity INTEGER,
           engagement_type_id INTEGER,
           engagement_type_name TEXT,
@@ -189,11 +171,13 @@ async function initializeDatabase() {
           officer_notes TEXT,
           created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
           updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-          FOREIGN KEY (engagement_type_id) REFERENCES engagement_types(id)
+          FOREIGN KEY (division_id) REFERENCES divisions(id),
+          FOREIGN KEY (department_id) REFERENCES departments(id),
+          FOREIGN KEY (domain_id) REFERENCES domains(id)
         )
       `);
 
-      // Program tasks (stations) table
+      // Create program_tasks table (stations)
       db.run(`
         CREATE TABLE IF NOT EXISTS program_tasks (
           id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -210,13 +194,13 @@ async function initializeDatabase() {
           is_last_station BOOLEAN DEFAULT 0,
           created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
           updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-          FOREIGN KEY (program_id) REFERENCES programs(id),
+          FOREIGN KEY (program_id) REFERENCES programs(id) ON DELETE CASCADE,
           FOREIGN KEY (activity_id) REFERENCES activity_pool(id),
           UNIQUE(program_id, station_id)
         )
       `);
 
-      // Complexity estimates table
+      // Create complexity_estimates table
       db.run(`
         CREATE TABLE IF NOT EXISTS complexity_estimates (
           id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -227,71 +211,35 @@ async function initializeDatabase() {
         )
       `);
 
-      // Acceptance options table
+      // Create acceptance_options table
       db.run(`
         CREATE TABLE IF NOT EXISTS acceptance_options (
           id INTEGER PRIMARY KEY AUTOINCREMENT,
-          year_id INTEGER UNIQUE NOT NULL,
-          upload_code TEXT NOT NULL CHECK (upload_code IN ('Plan', 'Late', 'Block', 'Finish')),
+          year_id INTEGER NOT NULL,
+          upload_code TEXT NOT NULL,
           upload_code_description TEXT NOT NULL,
           broad_meaning TEXT,
           created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-          updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+          updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+          UNIQUE(year_id)
         )
       `);
 
-      // System settings table
-      db.run(`
-        CREATE TABLE IF NOT EXISTS system_settings (
-          id INTEGER PRIMARY KEY AUTOINCREMENT,
-          setting_key TEXT UNIQUE NOT NULL,
-          setting_value TEXT NOT NULL,
-          description TEXT,
-          updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
-        )
-      `, (err) => {
-        if (err) {
-          console.error('Error creating system_settings table:', err);
-          reject(err);
-          return;
-        }
+      // Create indexes for better performance
+      db.run('CREATE INDEX IF NOT EXISTS idx_workers_employee_id ON workers(employee_id)');
+      db.run('CREATE INDEX IF NOT EXISTS idx_workers_role_code ON workers(role_code)');
+      db.run('CREATE INDEX IF NOT EXISTS idx_programs_task_id ON programs(task_id)');
+      db.run('CREATE INDEX IF NOT EXISTS idx_programs_status ON programs(status)');
+      db.run('CREATE INDEX IF NOT EXISTS idx_program_tasks_program_id ON program_tasks(program_id)');
+      db.run('CREATE INDEX IF NOT EXISTS idx_program_tasks_station_id ON program_tasks(station_id)');
 
-        // Create indexes for better performance
-        db.run('CREATE INDEX IF NOT EXISTS idx_programs_status ON programs(status)');
-        db.run('CREATE INDEX IF NOT EXISTS idx_programs_work_year ON programs(work_year)');
-        db.run('CREATE INDEX IF NOT EXISTS idx_program_tasks_program_id ON program_tasks(program_id)');
-        db.run('CREATE INDEX IF NOT EXISTS idx_users_employee_id ON users(employee_id)');
-        db.run('CREATE INDEX IF NOT EXISTS idx_acceptance_options_year ON acceptance_options(year_id)', (err) => {
-          if (err) {
-            console.error('Error creating indexes:', err);
-            reject(err);
-            return;
-          }
-          
-          console.log('Database tables and indexes created successfully');
-          isInitialized = true;
-          resolve();
-        });
-      });
+      console.log('Database tables and indexes created successfully');
+      resolve();
+    });
+
+    db.on('error', (err) => {
+      console.error('Database error:', err);
+      reject(err);
     });
   });
 }
-
-function closeDatabase() {
-  if (db) {
-    db.close((err) => {
-      if (err) {
-        console.error('Error closing database:', err);
-      } else {
-        console.log('Database connection closed');
-      }
-    });
-    db = null;
-  }
-}
-
-export {
-  getDatabase,
-  initializeDatabase,
-  closeDatabase
-};

@@ -1,103 +1,83 @@
 import express from 'express';
-import { body, validationResult } from 'express-validator';
 import { getDatabase } from '../config/database.js';
-import { authenticateToken, authorizeRoles } from '../middleware/auth.js';
+import { authenticateToken, requireRole } from '../middleware/auth.js';
 
 const router = express.Router();
 
-// ===== ACTIVITY POOL ROUTES =====
-
-// Get all activities
-router.get('/activity-pool', authenticateToken, (req, res) => {
+// Activity Pool routes
+router.get('/activity-pool', authenticateToken, requireRole([0, 9]), (req, res) => {
   const db = getDatabase();
   
-  db.all('SELECT * FROM activity_pool ORDER BY name', (err, activities) => {
+  db.all('SELECT * FROM activity_pool ORDER BY name', (err, rows) => {
     if (err) {
-      console.error('Error fetching activities:', err);
-      return res.status(500).json({ error: 'Failed to fetch activities' });
+      console.error('Error fetching activity pool:', err);
+      return res.status(500).json({ error: 'Database error' });
     }
-    
-    res.json(activities);
+    res.json(rows);
   });
 });
 
-// Create activity
-router.post('/activity-pool', [
-  authenticateToken,
-  authorizeRoles(0, 9),
-  body('name').notEmpty().withMessage('Activity name is required')
-], (req, res) => {
-  const errors = validationResult(req);
-  if (!errors.isEmpty()) {
-    return res.status(400).json({ errors: errors.array() });
-  }
-
+router.post('/activity-pool', authenticateToken, requireRole([0, 9]), (req, res) => {
   const { name, toolsAndResources } = req.body;
   const db = getDatabase();
 
   db.run(
     'INSERT INTO activity_pool (name, tools_and_resources) VALUES (?, ?)',
-    [name, toolsAndResources || null],
+    [name, toolsAndResources],
     function(err) {
       if (err) {
         console.error('Error creating activity:', err);
-        return res.status(500).json({ error: 'Failed to create activity' });
+        return res.status(500).json({ error: 'Database error' });
       }
 
-      db.get('SELECT * FROM activity_pool WHERE id = ?', [this.lastID], (err, activity) => {
+      db.get('SELECT * FROM activity_pool WHERE id = ?', [this.lastID], (err, row) => {
         if (err) {
-          return res.status(500).json({ error: 'Failed to fetch created activity' });
+          console.error('Error fetching created activity:', err);
+          return res.status(500).json({ error: 'Database error' });
         }
-        res.status(201).json(activity);
+        res.status(201).json(row);
       });
     }
   );
 });
 
-// Update activity
-router.put('/activity-pool/:id', [
-  authenticateToken,
-  authorizeRoles(0, 9)
-], (req, res) => {
+router.put('/activity-pool/:id', authenticateToken, requireRole([0, 9]), (req, res) => {
   const { id } = req.params;
   const { name, toolsAndResources } = req.body;
   const db = getDatabase();
 
   db.run(
     'UPDATE activity_pool SET name = ?, tools_and_resources = ? WHERE id = ?',
-    [name, toolsAndResources || null, id],
+    [name, toolsAndResources, id],
     function(err) {
       if (err) {
         console.error('Error updating activity:', err);
-        return res.status(500).json({ error: 'Failed to update activity' });
+        return res.status(500).json({ error: 'Database error' });
       }
 
       if (this.changes === 0) {
         return res.status(404).json({ error: 'Activity not found' });
       }
 
-      db.get('SELECT * FROM activity_pool WHERE id = ?', [id], (err, activity) => {
+      db.get('SELECT * FROM activity_pool WHERE id = ?', [id], (err, row) => {
         if (err) {
-          return res.status(500).json({ error: 'Failed to fetch updated activity' });
+          console.error('Error fetching updated activity:', err);
+          return res.status(500).json({ error: 'Database error' });
         }
-        res.json(activity);
+        res.json(row);
       });
     }
   );
 });
 
-// Delete activity
-router.delete('/activity-pool/:id', [
-  authenticateToken,
-  authorizeRoles(0, 9)
-], (req, res) => {
+router.delete('/activity-pool/:id', authenticateToken, requireRole([0, 9]), (req, res) => {
   const { id } = req.params;
   const db = getDatabase();
 
   db.run('DELETE FROM activity_pool WHERE id = ?', [id], function(err) {
     if (err) {
       console.error('Error deleting activity:', err);
-      return res.status(500).json({ error: 'Failed to delete activity' });
+      return res.status(500).json({ error: 'Database error' });
     }
 
     if (this.changes === 0) {
@@ -108,33 +88,20 @@ router.delete('/activity-pool/:id', [
   });
 });
 
-// ===== DOMAINS ROUTES =====
-
-// Get all domains
-router.get('/domains', authenticateToken, (req, res) => {
+// Domains routes
+router.get('/domains', authenticateToken, requireRole([0, 9]), (req, res) => {
   const db = getDatabase();
   
-  db.all('SELECT * FROM domains ORDER BY description', (err, domains) => {
+  db.all('SELECT * FROM domains ORDER BY description', (err, rows) => {
     if (err) {
       console.error('Error fetching domains:', err);
-      return res.status(500).json({ error: 'Failed to fetch domains' });
+      return res.status(500).json({ error: 'Database error' });
     }
-    
-    res.json(domains);
+    res.json(rows);
   });
 });
 
-// Create domain
-router.post('/domains', [
-  authenticateToken,
-  authorizeRoles(0, 9),
-  body('description').notEmpty().withMessage('Domain description is required')
-], (req, res) => {
-  const errors = validationResult(req);
-  if (!errors.isEmpty()) {
-    return res.status(400).json({ errors: errors.array() });
-  }
-
+router.post('/domains', authenticateToken, requireRole([0, 9]), (req, res) => {
   const { description } = req.body;
   const db = getDatabase();
 
@@ -144,24 +111,21 @@ router.post('/domains', [
     function(err) {
       if (err) {
         console.error('Error creating domain:', err);
-        return res.status(500).json({ error: 'Failed to create domain' });
+        return res.status(500).json({ error: 'Database error' });
       }
 
-      db.get('SELECT * FROM domains WHERE id = ?', [this.lastID], (err, domain) => {
+      db.get('SELECT * FROM domains WHERE id = ?', [this.lastID], (err, row) => {
         if (err) {
-          return res.status(500).json({ error: 'Failed to fetch created domain' });
+          console.error('Error fetching created domain:', err);
+          return res.status(500).json({ error: 'Database error' });
         }
-        res.status(201).json(domain);
+        res.status(201).json(row);
       });
     }
   );
 });
 
-// Update domain
-router.put('/domains/:id', [
-  authenticateToken,
-  authorizeRoles(0, 9)
-], (req, res) => {
+router.put('/domains/:id', authenticateToken, requireRole([0, 9]), (req, res) => {
   const { id } = req.params;
   const { description } = req.body;
   const db = getDatabase();
@@ -172,35 +136,32 @@ router.put('/domains/:id', [
     function(err) {
       if (err) {
         console.error('Error updating domain:', err);
-        return res.status(500).json({ error: 'Failed to update domain' });
+        return res.status(500).json({ error: 'Database error' });
       }
 
       if (this.changes === 0) {
         return res.status(404).json({ error: 'Domain not found' });
       }
 
-      db.get('SELECT * FROM domains WHERE id = ?', [id], (err, domain) => {
+      db.get('SELECT * FROM domains WHERE id = ?', [id], (err, row) => {
         if (err) {
-          return res.status(500).json({ error: 'Failed to fetch updated domain' });
+          console.error('Error fetching updated domain:', err);
+          return res.status(500).json({ error: 'Database error' });
         }
-        res.json(domain);
+        res.json(row);
       });
     }
   );
 });
 
-// Delete domain
-router.delete('/domains/:id', [
-  authenticateToken,
-  authorizeRoles(0, 9)
-], (req, res) => {
+router.delete('/domains/:id', authenticateToken, requireRole([0, 9]), (req, res) => {
   const { id } = req.params;
   const db = getDatabase();
 
   db.run('DELETE FROM domains WHERE id = ?', [id], function(err) {
     if (err) {
       console.error('Error deleting domain:', err);
-      return res.status(500).json({ error: 'Failed to delete domain' });
+      return res.status(500).json({ error: 'Database error' });
     }
 
     if (this.changes === 0) {
@@ -211,99 +172,80 @@ router.delete('/domains/:id', [
   });
 });
 
-// ===== DIVISIONS ROUTES =====
-
-// Get all divisions
-router.get('/divisions', authenticateToken, (req, res) => {
+// Divisions routes
+router.get('/divisions', authenticateToken, requireRole([0, 9]), (req, res) => {
   const db = getDatabase();
   
-  db.all('SELECT * FROM divisions ORDER BY name', (err, divisions) => {
+  db.all('SELECT * FROM divisions ORDER BY name', (err, rows) => {
     if (err) {
       console.error('Error fetching divisions:', err);
-      return res.status(500).json({ error: 'Failed to fetch divisions' });
+      return res.status(500).json({ error: 'Database error' });
     }
-    
-    res.json(divisions);
+    res.json(rows);
   });
 });
 
-// Create division
-router.post('/divisions', [
-  authenticateToken,
-  authorizeRoles(0, 9),
-  body('name').notEmpty().withMessage('Division name is required')
-], (req, res) => {
-  const errors = validationResult(req);
-  if (!errors.isEmpty()) {
-    return res.status(400).json({ errors: errors.array() });
-  }
-
+router.post('/divisions', authenticateToken, requireRole([0, 9]), (req, res) => {
   const { name, isInternal } = req.body;
   const db = getDatabase();
 
   db.run(
     'INSERT INTO divisions (name, is_internal) VALUES (?, ?)',
-    [name, isInternal ? 1 : 0],
+    [name, isInternal],
     function(err) {
       if (err) {
         console.error('Error creating division:', err);
-        return res.status(500).json({ error: 'Failed to create division' });
+        return res.status(500).json({ error: 'Database error' });
       }
 
-      db.get('SELECT * FROM divisions WHERE id = ?', [this.lastID], (err, division) => {
+      db.get('SELECT * FROM divisions WHERE id = ?', [this.lastID], (err, row) => {
         if (err) {
-          return res.status(500).json({ error: 'Failed to fetch created division' });
+          console.error('Error fetching created division:', err);
+          return res.status(500).json({ error: 'Database error' });
         }
-        res.status(201).json(division);
+        res.status(201).json(row);
       });
     }
   );
 });
 
-// Update division
-router.put('/divisions/:id', [
-  authenticateToken,
-  authorizeRoles(0, 9)
-], (req, res) => {
+router.put('/divisions/:id', authenticateToken, requireRole([0, 9]), (req, res) => {
   const { id } = req.params;
   const { name, isInternal } = req.body;
   const db = getDatabase();
 
   db.run(
     'UPDATE divisions SET name = ?, is_internal = ? WHERE id = ?',
-    [name, isInternal ? 1 : 0, id],
+    [name, isInternal, id],
     function(err) {
       if (err) {
         console.error('Error updating division:', err);
-        return res.status(500).json({ error: 'Failed to update division' });
+        return res.status(500).json({ error: 'Database error' });
       }
 
       if (this.changes === 0) {
         return res.status(404).json({ error: 'Division not found' });
       }
 
-      db.get('SELECT * FROM divisions WHERE id = ?', [id], (err, division) => {
+      db.get('SELECT * FROM divisions WHERE id = ?', [id], (err, row) => {
         if (err) {
-          return res.status(500).json({ error: 'Failed to fetch updated division' });
+          console.error('Error fetching updated division:', err);
+          return res.status(500).json({ error: 'Database error' });
         }
-        res.json(division);
+        res.json(row);
       });
     }
   );
 });
 
-// Delete division
-router.delete('/divisions/:id', [
-  authenticateToken,
-  authorizeRoles(0, 9)
-], (req, res) => {
+router.delete('/divisions/:id', authenticateToken, requireRole([0, 9]), (req, res) => {
   const { id } = req.params;
   const db = getDatabase();
 
   db.run('DELETE FROM divisions WHERE id = ?', [id], function(err) {
     if (err) {
       console.error('Error deleting division:', err);
-      return res.status(500).json({ error: 'Failed to delete division' });
+      return res.status(500).json({ error: 'Database error' });
     }
 
     if (this.changes === 0) {
@@ -314,99 +256,100 @@ router.delete('/divisions/:id', [
   });
 });
 
-// ===== DEPARTMENTS ROUTES =====
-
-// Get all departments
-router.get('/departments', authenticateToken, (req, res) => {
+// Departments routes
+router.get('/departments', authenticateToken, requireRole([0, 9]), (req, res) => {
   const db = getDatabase();
   
-  db.all('SELECT * FROM departments ORDER BY name', (err, departments) => {
-    if (err) {
-      console.error('Error fetching departments:', err);
-      return res.status(500).json({ error: 'Failed to fetch departments' });
+  db.all(
+    `SELECT d.*, div.name as divisionName 
+     FROM departments d 
+     LEFT JOIN divisions div ON d.division_id = div.id 
+     ORDER BY d.name`,
+    (err, rows) => {
+      if (err) {
+        console.error('Error fetching departments:', err);
+        return res.status(500).json({ error: 'Database error' });
+      }
+      res.json(rows);
     }
-    
-    res.json(departments);
-  });
+  );
 });
 
-// Create department
-router.post('/departments', [
-  authenticateToken,
-  authorizeRoles(0, 9),
-  body('name').notEmpty().withMessage('Department name is required')
-], (req, res) => {
-  const errors = validationResult(req);
-  if (!errors.isEmpty()) {
-    return res.status(400).json({ errors: errors.array() });
-  }
-
+router.post('/departments', authenticateToken, requireRole([0, 9]), (req, res) => {
   const { name, divisionId } = req.body;
   const db = getDatabase();
 
   db.run(
     'INSERT INTO departments (name, division_id) VALUES (?, ?)',
-    [name, divisionId || null],
+    [name, divisionId],
     function(err) {
       if (err) {
         console.error('Error creating department:', err);
-        return res.status(500).json({ error: 'Failed to create department' });
+        return res.status(500).json({ error: 'Database error' });
       }
 
-      db.get('SELECT * FROM departments WHERE id = ?', [this.lastID], (err, department) => {
-        if (err) {
-          return res.status(500).json({ error: 'Failed to fetch created department' });
+      db.get(
+        `SELECT d.*, div.name as divisionName 
+         FROM departments d 
+         LEFT JOIN divisions div ON d.division_id = div.id 
+         WHERE d.id = ?`,
+        [this.lastID],
+        (err, row) => {
+          if (err) {
+            console.error('Error fetching created department:', err);
+            return res.status(500).json({ error: 'Database error' });
+          }
+          res.status(201).json(row);
         }
-        res.status(201).json(department);
-      });
+      );
     }
   );
 });
 
-// Update department
-router.put('/departments/:id', [
-  authenticateToken,
-  authorizeRoles(0, 9)
-], (req, res) => {
+router.put('/departments/:id', authenticateToken, requireRole([0, 9]), (req, res) => {
   const { id } = req.params;
   const { name, divisionId } = req.body;
   const db = getDatabase();
 
   db.run(
     'UPDATE departments SET name = ?, division_id = ? WHERE id = ?',
-    [name, divisionId || null, id],
+    [name, divisionId, id],
     function(err) {
       if (err) {
         console.error('Error updating department:', err);
-        return res.status(500).json({ error: 'Failed to update department' });
+        return res.status(500).json({ error: 'Database error' });
       }
 
       if (this.changes === 0) {
         return res.status(404).json({ error: 'Department not found' });
       }
 
-      db.get('SELECT * FROM departments WHERE id = ?', [id], (err, department) => {
-        if (err) {
-          return res.status(500).json({ error: 'Failed to fetch updated department' });
+      db.get(
+        `SELECT d.*, div.name as divisionName 
+         FROM departments d 
+         LEFT JOIN divisions div ON d.division_id = div.id 
+         WHERE d.id = ?`,
+        [id],
+        (err, row) => {
+          if (err) {
+            console.error('Error fetching updated department:', err);
+            return res.status(500).json({ error: 'Database error' });
+          }
+          res.json(row);
         }
-        res.json(department);
-      });
+      );
     }
   );
 });
 
-// Delete department
-router.delete('/departments/:id', [
-  authenticateToken,
-  authorizeRoles(0, 9)
-], (req, res) => {
+router.delete('/departments/:id', authenticateToken, requireRole([0, 9]), (req, res) => {
   const { id } = req.params;
   const db = getDatabase();
 
   db.run('DELETE FROM departments WHERE id = ?', [id], function(err) {
     if (err) {
       console.error('Error deleting department:', err);
-      return res.status(500).json({ error: 'Failed to delete department' });
+      return res.status(500).json({ error: 'Database error' });
     }
 
     if (this.changes === 0) {
@@ -417,33 +360,20 @@ router.delete('/departments/:id', [
   });
 });
 
-// ===== PROCUREMENT TEAMS ROUTES =====
-
-// Get all procurement teams
-router.get('/procurement-teams', authenticateToken, (req, res) => {
+// Procurement Teams routes
+router.get('/procurement-teams', authenticateToken, requireRole([0, 9]), (req, res) => {
   const db = getDatabase();
   
-  db.all('SELECT * FROM procurement_teams ORDER BY name', (err, teams) => {
+  db.all('SELECT * FROM procurement_teams ORDER BY name', (err, rows) => {
     if (err) {
       console.error('Error fetching procurement teams:', err);
-      return res.status(500).json({ error: 'Failed to fetch procurement teams' });
+      return res.status(500).json({ error: 'Database error' });
     }
-    
-    res.json(teams);
+    res.json(rows);
   });
 });
 
-// Create procurement team
-router.post('/procurement-teams', [
-  authenticateToken,
-  authorizeRoles(0, 9),
-  body('name').notEmpty().withMessage('Team name is required')
-], (req, res) => {
-  const errors = validationResult(req);
-  if (!errors.isEmpty()) {
-    return res.status(400).json({ errors: errors.array() });
-  }
-
+router.post('/procurement-teams', authenticateToken, requireRole([0, 9]), (req, res) => {
   const { name } = req.body;
   const db = getDatabase();
 
@@ -453,24 +383,21 @@ router.post('/procurement-teams', [
     function(err) {
       if (err) {
         console.error('Error creating procurement team:', err);
-        return res.status(500).json({ error: 'Failed to create procurement team' });
+        return res.status(500).json({ error: 'Database error' });
       }
 
-      db.get('SELECT * FROM procurement_teams WHERE id = ?', [this.lastID], (err, team) => {
+      db.get('SELECT * FROM procurement_teams WHERE id = ?', [this.lastID], (err, row) => {
         if (err) {
-          return res.status(500).json({ error: 'Failed to fetch created team' });
+          console.error('Error fetching created procurement team:', err);
+          return res.status(500).json({ error: 'Database error' });
         }
-        res.status(201).json(team);
+        res.status(201).json(row);
       });
     }
   );
 });
 
-// Update procurement team
-router.put('/procurement-teams/:id', [
-  authenticateToken,
-  authorizeRoles(0, 9)
-], (req, res) => {
+router.put('/procurement-teams/:id', authenticateToken, requireRole([0, 9]), (req, res) => {
   const { id } = req.params;
   const { name } = req.body;
   const db = getDatabase();
@@ -481,35 +408,32 @@ router.put('/procurement-teams/:id', [
     function(err) {
       if (err) {
         console.error('Error updating procurement team:', err);
-        return res.status(500).json({ error: 'Failed to update procurement team' });
+        return res.status(500).json({ error: 'Database error' });
       }
 
       if (this.changes === 0) {
         return res.status(404).json({ error: 'Procurement team not found' });
       }
 
-      db.get('SELECT * FROM procurement_teams WHERE id = ?', [id], (err, team) => {
+      db.get('SELECT * FROM procurement_teams WHERE id = ?', [id], (err, row) => {
         if (err) {
-          return res.status(500).json({ error: 'Failed to fetch updated team' });
+          console.error('Error fetching updated procurement team:', err);
+          return res.status(500).json({ error: 'Database error' });
         }
-        res.json(team);
+        res.json(row);
       });
     }
   );
 });
 
-// Delete procurement team
-router.delete('/procurement-teams/:id', [
-  authenticateToken,
-  authorizeRoles(0, 9)
-], (req, res) => {
+router.delete('/procurement-teams/:id', authenticateToken, requireRole([0, 9]), (req, res) => {
   const { id } = req.params;
   const db = getDatabase();
 
   db.run('DELETE FROM procurement_teams WHERE id = ?', [id], function(err) {
     if (err) {
       console.error('Error deleting procurement team:', err);
-      return res.status(500).json({ error: 'Failed to delete procurement team' });
+      return res.status(500).json({ error: 'Database error' });
     }
 
     if (this.changes === 0) {

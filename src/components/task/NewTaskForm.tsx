@@ -4,6 +4,8 @@ import { Button } from '../ui/button';
 import { Input } from '../ui/input';
 import { Textarea } from '../ui/textarea';
 import { Label } from '../ui/label';
+import { apiRequest } from '../../utils/api';
+import { useToast } from '../ui/use-toast';
 
 interface NewTaskFormProps {
   onSave: (task: Omit<Program, 'taskId' | 'createdAt' | 'lastUpdate'>) => void;
@@ -11,6 +13,8 @@ interface NewTaskFormProps {
 }
 
 const NewTaskForm: React.FC<NewTaskFormProps> = ({ onSave, onCancel }) => {
+  const { toast } = useToast();
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [formData, setFormData] = useState({
     workYear: new Date().getFullYear(),
     requiredQuarter: new Date(),
@@ -80,13 +84,74 @@ const NewTaskForm: React.FC<NewTaskFormProps> = ({ onSave, onCancel }) => {
     return `Q${quarter}/${year}`;
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
     if (!formData.title || !formData.requesterName || !formData.divisionName) {
-      alert('יש למלא את כל השדות החובה');
+      toast({
+        title: "שגיאה",
+        description: "יש למלא את כל השדות החובה",
+        variant: "destructive"
+      });
       return;
     }
-    onSave(formData);
+
+    setIsSubmitting(true);
+
+    try {
+      // Prepare data for API
+      const taskData = {
+        workYear: formData.workYear,
+        requiredQuarter: formData.requiredQuarter.toISOString().split('T')[0], // Convert to date string
+        title: formData.title,
+        description: formData.description,
+        requesterName: formData.requesterName,
+        divisionName: formData.divisionName,
+        departmentName: formData.departmentName,
+        domainName: formData.domainName,
+        estimatedAmount: formData.estimatedAmount,
+        currency: formData.currency,
+        supplierList: formData.supplierList,
+        justification: formData.justification,
+        planningSource: formData.planningSource,
+        complexity: formData.complexity
+      };
+
+      console.log('Submitting task data:', taskData);
+
+      const response = await apiRequest.post('/programs', taskData);
+
+      if (response.ok) {
+        const savedTask = await response.json();
+        console.log('Task saved successfully:', savedTask);
+        
+        toast({
+          title: "הצלחה",
+          description: `המשימה "${formData.title}" נוצרה בהצלחה עם מספר ${savedTask.taskId}`,
+        });
+
+        // Call the onSave callback with the saved task
+        onSave(savedTask);
+      } else {
+        const errorData = await response.json();
+        console.error('API error:', errorData);
+        
+        toast({
+          title: "שגיאה",
+          description: errorData.error || "שגיאה בשמירת המשימה",
+          variant: "destructive"
+        });
+      }
+    } catch (error) {
+      console.error('Error saving task:', error);
+      toast({
+        title: "שגיאה",
+        description: "שגיאה בחיבור לשרת",
+        variant: "destructive"
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -103,11 +168,22 @@ const NewTaskForm: React.FC<NewTaskFormProps> = ({ onSave, onCancel }) => {
         </div>
         
         <div className="flex items-center gap-2">
-          <Button type="button" variant="outline" onClick={onCancel} className="px-6">
+          <Button 
+            type="button" 
+            variant="outline" 
+            onClick={onCancel} 
+            className="px-6"
+            disabled={isSubmitting}
+          >
             ביטול
           </Button>
-          <Button type="submit" form="task-form" className="bg-green-600 hover:bg-green-700 px-6 text-white">
-            שמור
+          <Button 
+            type="submit" 
+            form="task-form" 
+            className="bg-green-600 hover:bg-green-700 px-6 text-white"
+            disabled={isSubmitting}
+          >
+            {isSubmitting ? 'שומר...' : 'שמור'}
           </Button>
         </div>
       </div>
@@ -124,6 +200,7 @@ const NewTaskForm: React.FC<NewTaskFormProps> = ({ onSave, onCancel }) => {
                 onChange={(e) => handleChange('title', e.target.value)}
                 className="text-right h-8 text-sm"
                 required
+                disabled={isSubmitting}
               />
             </div>
 
@@ -134,6 +211,7 @@ const NewTaskForm: React.FC<NewTaskFormProps> = ({ onSave, onCancel }) => {
                 value={formData.description}
                 onChange={(e) => handleChange('description', e.target.value)}
                 className="text-right h-8 text-sm"
+                disabled={isSubmitting}
               />
             </div>
 
@@ -144,6 +222,7 @@ const NewTaskForm: React.FC<NewTaskFormProps> = ({ onSave, onCancel }) => {
                 onChange={(e) => handleQuarterChange(e.target.value)}
                 className="flex h-8 w-full rounded-md border border-input bg-background px-3 py-1 text-sm"
                 required
+                disabled={isSubmitting}
               >
                 {generateQuarterOptions().map(quarter => (
                   <option key={quarter} value={quarter}>{quarter}</option>
@@ -171,6 +250,7 @@ const NewTaskForm: React.FC<NewTaskFormProps> = ({ onSave, onCancel }) => {
                 onChange={(e) => handleChange('requesterName', e.target.value)}
                 className="text-right h-8 text-sm"
                 required
+                disabled={isSubmitting}
               />
             </div>
 
@@ -181,6 +261,7 @@ const NewTaskForm: React.FC<NewTaskFormProps> = ({ onSave, onCancel }) => {
                 value={formData.departmentName}
                 onChange={(e) => handleChange('departmentName', e.target.value)}
                 className="text-right h-8 text-sm"
+                disabled={isSubmitting}
               />
             </div>
 
@@ -192,6 +273,7 @@ const NewTaskForm: React.FC<NewTaskFormProps> = ({ onSave, onCancel }) => {
                 onChange={(e) => handleChange('divisionName', e.target.value)}
                 className="text-right h-8 text-sm"
                 required
+                disabled={isSubmitting}
               />
             </div>
 
@@ -202,6 +284,7 @@ const NewTaskForm: React.FC<NewTaskFormProps> = ({ onSave, onCancel }) => {
                 onChange={(e) => handleChange('planningSource', e.target.value)}
                 className="flex h-8 w-full rounded-md border border-input bg-background px-3 py-1 text-sm"
                 required
+                disabled={isSubmitting}
               >
                 {Object.entries(PLANNING_SOURCE_CONFIG).map(([key, label]) => (
                   <option key={key} value={key}>{label}</option>
@@ -220,11 +303,13 @@ const NewTaskForm: React.FC<NewTaskFormProps> = ({ onSave, onCancel }) => {
                   value={formData.estimatedAmount || ''}
                   onChange={(e) => handleChange('estimatedAmount', e.target.value ? Number(e.target.value) : undefined)}
                   className="text-right h-8 text-sm flex-1"
+                  disabled={isSubmitting}
                 />
                 <select
                   value={formData.currency || ''}
                   onChange={(e) => handleChange('currency', e.target.value || undefined)}
                   className="flex h-8 w-20 rounded-md border border-input bg-background px-2 py-1 text-sm"
+                  disabled={isSubmitting}
                 >
                   <option value="">מטבע</option>
                   {Object.entries(CURRENCY_CONFIG).map(([key, label]) => (
@@ -248,6 +333,7 @@ const NewTaskForm: React.FC<NewTaskFormProps> = ({ onSave, onCancel }) => {
                 onChange={(e) => handleChange('supplierList', e.target.value)}
                 className="text-right text-sm"
                 rows={3}
+                disabled={isSubmitting}
               />
             </div>
 
@@ -259,6 +345,7 @@ const NewTaskForm: React.FC<NewTaskFormProps> = ({ onSave, onCancel }) => {
                 onChange={(e) => handleChange('justification', e.target.value)}
                 className="text-right text-sm"
                 rows={3}
+                disabled={isSubmitting}
               />
             </div>
           </div>

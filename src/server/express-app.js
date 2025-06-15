@@ -9,6 +9,7 @@ import authRoutes from './routes/auth.js';
 import workersRoutes from './routes/workers.js';
 import systemRoutes from './routes/system.js';
 import planningRoutes from './routes/planning.js';
+import programsRoutes from './routes/programs.js';
 
 // Environment variables
 process.env.JWT_SECRET = process.env.JWT_SECRET || 'your-super-secret-jwt-key-change-this-in-production';
@@ -69,43 +70,35 @@ async function createExpressApp() {
       
       isAppInitialized = true;
     } catch (error) {
-      console.error('❌ Failed to initialize database:', error);
+      console.error('❌ Database initialization failed:', error);
+      throw error;
     }
   }
 
-  // Health check endpoint
-  app.get('/health', (req, res) => {
-    res.json({ 
-      status: 'OK', 
-      timestamp: new Date().toISOString(),
-      version: '1.0.0'
-    });
-  });
-
-  // API Routes
+  // Routes
   app.use('/auth', authRoutes);
   app.use('/workers', workersRoutes);
   app.use('/system', systemRoutes);
   app.use('/planning', planningRoutes);
+  app.use('/programs', programsRoutes);
+
+  // Health check endpoint
+  app.get('/health', (req, res) => {
+    res.json({ status: 'OK', timestamp: new Date().toISOString() });
+  });
 
   // Error handling middleware
   app.use((err, req, res, next) => {
-    console.error('API Error:', err);
-    
-    if (err.type === 'entity.parse.failed') {
-      return res.status(400).json({ error: 'Invalid JSON format' });
-    }
-    
-    res.status(err.status || 500).json({
-      error: process.env.NODE_ENV === 'production' 
-        ? 'Internal server error' 
-        : err.message
+    console.error('Express error:', err);
+    res.status(500).json({ 
+      error: 'Internal server error',
+      message: process.env.NODE_ENV === 'development' ? err.message : 'Something went wrong'
     });
   });
 
-  // 404 handler for API routes
-  app.use('*', (req, res) => {
-    res.status(404).json({ error: 'API route not found' });
+  // 404 handler
+  app.use((req, res) => {
+    res.status(404).json({ error: 'Route not found' });
   });
 
   expressApp = app;

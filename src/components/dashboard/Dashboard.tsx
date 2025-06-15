@@ -1,10 +1,10 @@
-
-import React, { useState, useMemo } from 'react';
-import { Program, currentUser } from '../../types';
-import { mockPrograms } from '../../data/mockData';
+import React, { useState, useMemo, useEffect } from 'react';
+import { Program } from '../../types';
 import { useNavigate } from 'react-router-dom';
 import DashboardFilters from './DashboardFilters';
 import TaskCard from './TaskCard';
+import { apiRequest } from '../../utils/api';
+import { useAuth } from '../auth/AuthProvider';
 
 interface FilterState {
   status: string[];
@@ -15,6 +15,7 @@ interface FilterState {
 
 const Dashboard = () => {
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [filters, setFilters] = useState<FilterState>({
     status: [],
     assignedOfficer: [],
@@ -22,15 +23,40 @@ const Dashboard = () => {
     complexity: []
   });
   
-  const [programs] = useState<Program[]>(mockPrograms);
+  const [programs, setPrograms] = useState<Program[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  // Load programs from database
+  useEffect(() => {
+    loadPrograms();
+  }, []);
+
+  const loadPrograms = async () => {
+    try {
+      setLoading(true);
+      const response = await apiRequest.get('/programs');
+      
+      if (response.ok) {
+        const data = await response.json();
+        console.log('Loaded programs from database:', data);
+        setPrograms(data);
+      } else {
+        console.error('Failed to load programs:', response.status);
+      }
+    } catch (error) {
+      console.error('Error loading programs:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const filteredPrograms = useMemo(() => {
     return programs.filter(program => {
       // Role-based filtering
-      if (currentUser.role === 'procurement_officer' && program.assignedOfficerName !== currentUser.name) {
+      if (user?.roleCode === 3 && program.assignedOfficerName !== user.fullName) {
         return false;
       }
-      if (currentUser.role === 'requester' && program.requesterName !== currentUser.name) {
+      if (user?.roleCode === 4 && program.requesterName !== user.fullName) {
         return false;
       }
 
@@ -42,12 +68,23 @@ const Dashboard = () => {
 
       return true;
     });
-  }, [programs, filters]);
+  }, [programs, filters, user]);
 
   const handleProgramClick = (program: Program) => {
     console.log('נלחץ על משימה:', program.taskId);
     navigate(`/station-assignment/${program.taskId}`);
   };
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
+          <p className="mt-2 text-gray-600">טוען משימות...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -71,7 +108,9 @@ const Dashboard = () => {
 
       {filteredPrograms.length === 0 && (
         <div className="text-center py-12">
-          <p className="text-gray-500 text-lg">לא נמצאו משימות המתאימות לסינון</p>
+          <p className="text-gray-500 text-lg">
+            {programs.length === 0 ? 'אין משימות במערכת' : 'לא נמצאו משימות המתאימות לסינון'}
+          </p>
         </div>
       )}
     </div>
