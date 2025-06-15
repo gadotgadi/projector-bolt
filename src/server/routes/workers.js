@@ -8,16 +8,27 @@ const router = express.Router();
 
 // Get organizational roles
 router.get('/organizational-roles', authenticateToken, (req, res) => {
+  console.log('🔍 API: Getting organizational roles...');
   const db = getDatabase();
   
   db.all('SELECT * FROM organizational_roles ORDER BY role_code', (err, roles) => {
     if (err) {
-      console.error('Error fetching organizational roles:', err);
+      console.error('❌ Error fetching organizational roles:', err);
       return res.status(500).json({ error: 'Failed to fetch organizational roles' });
     }
     
-    console.log('Fetched organizational roles:', roles);
-    res.json(roles);
+    console.log('✅ Fetched organizational roles from DB:', roles);
+    
+    // Transform to match frontend format
+    const transformedRoles = roles.map(role => ({
+      id: role.id,
+      roleCode: role.role_code,
+      description: role.description,
+      permissions: role.permissions
+    }));
+    
+    console.log('✅ Transformed roles for frontend:', transformedRoles);
+    res.json(transformedRoles);
   });
 });
 
