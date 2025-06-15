@@ -191,14 +191,14 @@ const WorkerFormDialog: React.FC<WorkerFormDialogProps> = ({
                 שייכות לאגף (רק לתפקידים 4,5)
               </Label>
               <Select
-                value={formData.divisionId ? formData.divisionId.toString() : ''}
-                onValueChange={(value) => onInputChange('divisionId', value ? parseInt(value) : undefined)}
+                value={formData.divisionId ? formData.divisionId.toString() : 'none'}
+                onValueChange={(value) => onInputChange('divisionId', value === 'none' ? undefined : parseInt(value))}
               >
                 <SelectTrigger className="text-right">
                   <SelectValue placeholder="בחר אגף" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">ללא אגף</SelectItem>
+                  <SelectItem value="none">ללא אגף</SelectItem>
                   {divisions.map(div => (
                     <SelectItem key={div.id} value={div.id.toString()}>
                       {div.name}
@@ -215,14 +215,14 @@ const WorkerFormDialog: React.FC<WorkerFormDialogProps> = ({
                 שייכות למחלקה (רק לתפקידים 4,5)
               </Label>
               <Select
-                value={formData.departmentId ? formData.departmentId.toString() : ''}
-                onValueChange={(value) => onInputChange('departmentId', value ? parseInt(value) : undefined)}
+                value={formData.departmentId ? formData.departmentId.toString() : 'none'}
+                onValueChange={(value) => onInputChange('departmentId', value === 'none' ? undefined : parseInt(value))}
               >
                 <SelectTrigger className="text-right">
                   <SelectValue placeholder="בחר מחלקה" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">ללא מחלקה</SelectItem>
+                  <SelectItem value="none">ללא מחלקה</SelectItem>
                   {departments
                     .filter(dept => !formData.divisionId || dept.divisionId === formData.divisionId)
                     .map(dept => (
@@ -241,14 +241,14 @@ const WorkerFormDialog: React.FC<WorkerFormDialogProps> = ({
                 צוות רכש (רק לתפקידים 2,3)
               </Label>
               <Select
-                value={formData.procurementTeam || ''}
-                onValueChange={(value) => onInputChange('procurementTeam', value)}
+                value={formData.procurementTeam || 'none'}
+                onValueChange={(value) => onInputChange('procurementTeam', value === 'none' ? '' : value)}
               >
                 <SelectTrigger className="text-right">
                   <SelectValue placeholder="בחר צוות רכש" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">ללא צוות</SelectItem>
+                  <SelectItem value="none">ללא צוות</SelectItem>
                   {procurementTeams.map(team => (
                     <SelectItem key={team.id} value={team.name}>
                       {team.name}
