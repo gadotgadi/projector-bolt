@@ -10,6 +10,7 @@ async function seedDatabase() {
     
     // Seed organizational roles
     const roles = [
+      { roleCode: 0, description: 'מנהלן מערכת', permissions: 'הרשאות מלאות לניהול המערכת' },
       { roleCode: 1, description: 'מנהל רכש', permissions: 'הרשאות מלאות לניהול כל תהליכי הרכש' },
       { roleCode: 2, description: 'ראש צוות', permissions: 'ניהול צוות קניינים ומעקב משימות' },
       { roleCode: 3, description: 'קניין', permissions: 'ביצוע פעילויות רכש ומעקב משימות' },
@@ -105,6 +106,35 @@ async function seedDatabase() {
     
     for (const type of engagementTypes) {
       db.run('INSERT OR IGNORE INTO engagement_types (name) VALUES (?)', [type]);
+    }
+
+    // Seed complexity estimates (single record)
+    db.run(`
+      INSERT OR IGNORE INTO complexity_estimates (id, estimate_level_1, estimate_level_2, estimate_level_3) 
+      VALUES (1, 5, 10, 20)
+    `);
+
+    // Seed acceptance options
+    const acceptanceOptions = [
+      {
+        yearId: 2024,
+        uploadCode: 'Finish',
+        uploadCodeDescription: 'הסתיים',
+        broadMeaning: 'שנת 2024 הסתיימה ולא ניתן להעלות דרישות חדשות'
+      },
+      {
+        yearId: 2025,
+        uploadCode: 'Plan',
+        uploadCodeDescription: 'מתוכנן',
+        broadMeaning: 'פתוח לקליטת דרישות חדשות לשנת 2025'
+      }
+    ];
+
+    for (const option of acceptanceOptions) {
+      db.run(`
+        INSERT OR IGNORE INTO acceptance_options (year_id, upload_code, upload_code_description, broad_meaning) 
+        VALUES (?, ?, ?, ?)
+      `, [option.yearId, option.uploadCode, option.uploadCodeDescription, option.broadMeaning]);
     }
     
     // Create default admin user

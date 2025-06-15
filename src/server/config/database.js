@@ -193,6 +193,30 @@ async function initializeDatabase() {
         )
       `);
 
+      // Complexity estimates table
+      db.run(`
+        CREATE TABLE IF NOT EXISTS complexity_estimates (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          estimate_level_1 INTEGER NOT NULL DEFAULT 5,
+          estimate_level_2 INTEGER NOT NULL DEFAULT 10,
+          estimate_level_3 INTEGER NOT NULL DEFAULT 20,
+          updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+        )
+      `);
+
+      // Acceptance options table
+      db.run(`
+        CREATE TABLE IF NOT EXISTS acceptance_options (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          year_id INTEGER UNIQUE NOT NULL,
+          upload_code TEXT NOT NULL CHECK (upload_code IN ('Plan', 'Late', 'Block', 'Finish')),
+          upload_code_description TEXT NOT NULL,
+          broad_meaning TEXT,
+          created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+          updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+        )
+      `);
+
       // System settings table
       db.run(`
         CREATE TABLE IF NOT EXISTS system_settings (
@@ -213,7 +237,8 @@ async function initializeDatabase() {
         db.run('CREATE INDEX IF NOT EXISTS idx_programs_status ON programs(status)');
         db.run('CREATE INDEX IF NOT EXISTS idx_programs_work_year ON programs(work_year)');
         db.run('CREATE INDEX IF NOT EXISTS idx_program_tasks_program_id ON program_tasks(program_id)');
-        db.run('CREATE INDEX IF NOT EXISTS idx_users_employee_id ON users(employee_id)', (err) => {
+        db.run('CREATE INDEX IF NOT EXISTS idx_users_employee_id ON users(employee_id)');
+        db.run('CREATE INDEX IF NOT EXISTS idx_acceptance_options_year ON acceptance_options(year_id)', (err) => {
           if (err) {
             console.error('Error creating indexes:', err);
             reject(err);

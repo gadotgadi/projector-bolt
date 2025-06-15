@@ -10,6 +10,7 @@ import { Plus, Save, Edit, Trash2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Textarea } from '@/components/ui/textarea';
+import { apiRequest } from '../utils/api';
 
 interface ComplexityEstimate {
   estimateLevel1: number;
@@ -36,22 +37,8 @@ const PlanningHelpers: React.FC = () => {
   });
 
   // State for acceptance options
-  const [acceptanceOptions, setAcceptanceOptions] = useState<AcceptanceOption[]>([
-    {
-      id: 1,
-      yearId: 2024,
-      uploadCode: 'Finish',
-      uploadCodeDescription: 'הסתיים',
-      broadMeaning: 'שנת 2024 הסתיימה ולא ניתן להעלות דרישות חדשות'
-    },
-    {
-      id: 2,
-      yearId: 2025,
-      uploadCode: 'Plan',
-      uploadCodeDescription: 'מתוכנן',
-      broadMeaning: 'פתוח לקליטת דרישות חדשות לשנת 2025'
-    }
-  ]);
+  const [acceptanceOptions, setAcceptanceOptions] = useState<AcceptanceOption[]>([]);
+  const [loading, setLoading] = useState(true);
 
   // State for new acceptance option dialog
   const [isNewOptionDialogOpen, setIsNewOptionDialogOpen] = useState(false);
@@ -78,6 +65,41 @@ const PlanningHelpers: React.FC = () => {
     'Finish': 'לא ניתן להעלות דרישות חדשות עבור השנה הרלוונטית. באחריות מנהל הרכש לוודא העברה למצב זה לקראת סיום השנה.'
   };
 
+  // Load data on component mount
+  useEffect(() => {
+    loadData();
+  }, []);
+
+  const loadData = async () => {
+    try {
+      setLoading(true);
+
+      // Load complexity estimates
+      const complexityRes = await apiRequest.get('/planning/complexity-estimates');
+      if (complexityRes.ok) {
+        const complexityData = await complexityRes.json();
+        setComplexityEstimate(complexityData);
+      }
+
+      // Load acceptance options
+      const acceptanceRes = await apiRequest.get('/planning/acceptance-options');
+      if (acceptanceRes.ok) {
+        const acceptanceData = await acceptanceRes.json();
+        setAcceptanceOptions(acceptanceData);
+      }
+
+    } catch (error) {
+      console.error('Error loading planning helpers data:', error);
+      toast({
+        title: "שגיאה",
+        description: "שגיאה בטעינת הנתונים מהשרת",
+        variant: "destructive"
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const handleComplexityEstimateChange = (field: keyof ComplexityEstimate, value: string) => {
     const numValue = parseInt(value) || 0;
     setComplexityEstimate(prev => ({
@@ -86,12 +108,31 @@ const PlanningHelpers: React.FC = () => {
     }));
   };
 
-  const handleSaveComplexityEstimate = () => {
-    // Here you would save to the database
-    toast({
-      title: "נשמר בהצלחה",
-      description: "הערכות ימי הטיפול במשימה עודכנו"
-    });
+  const handleSaveComplexityEstimate = async () => {
+    try {
+      const response = await apiRequest.put('/planning/complexity-estimates', complexityEstimate);
+      
+      if (response.ok) {
+        toast({
+          title: "נשמר בהצלחה",
+          description: "הערכות ימי הטיפול במשימה עודכנו"
+        });
+      } else {
+        const errorData = await response.json();
+        toast({
+          title: "שגיאה",
+          description: errorData.error || "שגיאה בשמירת הנתונים",
+          variant: "destructive"
+        });
+      }
+    } catch (error) {
+      console.error('Error saving complexity estimates:', error);
+      toast({
+        title: "שגיאה",
+        description: "שגיאה בשמירת הנתונים",
+        variant: "destructive"
+      });
+    }
   };
 
   const handleNewAcceptanceOption = () => {
@@ -114,67 +155,91 @@ const PlanningHelpers: React.FC = () => {
     setIsNewOptionDialogOpen(true);
   };
 
-  const handleSaveAcceptanceOption = () => {
-    // Check if year already exists (for new records)
-    if (!editingOption) {
-      const existingYear = acceptanceOptions.find(opt => opt.yearId === newOptionForm.yearId);
-      if (existingYear) {
-        toast({
-          title: "שגיאה",
-          description: `כבר קיימת רשומה עבור שנת ${newOptionForm.yearId}`,
-          variant: "destructive"
-        });
-        return;
-      }
-    }
+  const handleSaveAcceptanceOption = async () => {
+    try {
+      const uploadCodeDescription = uploadCodeDescriptions[newOptionForm.uploadCode];
+      const defaultMeaning = uploadCodeMeanings[newOptionForm.uploadCode];
 
-    const uploadCodeDescription = uploadCodeDescriptions[newOptionForm.uploadCode];
-    const defaultMeaning = uploadCodeMeanings[newOptionForm.uploadCode];
-
-    if (editingOption) {
-      // Update existing
-      setAcceptanceOptions(prev => prev.map(opt => 
-        opt.id === editingOption.id 
-          ? {
-              ...opt,
-              yearId: newOptionForm.yearId,
-              uploadCode: newOptionForm.uploadCode,
-              uploadCodeDescription,
-              broadMeaning: newOptionForm.broadMeaning || defaultMeaning
-            }
-          : opt
-      ));
-      toast({
-        title: "עודכן בהצלחה",
-        description: `רשומת שנת ${newOptionForm.yearId} עודכנה`
-      });
-    } else {
-      // Add new
-      const newId = Math.max(...acceptanceOptions.map(opt => opt.id), 0) + 1;
-      const newOption: AcceptanceOption = {
-        id: newId,
+      const optionData = {
         yearId: newOptionForm.yearId,
         uploadCode: newOptionForm.uploadCode,
-        uploadCodeDescription,
         broadMeaning: newOptionForm.broadMeaning || defaultMeaning
       };
-      setAcceptanceOptions(prev => [...prev, newOption].sort((a, b) => b.yearId - a.yearId));
+
+      let response;
+      if (editingOption) {
+        // Update existing
+        response = await apiRequest.put(`/planning/acceptance-options/${editingOption.id}`, optionData);
+      } else {
+        // Create new
+        response = await apiRequest.post('/planning/acceptance-options', optionData);
+      }
+
+      if (response.ok) {
+        const savedOption = await response.json();
+        
+        if (editingOption) {
+          setAcceptanceOptions(prev => prev.map(opt => 
+            opt.id === editingOption.id ? savedOption : opt
+          ));
+          toast({
+            title: "עודכן בהצלחה",
+            description: `רשומת שנת ${newOptionForm.yearId} עודכנה`
+          });
+        } else {
+          setAcceptanceOptions(prev => [...prev, savedOption].sort((a, b) => b.yearId - a.yearId));
+          toast({
+            title: "נוסף בהצלחה",
+            description: `רשומה חדשה עבור שנת ${newOptionForm.yearId} נוספה`
+          });
+        }
+
+        setIsNewOptionDialogOpen(false);
+      } else {
+        const errorData = await response.json();
+        toast({
+          title: "שגיאה",
+          description: errorData.error || "שגיאה בשמירת הנתונים",
+          variant: "destructive"
+        });
+      }
+    } catch (error) {
+      console.error('Error saving acceptance option:', error);
       toast({
-        title: "נוסף בהצלחה",
-        description: `רשומה חדשה עבור שנת ${newOptionForm.yearId} נוספה`
+        title: "שגיאה",
+        description: "שגיאה בשמירת הנתונים",
+        variant: "destructive"
       });
     }
-
-    setIsNewOptionDialogOpen(false);
   };
 
-  const handleDeleteAcceptanceOption = (id: number) => {
+  const handleDeleteAcceptanceOption = async (id: number) => {
     if (window.confirm('האם אתה בטוח שברצונך למחוק רשומה זו?')) {
-      setAcceptanceOptions(prev => prev.filter(opt => opt.id !== id));
-      toast({
-        title: "נמחק בהצלחה",
-        description: "הרשומה נמחקה"
-      });
+      try {
+        const response = await apiRequest.delete(`/planning/acceptance-options/${id}`);
+        
+        if (response.ok) {
+          setAcceptanceOptions(prev => prev.filter(opt => opt.id !== id));
+          toast({
+            title: "נמחק בהצלחה",
+            description: "הרשומה נמחקה"
+          });
+        } else {
+          const errorData = await response.json();
+          toast({
+            title: "שגיאה",
+            description: errorData.error || "שגיאה במחיקת הרשומה",
+            variant: "destructive"
+          });
+        }
+      } catch (error) {
+        console.error('Error deleting acceptance option:', error);
+        toast({
+          title: "שגיאה",
+          description: "שגיאה במחיקת הרשומה",
+          variant: "destructive"
+        });
+      }
     }
   };
 
@@ -187,6 +252,19 @@ const PlanningHelpers: React.FC = () => {
       default: return 'bg-gray-100 text-gray-800';
     }
   };
+
+  if (loading) {
+    return (
+      <AppLayout currentRoute="/planning-helpers">
+        <div className="flex items-center justify-center h-64">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
+            <p className="mt-2 text-gray-600">טוען נתונים...</p>
+          </div>
+        </div>
+      </AppLayout>
+    );
+  }
 
   return (
     <AppLayout currentRoute="/planning-helpers">
