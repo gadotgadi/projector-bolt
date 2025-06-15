@@ -1,8 +1,30 @@
 import express from 'express';
 import { getDatabase } from '../config/database.js';
 import { authenticateToken, requireRole } from '../middleware/auth.js';
+import { seedDatabase } from '../scripts/seedDatabase.js';
 
 const router = express.Router();
+
+// Seed database endpoint - only for system administrators
+router.post('/seed_db', authenticateToken, requireRole([0, 9]), async (req, res) => {
+  try {
+    console.log('🌱 Manual database seeding requested by user:', req.user.employeeId);
+    
+    await seedDatabase();
+    
+    console.log('✅ Manual database seeding completed successfully');
+    res.json({ 
+      message: 'Database seeded successfully',
+      timestamp: new Date().toISOString()
+    });
+  } catch (error) {
+    console.error('❌ Manual database seeding failed:', error);
+    res.status(500).json({ 
+      error: 'Database seeding failed',
+      message: error.message
+    });
+  }
+});
 
 // Activity Pool routes
 router.get('/activity-pool', authenticateToken, requireRole([0, 9]), (req, res) => {
