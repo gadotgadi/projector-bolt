@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import AppLayout from '../../components/layout/AppLayout';
 import SystemTableManager from '../../components/system/SystemTableManager';
@@ -30,7 +29,7 @@ const DivisionsManagement: React.FC = () => {
     // Convert string to boolean for isInternal field
     const processedRecord = {
       ...newRecord,
-      isInternal: String(newRecord.isInternal) === 'true'
+      isInternal: newRecord.isInternal === true || newRecord.isInternal === 'true' || newRecord.isInternal === 'פנימי'
     };
     setRecords(prev => [...prev, { ...processedRecord, id }]);
   };
@@ -39,7 +38,7 @@ const DivisionsManagement: React.FC = () => {
     // Convert string to boolean for isInternal field
     const processedRecord = {
       ...updatedRecord,
-      isInternal: String(updatedRecord.isInternal) === 'true'
+      isInternal: updatedRecord.isInternal === true || updatedRecord.isInternal === 'true' || updatedRecord.isInternal === 'פנימי'
     };
     setRecords(prev => prev.map(record => 
       record.id === id ? { ...record, ...processedRecord } : record
@@ -50,7 +49,7 @@ const DivisionsManagement: React.FC = () => {
     setRecords(prev => prev.filter(record => record.id !== id));
   };
 
-  // Transform records for display - show boolean as text
+  // Transform records for display - show boolean as Hebrew text
   const displayRecords = records.map(record => ({
     ...record,
     isInternal: record.isInternal ? 'פנימי' : 'חיצוני'
