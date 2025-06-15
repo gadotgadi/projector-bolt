@@ -9,7 +9,27 @@ export async function seedDatabase() {
     
     db.serialize(async () => {
       try {
-        // Always ensure default users exist (upsert approach)
+        // First, ensure organizational roles exist before inserting users
+        console.log('Ensuring organizational roles exist...');
+        
+        const roles = [
+          { role_code: 0, description: 'מנהלן מערכת', permissions: 'מלא' },
+          { role_code: 1, description: 'מנהל רכש', permissions: 'ניהול רכש' },
+          { role_code: 2, description: 'ראש צוות', permissions: 'ניהול צוות' },
+          { role_code: 3, description: 'קניין', permissions: 'ביצוע רכש' },
+          { role_code: 4, description: 'גורם דורש', permissions: 'הגשת דרישות' },
+          { role_code: 5, description: 'מנהלן מערכת', permissions: 'מלא' },
+          { role_code: 9, description: 'גורם טכני', permissions: 'תחזוקה טכנית' }
+        ];
+
+        roles.forEach(role => {
+          db.run(
+            'INSERT OR IGNORE INTO organizational_roles (role_code, description, permissions) VALUES (?, ?, ?)',
+            [role.role_code, role.description, role.permissions]
+          );
+        });
+
+        // Now ensure default users exist (upsert approach)
         console.log('Ensuring default users exist...');
         
         const defaultPassword = '123456';
@@ -50,36 +70,18 @@ export async function seedDatabase() {
         });
 
         // Check if other data already exists to avoid duplicates
-        db.get('SELECT COUNT(*) as count FROM organizational_roles', (err, row) => {
+        db.get('SELECT COUNT(*) as count FROM divisions', (err, row) => {
           if (err) {
             reject(err);
             return;
           }
           
           if (row.count > 0) {
-            console.log('Basic data already exists, only ensuring default users...');
+            console.log('Basic data already exists, only ensuring roles and default users...');
             resolve();
             return;
           }
           
-          // Seed organizational roles
-          const roles = [
-            { role_code: 0, description: 'מנהלן מערכת', permissions: 'מלא' },
-            { role_code: 1, description: 'מנהל רכש', permissions: 'ניהול רכש' },
-            { role_code: 2, description: 'ראש צוות', permissions: 'ניהול צוות' },
-            { role_code: 3, description: 'קניין', permissions: 'ביצוע רכש' },
-            { role_code: 4, description: 'גורם דורש', permissions: 'הגשת דרישות' },
-            { role_code: 5, description: 'מנהלן מערכת', permissions: 'מלא' },
-            { role_code: 9, description: 'גורם טכני', permissions: 'תחזוקה טכנית' }
-          ];
-
-          roles.forEach(role => {
-            db.run(
-              'INSERT OR IGNORE INTO organizational_roles (role_code, description, permissions) VALUES (?, ?, ?)',
-              [role.role_code, role.description, role.permissions]
-            );
-          });
-
           // Seed divisions
           const divisions = [
             { name: 'לוגיסטיקה', is_internal: 1 },
