@@ -124,9 +124,13 @@ export async function seedDatabase() {
             );
           });
 
-          // Create default users
+          // Create default users with proper password hashing
           const defaultPassword = '123456';
+          console.log('🔍 Creating default users with password:', defaultPassword);
+          
+          // Hash the password synchronously to ensure it's ready
           const hashedPassword = bcrypt.hashSync(defaultPassword, 12);
+          console.log('🔍 Hashed password created, length:', hashedPassword.length);
 
           const defaultUsers = [
             {
@@ -145,29 +149,50 @@ export async function seedDatabase() {
             }
           ];
 
-          defaultUsers.forEach(user => {
+          // Insert users one by one to ensure they're created
+          let usersCreated = 0;
+          defaultUsers.forEach((user, index) => {
             db.run(
-              `INSERT OR IGNORE INTO workers 
+              `INSERT OR REPLACE INTO workers 
                (employee_id, role_code, full_name, role_description, password) 
                VALUES (?, ?, ?, ?, ?)`,
-              [user.employee_id, user.role_code, user.full_name, user.role_description, user.password]
+              [user.employee_id, user.role_code, user.full_name, user.role_description, user.password],
+              function(err) {
+                if (err) {
+                  console.error('❌ Error creating user:', user.employee_id, err);
+                } else {
+                  console.log('✅ Created user:', user.employee_id, 'with ID:', this.lastID);
+                }
+                
+                usersCreated++;
+                if (usersCreated === defaultUsers.length) {
+                  // Verify users were created
+                  db.all('SELECT employee_id, full_name, role_code FROM workers', (err, rows) => {
+                    if (err) {
+                      console.error('❌ Error verifying users:', err);
+                    } else {
+                      console.log('✅ Users in database after seeding:', rows);
+                    }
+                  });
+                  
+                  // Seed complexity estimates
+                  db.run(
+                    'INSERT OR IGNORE INTO complexity_estimates (id, estimate_level_1, estimate_level_2, estimate_level_3) VALUES (1, 5, 10, 20)'
+                  );
+
+                  console.log('✅ Database seeded successfully!');
+                  console.log('Default users created:');
+                  console.log('- Admin: 9999 / 123456');
+                  console.log('- Manager: 1001 / 123456');
+                  
+                  resolve();
+                }
+              }
             );
           });
-
-          // Seed complexity estimates
-          db.run(
-            'INSERT OR IGNORE INTO complexity_estimates (id, estimate_level_1, estimate_level_2, estimate_level_3) VALUES (1, 5, 10, 20)'
-          );
-
-          console.log('Database seeded successfully!');
-          console.log('Default users created:');
-          console.log('- Admin: 9999 / 123456');
-          console.log('- Manager: 1001 / 123456');
-          
-          resolve();
         });
       } catch (error) {
-        console.error('Error seeding database:', error);
+        console.error('❌ Error seeding database:', error);
         reject(error);
       }
     });
