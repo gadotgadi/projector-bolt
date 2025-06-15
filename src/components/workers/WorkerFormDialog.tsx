@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -67,6 +67,13 @@ const WorkerFormDialog: React.FC<WorkerFormDialogProps> = ({
   procurementTeams,
   organizationalRoles
 }) => {
+  // Debug effect
+  useEffect(() => {
+    if (isOpen) {
+      console.log('🔍 Dialog opened with roles:', organizationalRoles);
+    }
+  }, [isOpen, organizationalRoles]);
+
   const isFieldRelevant = (field: string, roleCode?: number) => {
     if (!roleCode) return true;
     
@@ -83,10 +90,18 @@ const WorkerFormDialog: React.FC<WorkerFormDialogProps> = ({
     }
   };
 
-  // Debug logging
-  console.log('WorkerFormDialog - organizationalRoles:', organizationalRoles);
-  console.log('WorkerFormDialog - formData.roleCode:', formData.roleCode);
-  console.log('WorkerFormDialog - isOpen:', isOpen);
+  // Hardcoded roles as fallback
+  const fallbackRoles = [
+    { id: 1, roleCode: 0, description: 'מנהלן מערכת' },
+    { id: 2, roleCode: 1, description: 'מנהל רכש' },
+    { id: 3, roleCode: 2, description: 'ראש צוות' },
+    { id: 4, roleCode: 3, description: 'קניין' },
+    { id: 5, roleCode: 4, description: 'גורם דורש' },
+    { id: 6, roleCode: 5, description: 'מנהלן מערכת' },
+    { id: 7, roleCode: 9, description: 'גורם טכני' }
+  ];
+
+  const rolesToUse = organizationalRoles && organizationalRoles.length > 0 ? organizationalRoles : fallbackRoles;
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -102,38 +117,29 @@ const WorkerFormDialog: React.FC<WorkerFormDialogProps> = ({
               תפקיד <span className="text-red-500">*</span>
             </Label>
             <Select
-              value={formData.roleCode ? formData.roleCode.toString() : 'null-value'}
+              value={formData.roleCode ? formData.roleCode.toString() : ''}
               onValueChange={(value) => {
-                console.log('Role selected:', value);
-                onInputChange('roleCode', value === 'null-value' ? undefined : parseInt(value));
+                console.log('🔍 Role selected:', value);
+                onInputChange('roleCode', value ? parseInt(value) : undefined);
               }}
             >
               <SelectTrigger className="text-right">
                 <SelectValue placeholder="בחר תפקיד" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="null-value">בחר תפקיד</SelectItem>
-                {organizationalRoles && organizationalRoles.length > 0 ? (
-                  organizationalRoles
-                    .filter(role => role && typeof role.roleCode === 'number')
-                    .sort((a, b) => a.roleCode - b.roleCode)
-                    .map(role => (
-                      <SelectItem key={role.roleCode} value={role.roleCode.toString()}>
-                        {role.description}
-                      </SelectItem>
-                    ))
-                ) : (
-                  <SelectItem value="loading" disabled>
-                    טוען תפקידים...
+                {rolesToUse.map(role => (
+                  <SelectItem key={role.roleCode} value={role.roleCode.toString()}>
+                    {role.description}
                   </SelectItem>
-                )}
+                ))}
               </SelectContent>
             </Select>
-            {organizationalRoles && organizationalRoles.length === 0 && (
-              <div className="text-xs text-red-500">
-                שגיאה: לא נמצאו תפקידים במערכת
-              </div>
-            )}
+            <div className="text-xs text-gray-500">
+              {organizationalRoles && organizationalRoles.length > 0 
+                ? `נטענו ${organizationalRoles.length} תפקידים מהשרת`
+                : 'משתמש ברשימת תפקידים ברירת מחדל'
+              }
+            </div>
           </div>
 
           <div className="space-y-2">
@@ -185,14 +191,14 @@ const WorkerFormDialog: React.FC<WorkerFormDialogProps> = ({
                 שייכות לאגף (רק לתפקידים 4,5)
               </Label>
               <Select
-                value={formData.divisionId ? formData.divisionId.toString() : 'null-value'}
-                onValueChange={(value) => onInputChange('divisionId', value === 'null-value' ? undefined : parseInt(value))}
+                value={formData.divisionId ? formData.divisionId.toString() : ''}
+                onValueChange={(value) => onInputChange('divisionId', value ? parseInt(value) : undefined)}
               >
                 <SelectTrigger className="text-right">
                   <SelectValue placeholder="בחר אגף" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="null-value">ללא אגף</SelectItem>
+                  <SelectItem value="">ללא אגף</SelectItem>
                   {divisions.map(div => (
                     <SelectItem key={div.id} value={div.id.toString()}>
                       {div.name}
@@ -209,14 +215,14 @@ const WorkerFormDialog: React.FC<WorkerFormDialogProps> = ({
                 שייכות למחלקה (רק לתפקידים 4,5)
               </Label>
               <Select
-                value={formData.departmentId ? formData.departmentId.toString() : 'null-value'}
-                onValueChange={(value) => onInputChange('departmentId', value === 'null-value' ? undefined : parseInt(value))}
+                value={formData.departmentId ? formData.departmentId.toString() : ''}
+                onValueChange={(value) => onInputChange('departmentId', value ? parseInt(value) : undefined)}
               >
                 <SelectTrigger className="text-right">
                   <SelectValue placeholder="בחר מחלקה" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="null-value">ללא מחלקה</SelectItem>
+                  <SelectItem value="">ללא מחלקה</SelectItem>
                   {departments
                     .filter(dept => !formData.divisionId || dept.divisionId === formData.divisionId)
                     .map(dept => (
@@ -235,14 +241,14 @@ const WorkerFormDialog: React.FC<WorkerFormDialogProps> = ({
                 צוות רכש (רק לתפקידים 2,3)
               </Label>
               <Select
-                value={formData.procurementTeam || 'null-value'}
-                onValueChange={(value) => onInputChange('procurementTeam', value === 'null-value' ? undefined : value)}
+                value={formData.procurementTeam || ''}
+                onValueChange={(value) => onInputChange('procurementTeam', value)}
               >
                 <SelectTrigger className="text-right">
                   <SelectValue placeholder="בחר צוות רכש" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="null-value">ללא צוות</SelectItem>
+                  <SelectItem value="">ללא צוות</SelectItem>
                   {procurementTeams.map(team => (
                     <SelectItem key={team.id} value={team.name}>
                       {team.name}
