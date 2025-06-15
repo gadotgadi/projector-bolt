@@ -39,6 +39,18 @@ async function initializeDatabase() {
     return;
   }
 
+  // In development, delete existing database file to ensure clean state
+  const isDevelopment = process.env.NODE_ENV !== 'production' && process.env.NODE_ENV !== 'test';
+  if (isDevelopment && fs.existsSync(DB_PATH)) {
+    console.log('Development mode: Removing existing database file for clean initialization...');
+    // Close existing connection if any
+    if (db) {
+      db.close();
+      db = null;
+    }
+    fs.unlinkSync(DB_PATH);
+  }
+
   const db = getDatabase();
   
   return new Promise((resolve, reject) => {
