@@ -5,10 +5,10 @@ import { seedDatabase } from '../scripts/seedDatabase.js';
 
 const router = express.Router();
 
-// Seed database endpoint - only for system administrators
-router.post('/seed_db', authenticateToken, requireRole([0, 9]), async (req, res) => {
+// Seed database endpoint - publicly available without authentication
+router.post('/seed_db', async (req, res) => {
   try {
-    console.log('🌱 Manual database seeding requested by user:', req.user.employeeId);
+    console.log('🌱 Manual database seeding requested (public endpoint)');
     
     await seedDatabase();
     
