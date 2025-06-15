@@ -37,7 +37,44 @@ async function initializeDatabase() {
     db.serialize(() => {
       console.log('Creating database tables...');
       
-      // Users table
+      // Organizational roles table (must be created before users)
+      db.run(`
+        CREATE TABLE IF NOT EXISTS organizational_roles (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          role_code INTEGER UNIQUE NOT NULL,
+          description TEXT NOT NULL,
+          permissions TEXT
+        )
+      `);
+
+      // Divisions table (must be created before users and departments)
+      db.run(`
+        CREATE TABLE IF NOT EXISTS divisions (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          name TEXT NOT NULL,
+          is_internal BOOLEAN DEFAULT 1
+        )
+      `);
+
+      // Departments table (must be created before users)
+      db.run(`
+        CREATE TABLE IF NOT EXISTS departments (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          name TEXT NOT NULL,
+          division_id INTEGER,
+          FOREIGN KEY (division_id) REFERENCES divisions(id)
+        )
+      `);
+
+      // Procurement teams table (must be created before users)
+      db.run(`
+        CREATE TABLE IF NOT EXISTS procurement_teams (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          name TEXT NOT NULL
+        )
+      `);
+
+      // Users table (with proper foreign key constraints)
       db.run(`
         CREATE TABLE IF NOT EXISTS users (
           id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -52,44 +89,10 @@ async function initializeDatabase() {
           available_work_days INTEGER,
           email TEXT,
           created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-          updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
-        )
-      `);
-
-      // Organizational roles table
-      db.run(`
-        CREATE TABLE IF NOT EXISTS organizational_roles (
-          id INTEGER PRIMARY KEY AUTOINCREMENT,
-          role_code INTEGER UNIQUE NOT NULL,
-          description TEXT NOT NULL,
-          permissions TEXT
-        )
-      `);
-
-      // Divisions table
-      db.run(`
-        CREATE TABLE IF NOT EXISTS divisions (
-          id INTEGER PRIMARY KEY AUTOINCREMENT,
-          name TEXT NOT NULL,
-          is_internal BOOLEAN DEFAULT 1
-        )
-      `);
-
-      // Departments table
-      db.run(`
-        CREATE TABLE IF NOT EXISTS departments (
-          id INTEGER PRIMARY KEY AUTOINCREMENT,
-          name TEXT NOT NULL,
-          division_id INTEGER,
-          FOREIGN KEY (division_id) REFERENCES divisions(id)
-        )
-      `);
-
-      // Procurement teams table
-      db.run(`
-        CREATE TABLE IF NOT EXISTS procurement_teams (
-          id INTEGER PRIMARY KEY AUTOINCREMENT,
-          name TEXT NOT NULL
+          updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+          FOREIGN KEY (role_code) REFERENCES organizational_roles(role_code),
+          FOREIGN KEY (division_id) REFERENCES divisions(id),
+          FOREIGN KEY (department_id) REFERENCES departments(id)
         )
       `);
 
