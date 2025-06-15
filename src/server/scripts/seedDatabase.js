@@ -7,10 +7,10 @@ export async function seedDatabase() {
   return new Promise((resolve, reject) => {
     console.log('Seeding database with initial data...');
     
-    db.serialize(async () => {
+    db.serialize(() => {
       try {
-        // First, ensure organizational roles exist before inserting users
-        console.log('Ensuring organizational roles exist...');
+        // Step 1: First, ensure organizational roles exist
+        console.log('Step 1: Ensuring organizational roles exist...');
         
         const roles = [
           { role_code: 0, description: 'מנהלן מערכת', permissions: 'מלא' },
@@ -22,15 +22,23 @@ export async function seedDatabase() {
           { role_code: 9, description: 'גורם טכני', permissions: 'תחזוקה טכנית' }
         ];
 
+        // Insert roles synchronously
         roles.forEach(role => {
           db.run(
-            'INSERT OR IGNORE INTO organizational_roles (role_code, description, permissions) VALUES (?, ?, ?)',
-            [role.role_code, role.description, role.permissions]
+            'INSERT OR REPLACE INTO organizational_roles (role_code, description, permissions) VALUES (?, ?, ?)',
+            [role.role_code, role.description, role.permissions],
+            function(err) {
+              if (err) {
+                console.error('❌ Error inserting role:', role.role_code, err);
+              } else {
+                console.log('✅ Ensured role exists:', role.role_code);
+              }
+            }
           );
         });
 
-        // Now ensure default users exist (upsert approach)
-        console.log('Ensuring default users exist...');
+        // Step 2: Wait for roles to be inserted, then insert users
+        console.log('Step 2: Ensuring default users exist...');
         
         const defaultPassword = '123456';
         const hashedPassword = bcrypt.hashSync(defaultPassword, 12);
@@ -52,7 +60,7 @@ export async function seedDatabase() {
           }
         ];
 
-        // Insert or update default users
+        // Insert users after roles are ready
         defaultUsers.forEach((user) => {
           db.run(
             `INSERT OR REPLACE INTO workers 
@@ -69,18 +77,21 @@ export async function seedDatabase() {
           );
         });
 
-        // Check if other data already exists to avoid duplicates
+        // Step 3: Check if other data already exists to avoid duplicates
         db.get('SELECT COUNT(*) as count FROM divisions', (err, row) => {
           if (err) {
+            console.error('❌ Error checking divisions:', err);
             reject(err);
             return;
           }
           
-          if (row.count > 0) {
-            console.log('Basic data already exists, only ensuring roles and default users...');
+          if (row && row.count > 0) {
+            console.log('✅ Basic data already exists, only ensured roles and default users');
             resolve();
             return;
           }
+          
+          console.log('Step 3: Seeding additional data...');
           
           // Seed divisions
           const divisions = [
@@ -168,7 +179,14 @@ export async function seedDatabase() {
 
           // Seed complexity estimates
           db.run(
-            'INSERT OR IGNORE INTO complexity_estimates (id, estimate_level_1, estimate_level_2, estimate_level_3) VALUES (1, 5, 10, 20)'
+            'INSERT OR IGNORE INTO complexity_estimates (id, estimate_level_1, estimate_level_2, estimate_level_3) VALUES (1, 5, 10, 20)',
+            function(err) {
+              if (err) {
+                console.error('❌ Error seeding complexity estimates:', err);
+              } else {
+                console.log('✅ Seeded complexity estimates');
+              }
+            }
           );
 
           console.log('✅ Database seeded successfully!');
