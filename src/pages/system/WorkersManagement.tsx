@@ -75,6 +75,20 @@ const WorkersManagement: React.FC = () => {
       
       console.log('Loading workers management data...');
       
+      // Load organizational roles FIRST - this is critical
+      console.log('Loading organizational roles...');
+      const rolesRes = await apiRequest.get('/workers/organizational-roles');
+      if (rolesRes.ok) {
+        const rolesData = await rolesRes.json();
+        console.log('✅ Loaded organizational roles:', rolesData);
+        setOrganizationalRoles(rolesData);
+      } else {
+        console.error('❌ Failed to load organizational roles:', rolesRes.status);
+        const errorText = await rolesRes.text();
+        console.error('Error response:', errorText);
+        throw new Error('Failed to load organizational roles');
+      }
+
       // Load workers
       const workersRes = await apiRequest.get('/workers');
       if (workersRes.ok) {
@@ -84,17 +98,6 @@ const WorkersManagement: React.FC = () => {
       } else {
         console.error('❌ Failed to load workers:', workersRes.status);
         throw new Error('Failed to load workers');
-      }
-
-      // Load organizational roles - REQUIRED
-      const rolesRes = await apiRequest.get('/workers/organizational-roles');
-      if (rolesRes.ok) {
-        const rolesData = await rolesRes.json();
-        console.log('✅ Loaded organizational roles:', rolesData);
-        setOrganizationalRoles(rolesData);
-      } else {
-        console.error('❌ Failed to load organizational roles:', rolesRes.status);
-        throw new Error('Failed to load organizational roles');
       }
 
       // Load divisions
@@ -148,7 +151,7 @@ const WorkersManagement: React.FC = () => {
     } else {
       setFormData({
         employeeId: '',
-        roleCode: 1,
+        roleCode: undefined, // Don't set default role
         fullName: '',
         roleDescription: '',
         password: '',
@@ -185,7 +188,7 @@ const WorkersManagement: React.FC = () => {
       return false;
     }
 
-    if (!formData.roleCode || ![1, 2, 3, 4, 5, 9].includes(formData.roleCode)) {
+    if (!formData.roleCode || ![0, 1, 2, 3, 4, 5, 9].includes(formData.roleCode)) {
       toast({
         title: "שגיאה",
         description: "נא לבחור תפקיד מהרשימה",
