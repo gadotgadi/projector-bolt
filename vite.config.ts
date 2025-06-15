@@ -3,6 +3,9 @@ import react from "@vitejs/plugin-react";
 import path from "path";
 import { componentTagger } from "lovable-tagger";
 
+// Set consistent database path before any server modules are imported
+process.env.DB_PATH = './src/server/data/procurement.db';
+
 // https://vitejs.dev/config/
 export default defineConfig(({ mode }) => ({
   server: {

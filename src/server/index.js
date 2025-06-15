@@ -12,6 +12,7 @@ import workersRoutes from './routes/workers.js';
 process.env.JWT_SECRET = process.env.JWT_SECRET || 'your-super-secret-jwt-key-change-this-in-production';
 process.env.JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN || '24h';
 process.env.BCRYPT_ROUNDS = process.env.BCRYPT_ROUNDS || '12';
+// Use consistent database path
 process.env.DB_PATH = process.env.DB_PATH || './src/server/data/procurement.db';
 
 async function startServer() {

@@ -14,10 +14,9 @@ import planningRoutes from './routes/planning.js';
 process.env.JWT_SECRET = process.env.JWT_SECRET || 'your-super-secret-jwt-key-change-this-in-production';
 process.env.JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN || '24h';
 process.env.BCRYPT_ROUNDS = process.env.BCRYPT_ROUNDS || '12';
-process.env.DB_PATH = process.env.DB_PATH || './src/server/data/procurement.db';
 
 let expressApp = null;
-let isInitialized = false;
+let isAppInitialized = false;
 
 async function createExpressApp() {
   if (expressApp) {
@@ -58,7 +57,7 @@ async function createExpressApp() {
   }
 
   // Initialize database only once
-  if (!isInitialized) {
+  if (!isAppInitialized) {
     try {
       await initializeDatabase();
       console.log('✅ Database initialized successfully');
@@ -68,7 +67,7 @@ async function createExpressApp() {
       await seedDatabase();
       console.log('✅ Database seeded successfully');
       
-      isInitialized = true;
+      isAppInitialized = true;
     } catch (error) {
       console.error('❌ Failed to initialize database:', error);
     }

@@ -2,7 +2,8 @@ import sqlite3 from 'sqlite3';
 import path from 'path';
 import fs from 'fs';
 
-const DB_PATH = process.env.DB_PATH || './data/procurement.db';
+// Use the environment variable set in vite.config.ts, with fallback
+const DB_PATH = process.env.DB_PATH || './src/server/data/procurement.db';
 
 // Ensure data directory exists
 const dataDir = path.dirname(DB_PATH);
@@ -12,6 +13,7 @@ if (!fs.existsSync(dataDir)) {
 }
 
 let db = null;
+let isInitialized = false;
 
 function getDatabase() {
   if (!db) {
@@ -31,6 +33,12 @@ function getDatabase() {
 }
 
 async function initializeDatabase() {
+  // Prevent multiple initializations
+  if (isInitialized) {
+    console.log('Database already initialized, skipping...');
+    return;
+  }
+
   const db = getDatabase();
   
   return new Promise((resolve, reject) => {
@@ -249,6 +257,7 @@ async function initializeDatabase() {
           }
           
           console.log('Database tables and indexes created successfully');
+          isInitialized = true;
           resolve();
         });
       });
