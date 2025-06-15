@@ -86,6 +86,7 @@ const WorkerFormDialog: React.FC<WorkerFormDialogProps> = ({
   // Debug logging
   console.log('WorkerFormDialog - organizationalRoles:', organizationalRoles);
   console.log('WorkerFormDialog - formData.roleCode:', formData.roleCode);
+  console.log('WorkerFormDialog - isOpen:', isOpen);
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -111,9 +112,11 @@ const WorkerFormDialog: React.FC<WorkerFormDialogProps> = ({
                 <SelectValue placeholder="בחר תפקיד" />
               </SelectTrigger>
               <SelectContent>
+                <SelectItem value="null-value">בחר תפקיד</SelectItem>
                 {organizationalRoles && organizationalRoles.length > 0 ? (
                   organizationalRoles
                     .filter(role => role && typeof role.roleCode === 'number')
+                    .sort((a, b) => a.roleCode - b.roleCode)
                     .map(role => (
                       <SelectItem key={role.roleCode} value={role.roleCode.toString()}>
                         {role.description}
@@ -126,6 +129,11 @@ const WorkerFormDialog: React.FC<WorkerFormDialogProps> = ({
                 )}
               </SelectContent>
             </Select>
+            {organizationalRoles && organizationalRoles.length === 0 && (
+              <div className="text-xs text-red-500">
+                שגיאה: לא נמצאו תפקידים במערכת
+              </div>
+            )}
           </div>
 
           <div className="space-y-2">

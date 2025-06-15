@@ -86,7 +86,16 @@ const WorkersManagement: React.FC = () => {
         console.error('❌ Failed to load organizational roles:', rolesRes.status);
         const errorText = await rolesRes.text();
         console.error('Error response:', errorText);
-        throw new Error('Failed to load organizational roles');
+        
+        // Show error to user
+        toast({
+          title: "שגיאה",
+          description: "שגיאה בטעינת רשימת התפקידים",
+          variant: "destructive"
+        });
+        
+        // Continue loading other data even if roles fail
+        setOrganizationalRoles([]);
       }
 
       // Load workers
@@ -108,7 +117,7 @@ const WorkersManagement: React.FC = () => {
         setDivisions(divisionsData);
       } else {
         console.error('❌ Failed to load divisions');
-        throw new Error('Failed to load divisions');
+        setDivisions([]);
       }
 
       // Load departments
@@ -119,7 +128,7 @@ const WorkersManagement: React.FC = () => {
         setDepartments(departmentsData);
       } else {
         console.error('❌ Failed to load departments');
-        throw new Error('Failed to load departments');
+        setDepartments([]);
       }
 
       // Load procurement teams
@@ -130,7 +139,7 @@ const WorkersManagement: React.FC = () => {
         setProcurementTeams(teamsData);
       } else {
         console.error('❌ Failed to load procurement teams');
-        throw new Error('Failed to load procurement teams');
+        setProcurementTeams([]);
       }
 
     } catch (error) {
@@ -399,6 +408,11 @@ const WorkersManagement: React.FC = () => {
                 <div>
                   <CardTitle className="text-xl">Workers</CardTitle>
                   <p className="text-gray-600 mt-1">ניהול רשימת העובדים ומשתמשי המערכת</p>
+                  {organizationalRoles.length === 0 && (
+                    <p className="text-red-500 text-sm mt-1">
+                      שגיאה: לא נטענו תפקידים ארגוניים
+                    </p>
+                  )}
                 </div>
               </div>
             </CardHeader>
