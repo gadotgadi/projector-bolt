@@ -24,6 +24,7 @@ interface NavItem {
   icon: string;
   roles: number[];
   route: string;
+  requiresAcceptanceCheck?: boolean;
 }
 
 interface AppLayoutProps {
@@ -50,7 +51,7 @@ const getPageTitle = (route: string) => {
   return routeMap[route] || 'שולחן עבודה';
 };
 
-// Navigation items with role-based access
+// Navigation items with role-based access and acceptance option checks
 const navigationItems: NavItem[] = [
   {
     id: '1',
@@ -64,7 +65,8 @@ const navigationItems: NavItem[] = [
     label: 'דרישה חדשה',
     icon: 'Plus',
     roles: [1, 4], // מנהל רכש, גורם דורש
-    route: '/new-task'
+    route: '/new-task',
+    requiresAcceptanceCheck: true
   },
   {
     id: '3',
@@ -127,14 +129,57 @@ const navigationItems: NavItem[] = [
 const AppLayout: React.FC<AppLayoutProps> = ({ children, currentRoute = '/', pageTitle }) => {
   const navigate = useNavigate();
   const { user, logout } = useAuth();
+  const [acceptanceOption, setAcceptanceOption] = React.useState<any>(null);
   
   if (!user) {
     return null; // This should not happen as the app should redirect to login
   }
 
-  const userNavItems = navigationItems.filter(item => 
-    item.roles.includes(user.roleCode)
-  );
+  // Load acceptance option for current year
+  React.useEffect(() => {
+    const loadAcceptanceOption = async () => {
+      try {
+        const response = await fetch('/api/planning/acceptance-options');
+        if (response.ok) {
+          const data = await response.json();
+          const currentYear = new Date().getFullYear();
+          const currentYearOption = data.find((opt: any) => opt.yearId === currentYear);
+          setAcceptanceOption(currentYearOption);
+        }
+      } catch (error) {
+        console.error('Error loading acceptance option:', error);
+      }
+    };
+
+    loadAcceptanceOption();
+  }, []);
+
+  // Filter navigation items based on user role and acceptance options
+  const getFilteredNavItems = () => {
+    return navigationItems.filter(item => {
+      // Check role permission
+      if (!item.roles.includes(user.roleCode)) {
+        return false;
+      }
+
+      // Check acceptance option for new task
+      if (item.requiresAcceptanceCheck && acceptanceOption) {
+        if (user.roleCode === 1) {
+          // Procurement manager can access unless status is 'Finish'
+          return acceptanceOption.uploadCode !== 'Finish';
+        }
+        
+        if (user.roleCode === 4) {
+          // Requester can access only if status is 'Plan' or 'Late'
+          return ['Plan', 'Late'].includes(acceptanceOption.uploadCode);
+        }
+      }
+
+      return true;
+    });
+  };
+
+  const userNavItems = getFilteredNavItems();
 
   const handleNavigation = (route: string) => {
     navigate(route);
