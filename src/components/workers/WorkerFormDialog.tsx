@@ -111,11 +111,13 @@ const WorkerFormDialog: React.FC<WorkerFormDialogProps> = ({
                 <SelectValue placeholder="בחר תפקיד" />
               </SelectTrigger>
               <SelectContent>
-                {organizationalRoles.map(role => (
-                  <SelectItem key={role.roleCode} value={role.roleCode.toString()}>
-                    {role.description}
-                  </SelectItem>
-                ))}
+                {organizationalRoles
+                  .filter(role => role && typeof role.roleCode === 'number')
+                  .map(role => (
+                    <SelectItem key={role.roleCode} value={role.roleCode.toString()}>
+                      {role.description}
+                    </SelectItem>
+                  ))}
               </SelectContent>
             </Select>
           </div>
