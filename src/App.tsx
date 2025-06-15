@@ -25,6 +25,7 @@ import Permissions from './pages/infrastructure/Permissions';
 import ProgressTracking from './pages/ProgressTracking';
 import PlanningConvergence from './pages/PlanningConvergence';
 import ProcurementLoad from './pages/ProcurementLoad';
+import PlanningHelpers from './pages/PlanningHelpers';
 import { getDefaultRouteForRole } from './utils/rolePermissions';
 
 const AppContent: React.FC = () => {
@@ -83,6 +84,12 @@ const AppContent: React.FC = () => {
       <Route path="/procurement-load" element={
         <ProtectedRoute route="/procurement-load">
           <ProcurementLoad />
+        </ProtectedRoute>
+      } />
+      
+      <Route path="/planning-helpers" element={
+        <ProtectedRoute route="/planning-helpers">
+          <PlanningHelpers />
         </ProtectedRoute>
       } />
       

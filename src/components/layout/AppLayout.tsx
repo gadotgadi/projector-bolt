@@ -1,5 +1,5 @@
 import React from 'react';
-import { Home, Plus, BarChart3, Target, Users, UserCog, Settings, Cog, TrendingUp, Calculator, LogOut } from 'lucide-react';
+import { Home, Plus, BarChart3, Target, Users, UserCog, Settings, Cog, TrendingUp, Calculator, LogOut, Wrench } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../auth/AuthProvider';
 import { Button } from '../ui/button';
@@ -14,7 +14,8 @@ const iconMap = {
   Settings,
   Cog,
   TrendingUp,
-  Calculator
+  Calculator,
+  Wrench
 };
 
 interface NavItem {
@@ -41,6 +42,7 @@ const getPageTitle = (route: string) => {
     '/progress-tracking': 'מעקב התקדמות',
     '/planning-convergence': 'התקבצות תכנון',
     '/procurement-load': 'עומסת קניינים',
+    '/planning-helpers': 'עזרי תכנון',
     '/system-settings': 'הגדרות מערכת',
     '/infrastructure-maintenance': 'תחזוקת תשתיות'
   };
@@ -98,6 +100,13 @@ const navigationItems: NavItem[] = [
     icon: 'TrendingUp',
     roles: [1, 2], // מנהל רכש, ראש צוות
     route: '/procurement-load'
+  },
+  {
+    id: '10',
+    label: 'עזרי תכנון',
+    icon: 'Wrench',
+    roles: [1, 0], // מנהל רכש, מנהלן מערכת
+    route: '/planning-helpers'
   },
   {
     id: '5',

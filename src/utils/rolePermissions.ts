@@ -28,6 +28,7 @@ export const hasPermissionForRoute = (roleCode: number, route: string): boolean 
     '/progress-tracking': [1], // מעקב התקדמות
     '/planning-convergence': [1], // התכנסות תכנון
     '/procurement-load': [1, 2], // העמסת קניינים
+    '/planning-helpers': [1, 0], // עזרי תכנון
     '/system-settings': [0, 9], // הגדרות מערכת
     '/infrastructure-maintenance': [9], // תחזוקת תשתיות
   };
