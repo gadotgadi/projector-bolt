@@ -33,6 +33,11 @@ interface Department {
   divisionId: number;
 }
 
+interface Domain {
+  id: number;
+  description: string;
+}
+
 interface Worker {
   id: number;
   employeeId: string;
@@ -53,6 +58,7 @@ const NewTaskForm: React.FC<NewTaskFormProps> = ({ onSave, onCancel }) => {
   const [acceptanceOption, setAcceptanceOption] = useState<AcceptanceOption | null>(null);
   const [divisions, setDivisions] = useState<Division[]>([]);
   const [departments, setDepartments] = useState<Department[]>([]);
+  const [domains, setDomains] = useState<Domain[]>([]);
   const [requesters, setRequesters] = useState<Worker[]>([]);
   
   // Current year from header
@@ -70,6 +76,7 @@ const NewTaskForm: React.FC<NewTaskFormProps> = ({ onSave, onCancel }) => {
     departmentName: '',
     departmentId: undefined as number | undefined,
     domainName: '',
+    domainId: undefined as number | undefined,
     estimatedAmount: undefined as number | undefined,
     currency: undefined as string | undefined,
     supplierList: '',
@@ -175,6 +182,13 @@ const NewTaskForm: React.FC<NewTaskFormProps> = ({ onSave, onCancel }) => {
         setDepartments(departmentsData);
       }
 
+      // Load domains
+      const domainsRes = await apiRequest.get('/system/domains');
+      if (domainsRes.ok) {
+        const domainsData = await domainsRes.json();
+        setDomains(domainsData);
+      }
+
       // Load requesters (workers with role code 4)
       const workersRes = await apiRequest.get('/workers');
       if (workersRes.ok) {
@@ -243,6 +257,19 @@ const NewTaskForm: React.FC<NewTaskFormProps> = ({ onSave, onCancel }) => {
         ...prev,
         departmentId: department.id,
         departmentName: department.name
+      }));
+    }
+  };
+
+  const handleDomainChange = (domainId: string) => {
+    if (isFormLocked) return;
+    
+    const domain = domains.find(d => d.id.toString() === domainId);
+    if (domain) {
+      setFormData(prev => ({
+        ...prev,
+        domainId: domain.id,
+        domainName: domain.description
       }));
     }
   };
@@ -438,6 +465,11 @@ const NewTaskForm: React.FC<NewTaskFormProps> = ({ onSave, onCancel }) => {
     return user?.roleCode === 4; // Locked for requesters
   };
 
+  // Check if user is procurement manager
+  const isProcurementManager = () => {
+    return user?.roleCode === 1;
+  };
+
   if (!canCreateTask()) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center" dir="rtl">
@@ -468,7 +500,7 @@ const NewTaskForm: React.FC<NewTaskFormProps> = ({ onSave, onCancel }) => {
             <div>
               <Label className="block text-sm font-medium text-gray-700 mb-1">מספר משימה</Label>
               <div className="text-lg font-bold text-gray-900 bg-gray-100 px-4 py-2 rounded border min-w-[120px] text-center">
-                {taskId || 'יקבע אוטומטית'}
+                {taskId || ''}
               </div>
             </div>
           </div>
@@ -500,18 +532,17 @@ const NewTaskForm: React.FC<NewTaskFormProps> = ({ onSave, onCancel }) => {
       <form id="task-form" onSubmit={handleSubmit} className="p-6 max-w-6xl mx-auto">
         {/* Basic Information */}
         <div className="bg-white rounded-lg border shadow-sm p-6 mb-6">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4 text-right">פרטי הדרישה</h3>
-          
-          <div className="grid grid-cols-4 gap-4 mb-4">
+          {/* First Row - Title and Description */}
+          <div className="grid grid-cols-2 gap-6 mb-6">
             <div>
-              <Label htmlFor="title" className="block text-sm font-medium text-gray-700 mb-1">
+              <Label htmlFor="title" className="block text-sm font-medium text-gray-700 mb-2">
                 כותרת המשימה <span className="text-red-500">*</span>
               </Label>
               <Input
                 id="title"
                 value={formData.title}
                 onChange={(e) => handleChange('title', e.target.value)}
-                className="text-right h-8 text-sm"
+                className="text-right text-sm"
                 maxLength={25}
                 required
                 disabled={isSubmitting || isFormLocked}
@@ -520,249 +551,209 @@ const NewTaskForm: React.FC<NewTaskFormProps> = ({ onSave, onCancel }) => {
             </div>
 
             <div>
-              <Label htmlFor="description" className="block text-sm font-medium text-gray-700 mb-1">
-                פירוט הצורך
+              <Label htmlFor="description" className="block text-sm font-medium text-gray-700 mb-2">
+                פירוט המשימה
               </Label>
-              <Input
+              <Textarea
                 id="description"
                 value={formData.description}
                 onChange={(e) => handleChange('description', e.target.value)}
-                className="text-right h-8 text-sm"
+                className="text-right text-sm"
                 maxLength={50}
                 disabled={isSubmitting || isFormLocked}
                 placeholder="עד 50 תווים"
-              />
-            </div>
-
-            <div>
-              <Label htmlFor="requiredQuarter" className="block text-sm font-medium text-gray-700 mb-1">
-                רבעון נדרש <span className="text-red-500">*</span>
-              </Label>
-              <Select
-                value={formData.requiredQuarter}
-                onValueChange={handleQuarterChange}
-                disabled={isSubmitting || isFormLocked}
-              >
-                <SelectTrigger className="text-right h-8 text-sm">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {generateQuarterOptions().map(quarter => (
-                    <SelectItem key={quarter} value={quarter}>{quarter}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div>
-              <Label htmlFor="lastUpdate" className="block text-sm font-medium text-gray-700 mb-1">
-                מועד עדכון אחרון
-              </Label>
-              <Input
-                id="lastUpdate"
-                value={`${new Date().toLocaleDateString('he-IL')} ${new Date().toLocaleTimeString('he-IL', { hour: '2-digit', minute: '2-digit' })}`}
-                className="text-right h-8 text-sm bg-gray-50"
-                disabled
+                rows={3}
               />
             </div>
           </div>
 
-          <div className="grid grid-cols-4 gap-4 mb-4">
-            <div>
-              <Label htmlFor="requesterName" className="block text-sm font-medium text-gray-700 mb-1">
-                גורם דורש <span className="text-red-500">*</span>
-              </Label>
-              {user?.roleCode === 4 ? (
-                <Input
-                  id="requesterName"
-                  value={formData.requesterName}
-                  className="text-right h-8 text-sm bg-gray-50"
-                  disabled
-                />
-              ) : (
-                <Select
-                  value={formData.requesterId?.toString() || ''}
-                  onValueChange={handleRequesterChange}
-                  disabled={isSubmitting || isFormLocked}
-                >
-                  <SelectTrigger className="text-right h-8 text-sm">
-                    <SelectValue placeholder="בחר גורם דורש" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {requesters.map(requester => (
-                      <SelectItem key={requester.id} value={requester.id.toString()}>
-                        {requester.fullName}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              )}
+          {/* Second Row - Left and Right Columns */}
+          <div className="grid grid-cols-2 gap-12">
+            {/* Right Column - Requester, Division, Department */}
+            <div className="space-y-4">
+              <div>
+                <Label htmlFor="requesterName" className="block text-sm font-medium text-gray-700 mb-2">
+                  גורם דורש <span className="text-red-500">*</span>
+                </Label>
+                {user?.roleCode === 4 ? (
+                  <Input
+                    id="requesterName"
+                    value={formData.requesterName}
+                    className="text-right text-sm bg-gray-50"
+                    disabled
+                  />
+                ) : (
+                  <Select
+                    value={formData.requesterId?.toString() || ''}
+                    onValueChange={handleRequesterChange}
+                    disabled={isSubmitting || isFormLocked}
+                  >
+                    <SelectTrigger className="text-right text-sm">
+                      <SelectValue placeholder="בחר גורם דורש" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {requesters.map(requester => (
+                        <SelectItem key={requester.id} value={requester.id.toString()}>
+                          {requester.fullName}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                )}
+              </div>
+
+              <div>
+                <Label htmlFor="divisionName" className="block text-sm font-medium text-gray-700 mb-2">
+                  אגף <span className="text-red-500">*</span>
+                </Label>
+                {isDivisionLocked() ? (
+                  <Input
+                    id="divisionName"
+                    value={formData.divisionName}
+                    className="text-right text-sm bg-gray-50"
+                    disabled
+                  />
+                ) : (
+                  <Select
+                    value={formData.divisionId?.toString() || ''}
+                    onValueChange={handleDivisionChange}
+                    disabled={isSubmitting || isFormLocked}
+                  >
+                    <SelectTrigger className="text-right text-sm">
+                      <SelectValue placeholder="בחר אגף" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {getAvailableDivisions().map(division => (
+                        <SelectItem key={division.id} value={division.id.toString()}>
+                          {division.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                )}
+              </div>
+
+              <div>
+                <Label htmlFor="departmentName" className="block text-sm font-medium text-gray-700 mb-2">
+                  מחלקה
+                </Label>
+                {isDepartmentLocked() ? (
+                  <Input
+                    id="departmentName"
+                    value={formData.departmentName}
+                    className="text-right text-sm bg-gray-50"
+                    disabled
+                  />
+                ) : (
+                  <Select
+                    value={formData.departmentId?.toString() || ''}
+                    onValueChange={handleDepartmentChange}
+                    disabled={isSubmitting || isFormLocked}
+                  >
+                    <SelectTrigger className="text-right text-sm">
+                      <SelectValue placeholder="בחר מחלקה" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {getAvailableDepartments().map(department => (
+                        <SelectItem key={department.id} value={department.id.toString()}>
+                          {department.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                )}
+              </div>
             </div>
 
-            <div>
-              <Label htmlFor="divisionName" className="block text-sm font-medium text-gray-700 mb-1">
-                אגף לקוח <span className="text-red-500">*</span>
-              </Label>
-              {isDivisionLocked() ? (
-                <Input
-                  id="divisionName"
-                  value={formData.divisionName}
-                  className="text-right h-8 text-sm bg-gray-50"
-                  disabled
-                />
-              ) : (
+            {/* Left Column - Quarter, Planning Source, Amount */}
+            <div className="space-y-4">
+              <div>
+                <Label htmlFor="requiredQuarter" className="block text-sm font-medium text-gray-700 mb-2">
+                  רבעון נדרש <span className="text-red-500">*</span>
+                </Label>
                 <Select
-                  value={formData.divisionId?.toString() || ''}
-                  onValueChange={handleDivisionChange}
+                  value={formData.requiredQuarter}
+                  onValueChange={handleQuarterChange}
                   disabled={isSubmitting || isFormLocked}
                 >
-                  <SelectTrigger className="text-right h-8 text-sm">
-                    <SelectValue placeholder="בחר אגף" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {getAvailableDivisions().map(division => (
-                      <SelectItem key={division.id} value={division.id.toString()}>
-                        {division.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              )}
-            </div>
-
-            <div>
-              <Label htmlFor="departmentName" className="block text-sm font-medium text-gray-700 mb-1">
-                מחלקה
-              </Label>
-              {isDepartmentLocked() ? (
-                <Input
-                  id="departmentName"
-                  value={formData.departmentName}
-                  className="text-right h-8 text-sm bg-gray-50"
-                  disabled
-                />
-              ) : (
-                <Select
-                  value={formData.departmentId?.toString() || ''}
-                  onValueChange={handleDepartmentChange}
-                  disabled={isSubmitting || isFormLocked}
-                >
-                  <SelectTrigger className="text-right h-8 text-sm">
-                    <SelectValue placeholder="בחר מחלקה" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {getAvailableDepartments().map(department => (
-                      <SelectItem key={department.id} value={department.id.toString()}>
-                        {department.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              )}
-            </div>
-
-            <div>
-              <Label htmlFor="planningSource" className="block text-sm font-medium text-gray-700 mb-1">
-                מקור תכנון <span className="text-red-500">*</span>
-              </Label>
-              {isPlanningSourceLocked() ? (
-                <Input
-                  id="planningSource"
-                  value={PLANNING_SOURCE_CONFIG[formData.planningSource]}
-                  className="text-right h-8 text-sm bg-gray-50"
-                  disabled
-                />
-              ) : (
-                <Select
-                  value={formData.planningSource}
-                  onValueChange={(value) => handleChange('planningSource', value)}
-                  disabled={isSubmitting || isFormLocked}
-                >
-                  <SelectTrigger className="text-right h-8 text-sm">
+                  <SelectTrigger className="text-right text-sm">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    {Object.entries(PLANNING_SOURCE_CONFIG).map(([key, label]) => (
-                      <SelectItem key={key} value={key}>{label}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              )}
-            </div>
-          </div>
-
-          <div className="grid grid-cols-4 gap-4 mb-4">
-            <div>
-              <Label htmlFor="estimatedAmount" className="block text-sm font-medium text-gray-700 mb-1">
-                אומדן התקשרות
-              </Label>
-              <div className="flex gap-2">
-                <Input
-                  id="estimatedAmount"
-                  type="number"
-                  value={formData.estimatedAmount || ''}
-                  onChange={(e) => handleChange('estimatedAmount', e.target.value ? Number(e.target.value) : undefined)}
-                  className="text-right h-8 text-sm flex-1"
-                  disabled={isSubmitting || isFormLocked}
-                  placeholder="סכום"
-                />
-                <Select
-                  value={formData.currency || ''}
-                  onValueChange={(value) => handleChange('currency', value || undefined)}
-                  disabled={isSubmitting || isFormLocked || !formData.estimatedAmount}
-                >
-                  <SelectTrigger className="w-20 h-8 text-sm">
-                    <SelectValue placeholder="מטבע" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {Object.entries(CURRENCY_CONFIG).map(([key, label]) => (
-                      <SelectItem key={key} value={key}>{label}</SelectItem>
+                    {generateQuarterOptions().map(quarter => (
+                      <SelectItem key={quarter} value={quarter}>{quarter}</SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
               </div>
-            </div>
 
-            <div>
-              <Label htmlFor="domainName" className="block text-sm font-medium text-gray-700 mb-1">
-                תחום רכש
-              </Label>
-              <Input
-                id="domainName"
-                value={formData.domainName}
-                onChange={(e) => handleChange('domainName', e.target.value)}
-                className="text-right h-8 text-sm"
-                disabled={isSubmitting || isFormLocked}
-              />
-            </div>
+              <div>
+                <Label htmlFor="planningSource" className="block text-sm font-medium text-gray-700 mb-2">
+                  מקור תכנון <span className="text-red-500">*</span>
+                </Label>
+                {isPlanningSourceLocked() ? (
+                  <Input
+                    id="planningSource"
+                    value={PLANNING_SOURCE_CONFIG[formData.planningSource]}
+                    className="text-right text-sm bg-gray-50"
+                    disabled
+                  />
+                ) : (
+                  <Select
+                    value={formData.planningSource}
+                    onValueChange={(value) => handleChange('planningSource', value)}
+                    disabled={isSubmitting || isFormLocked}
+                  >
+                    <SelectTrigger className="text-right text-sm">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {Object.entries(PLANNING_SOURCE_CONFIG).map(([key, label]) => (
+                        <SelectItem key={key} value={key}>{label}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                )}
+              </div>
 
-            <div>
-              <Label htmlFor="complexity" className="block text-sm font-medium text-gray-700 mb-1">
-                רמת מורכבות
-              </Label>
-              <Select
-                value={formData.complexity?.toString() || ''}
-                onValueChange={(value) => handleChange('complexity', value ? Number(value) : undefined)}
-                disabled={isSubmitting || isFormLocked}
-              >
-                <SelectTrigger className="text-right h-8 text-sm">
-                  <SelectValue placeholder="בחר רמת מורכבות" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="1">פשוט</SelectItem>
-                  <SelectItem value="2">בינוני</SelectItem>
-                  <SelectItem value="3">מורכב</SelectItem>
-                </SelectContent>
-              </Select>
+              <div>
+                <Label htmlFor="estimatedAmount" className="block text-sm font-medium text-gray-700 mb-2">
+                  אומדן התקשרות
+                </Label>
+                <div className="flex gap-2">
+                  <Input
+                    id="estimatedAmount"
+                    type="number"
+                    value={formData.estimatedAmount || ''}
+                    onChange={(e) => handleChange('estimatedAmount', e.target.value ? Number(e.target.value) : undefined)}
+                    className="text-right text-sm flex-1"
+                    disabled={isSubmitting || isFormLocked}
+                    placeholder="סכום"
+                  />
+                  <Select
+                    value={formData.currency || ''}
+                    onValueChange={(value) => handleChange('currency', value || undefined)}
+                    disabled={isSubmitting || isFormLocked || !formData.estimatedAmount}
+                  >
+                    <SelectTrigger className="w-20 text-sm">
+                      <SelectValue placeholder="מטבע" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {Object.entries(CURRENCY_CONFIG).map(([key, label]) => (
+                        <SelectItem key={key} value={key}>{label}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
             </div>
-
-            <div></div>
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
+          {/* Third Row - Suppliers and Justification */}
+          <div className="grid grid-cols-2 gap-6 mt-6">
             <div>
-              <Label htmlFor="supplierList" className="block text-sm font-medium text-gray-700 mb-1">
-                רשימת ספקים
+              <Label htmlFor="supplierList" className="block text-sm font-medium text-gray-700 mb-2">
+                ספקים
               </Label>
               <Textarea
                 id="supplierList"
@@ -777,7 +768,7 @@ const NewTaskForm: React.FC<NewTaskFormProps> = ({ onSave, onCancel }) => {
             </div>
 
             <div>
-              <Label htmlFor="justification" className="block text-sm font-medium text-gray-700 mb-1">
+              <Label htmlFor="justification" className="block text-sm font-medium text-gray-700 mb-2">
                 נימוק
               </Label>
               <Textarea
@@ -792,6 +783,53 @@ const NewTaskForm: React.FC<NewTaskFormProps> = ({ onSave, onCancel }) => {
               />
             </div>
           </div>
+
+          {/* Fourth Row - Domain and Complexity (only for procurement manager) */}
+          {isProcurementManager() && (
+            <div className="grid grid-cols-2 gap-6 mt-6 pt-6 border-t border-gray-200">
+              <div>
+                <Label htmlFor="domainName" className="block text-sm font-medium text-gray-700 mb-2">
+                  תחום רכש
+                </Label>
+                <Select
+                  value={formData.domainId?.toString() || ''}
+                  onValueChange={handleDomainChange}
+                  disabled={isSubmitting || isFormLocked}
+                >
+                  <SelectTrigger className="text-right text-sm">
+                    <SelectValue placeholder="בחר תחום רכש" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {domains.map(domain => (
+                      <SelectItem key={domain.id} value={domain.id.toString()}>
+                        {domain.description}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div>
+                <Label htmlFor="complexity" className="block text-sm font-medium text-gray-700 mb-2">
+                  רמת מורכבות
+                </Label>
+                <Select
+                  value={formData.complexity?.toString() || ''}
+                  onValueChange={(value) => handleChange('complexity', value ? Number(value) : undefined)}
+                  disabled={isSubmitting || isFormLocked}
+                >
+                  <SelectTrigger className="text-right text-sm">
+                    <SelectValue placeholder="בחר רמת מורכבות" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="1">פשוט</SelectItem>
+                    <SelectItem value="2">בינוני</SelectItem>
+                    <SelectItem value="3">מורכב</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+          )}
         </div>
 
         {/* System Messages Section */}
