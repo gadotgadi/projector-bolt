@@ -51,7 +51,7 @@ async function initializeDatabase() {
     fs.unlinkSync(DB_PATH);
   }
 
-  const db = getDatabase();
+  getDatabase();
   
   return new Promise((resolve, reject) => {
     db.serialize(() => {
