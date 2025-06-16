@@ -1,5 +1,5 @@
 import React from 'react';
-import { Home, ShoppingCart, TrendingUp, Scale, Users, BarChart3, FileText, Search, UserCheck, Network, Wrench, Settings, Tool, LogOut } from 'lucide-react';
+import { Home, ShoppingCart, TrendingUp, Scale, Users, BarChart3, FileText, Search, UserCheck, Network, Wrench, Settings, PenTool as Tool, LogOut } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../auth/AuthProvider';
 import { Button } from '../ui/button';
