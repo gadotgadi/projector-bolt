@@ -1,21 +1,23 @@
 import React from 'react';
-import { Home, Plus, BarChart3, Target, Users, UserCog, Settings, Cog, TrendingUp, Calculator, LogOut, Wrench } from 'lucide-react';
+import { Home, ShoppingCart, TrendingUp, Scale, Users, BarChart3, FileText, Search, UserCheck, Network, Wrench, Settings, Tool, LogOut } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../auth/AuthProvider';
 import { Button } from '../ui/button';
 
 const iconMap = {
   Home,
-  Plus,
-  BarChart3,
-  Target,
-  Users,
-  UserCog,
-  Settings,
-  Cog,
+  ShoppingCart,
   TrendingUp,
-  Calculator,
-  Wrench
+  Scale,
+  Users,
+  BarChart3,
+  FileText,
+  Search,
+  UserCheck,
+  Network,
+  Wrench,
+  Settings,
+  Tool
 };
 
 interface NavItem {
@@ -24,7 +26,7 @@ interface NavItem {
   icon: string;
   roles: number[];
   route: string;
-  requiresAcceptanceCheck?: boolean;
+  isPlaceholder?: boolean;
 }
 
 interface AppLayoutProps {
@@ -37,21 +39,23 @@ const getPageTitle = (route: string) => {
   const routeMap: { [key: string]: string } = {
     '/': 'שולחן עבודה',
     '/new-task': 'דרישה חדשה',
-    '/station-assignment': 'עדכון משימה',
-    '/engagement-types': 'סוגי התקשרויות',
-    '/procurement-staff': 'עובדי רכש',
     '/progress-tracking': 'מעקב התקדמות',
-    '/planning-convergence': 'התקבצות תכנון',
-    '/procurement-load': 'עומסת קניינים',
+    '/planning-convergence': 'התכנסות תכנון',
+    '/procurement-load': 'העמסת קניינים',
+    '/work-plan': 'תוכנית עבודה',
+    '/overall-tracking': 'מעקב כולל',
+    '/detailed-tracking': 'מעקב מפורט',
+    '/procurement-staff': 'עובדי הרכש',
+    '/engagement-types': 'סוגי התקשרויות',
     '/planning-helpers': 'עזרי תכנון',
-    '/system-settings': 'הגדרות מערכת',
+    '/system-settings': 'הגדרות המערכת',
     '/infrastructure-maintenance': 'תחזוקת תשתיות'
   };
   
   return routeMap[route] || 'שולחן עבודה';
 };
 
-// Navigation items with role-based access and acceptance option checks
+// Navigation items with role-based access according to the new specification
 const navigationItems: NavItem[] = [
   {
     id: '1',
@@ -63,125 +67,115 @@ const navigationItems: NavItem[] = [
   {
     id: '2',
     label: 'דרישה חדשה',
-    icon: 'Plus',
+    icon: 'ShoppingCart',
     roles: [1, 4], // מנהל רכש, גורם דורש
-    route: '/new-task',
-    requiresAcceptanceCheck: true
+    route: '/new-task'
   },
   {
     id: '3',
-    label: 'סוגי התקשרויות',
-    icon: 'Target',
-    roles: [1, 0], // מנהל רכש, מנהלן מערכת
-    route: '/engagement-types'
-  },
-  {
-    id: '4',
-    label: 'עובדי הרכש',
-    icon: 'Users',
-    roles: [1, 0], // מנהל רכש, מנהלן מערכת
-    route: '/procurement-staff'
-  },
-  {
-    id: '7',
     label: 'מעקב התקדמות',
-    icon: 'BarChart3',
+    icon: 'TrendingUp',
     roles: [1], // מנהל רכש בלבד
     route: '/progress-tracking'
   },
   {
-    id: '8',
+    id: '4',
     label: 'התכנסות תכנון',
-    icon: 'Users',
+    icon: 'Scale',
     roles: [1], // מנהל רכש בלבד
     route: '/planning-convergence'
   },
   {
-    id: '9',
+    id: '5',
     label: 'העמסת קניינים',
-    icon: 'TrendingUp',
+    icon: 'Users',
     roles: [1, 2], // מנהל רכש, ראש צוות
     route: '/procurement-load'
   },
   {
+    id: '6',
+    label: 'תוכנית עבודה',
+    icon: 'BarChart3',
+    roles: [1, 4, 5, 6], // מנהל רכש, גורם דורש, מנהל יחידה, חברי הנהלה וגורם מטה ארגוני
+    route: '/work-plan',
+    isPlaceholder: true
+  },
+  {
+    id: '7',
+    label: 'מעקב כולל',
+    icon: 'FileText',
+    roles: [1, 4, 5, 6], // מנהל רכש, גורם דורש, מנהל יחידה, חברי הנהלה וגורם מטה ארגוני
+    route: '/overall-tracking',
+    isPlaceholder: true
+  },
+  {
+    id: '8',
+    label: 'מעקב מפורט',
+    icon: 'Search',
+    roles: [1, 4, 5, 6], // מנהל רכש, גורם דורש, מנהל יחידה, חברי הנהלה וגורם מטה ארגוני
+    route: '/detailed-tracking',
+    isPlaceholder: true
+  },
+  {
+    id: '9',
+    label: 'עובדי הרכש',
+    icon: 'UserCheck',
+    roles: [0, 1], // מנהלן מערכת, מנהל רכש
+    route: '/procurement-staff'
+  },
+  {
     id: '10',
+    label: 'סוגי התקשרויות',
+    icon: 'Network',
+    roles: [0, 1, 9], // מנהלן מערכת, מנהל רכש, גורם טכני
+    route: '/engagement-types'
+  },
+  {
+    id: '11',
     label: 'עזרי תכנון',
     icon: 'Wrench',
-    roles: [1, 0], // מנהל רכש, מנהלן מערכת
+    roles: [0, 1, 9], // מנהלן מערכת, מנהל רכש, גורם טכני
     route: '/planning-helpers'
   },
   {
-    id: '5',
-    label: 'הגדרות מערכת',
+    id: '12',
+    label: 'הגדרות המערכת',
     icon: 'Settings',
     roles: [0, 9], // מנהלן מערכת, גורם טכני
     route: '/system-settings'
   },
   {
-    id: '6',
+    id: '13',
     label: 'תחזוקת תשתיות',
-    icon: 'Cog',
+    icon: 'Tool',
     roles: [9], // גורם טכני בלבד
-    route: '/infrastructure-maintenance'  
+    route: '/infrastructure-maintenance'
   }
 ];
 
 const AppLayout: React.FC<AppLayoutProps> = ({ children, currentRoute = '/', pageTitle }) => {
   const navigate = useNavigate();
   const { user, logout } = useAuth();
-  const [acceptanceOption, setAcceptanceOption] = React.useState<any>(null);
   
   if (!user) {
     return null; // This should not happen as the app should redirect to login
   }
 
-  // Load acceptance option for current year
-  React.useEffect(() => {
-    const loadAcceptanceOption = async () => {
-      try {
-        const response = await fetch('/api/planning/acceptance-options');
-        if (response.ok) {
-          const data = await response.json();
-          const currentYear = new Date().getFullYear();
-          const currentYearOption = data.find((opt: any) => opt.yearId === currentYear);
-          setAcceptanceOption(currentYearOption);
-        }
-      } catch (error) {
-        console.error('Error loading acceptance option:', error);
-      }
-    };
-
-    loadAcceptanceOption();
-  }, []);
-
-  // Filter navigation items based on user role and acceptance options
+  // Filter navigation items based on user role
   const getFilteredNavItems = () => {
     return navigationItems.filter(item => {
-      // Check role permission
-      if (!item.roles.includes(user.roleCode)) {
-        return false;
-      }
-
-      // Check acceptance option for new task
-      if (item.requiresAcceptanceCheck && acceptanceOption) {
-        if (user.roleCode === 1) {
-          // Procurement manager can access unless status is 'Finish'
-          return acceptanceOption.uploadCode !== 'Finish';
-        }
-        
-        if (user.roleCode === 4) {
-          // Requester can access only if status is 'Plan' or 'Late'
-          return ['Plan', 'Late'].includes(acceptanceOption.uploadCode);
-        }
-      }
-
-      return true;
+      return item.roles.includes(user.roleCode);
     });
   };
 
   const userNavItems = getFilteredNavItems();
 
-  const handleNavigation = (route: string) => {
+  const handleNavigation = (route: string, isPlaceholder?: boolean) => {
+    if (isPlaceholder) {
+      // For placeholder items, show a message instead of navigating
+      alert('מסך זה עדיין לא מוכן. יהיה זמין בגרסה הבאה של המערכת.');
+      return;
+    }
     navigate(route);
   };
 
@@ -194,22 +188,22 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children, currentRoute = '/', pag
 
   return (
     <div className="min-h-screen bg-gray-50 flex w-full" dir="rtl">
-      {/* Right Sidebar - Navigation - Narrower */}
-      <div className="w-48 bg-white shadow-lg border-l border-gray-200">
+      {/* Right Sidebar - Navigation */}
+      <div className="w-64 bg-white shadow-lg border-l border-gray-200">
         {/* Logo */}
-        <div className="p-3 border-b border-gray-200">
+        <div className="p-4 border-b border-gray-200">
           <div className="flex justify-center">
             <img 
               src="/image.png" 
               alt="PROJECTOR Logo" 
-              className="h-8 w-auto"
+              className="h-10 w-auto"
             />
           </div>
         </div>
 
         {/* Navigation Menu */}
-        <nav className="p-3">
-          <ul className="space-y-1">
+        <nav className="p-4">
+          <ul className="space-y-2">
             {userNavItems.map((item) => {
               const Icon = iconMap[item.icon as keyof typeof iconMap];
               const isActive = item.route === currentRoute;
@@ -223,15 +217,21 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children, currentRoute = '/', pag
               return (
                 <li key={item.id}>
                   <button
-                    onClick={() => handleNavigation(item.route)}
-                    className={`w-full flex items-center gap-2 px-3 py-2 rounded-lg transition-colors text-right text-sm ${
+                    onClick={() => handleNavigation(item.route, item.isPlaceholder)}
+                    className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-colors text-right text-sm ${
                       isActive 
                         ? 'bg-blue-50 text-blue-600 border border-blue-200' 
-                        : 'text-gray-700 hover:bg-gray-50'
+                        : item.isPlaceholder
+                          ? 'text-gray-500 hover:bg-gray-50 cursor-pointer'
+                          : 'text-gray-700 hover:bg-gray-50'
                     }`}
+                    disabled={item.isPlaceholder}
                   >
-                    <Icon className="w-4 h-4" />
-                    <span className="font-medium">{item.label}</span>
+                    <Icon className={`w-5 h-5 ${item.isPlaceholder ? 'text-gray-400' : ''}`} />
+                    <span className={`font-medium ${item.isPlaceholder ? 'text-gray-500' : ''}`}>
+                      {item.label}
+                      {item.isPlaceholder && <span className="text-xs mr-2">(בפיתוח)</span>}
+                    </span>
                   </button>
                 </li>
               );
@@ -240,8 +240,8 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children, currentRoute = '/', pag
         </nav>
 
         {/* User Info and Logout */}
-        <div className="absolute bottom-0 w-48 p-3 border-t border-gray-200 bg-white">
-          <div className="text-sm text-gray-600 mb-2 text-right">
+        <div className="absolute bottom-0 w-64 p-4 border-t border-gray-200 bg-white">
+          <div className="text-sm text-gray-600 mb-3 text-right">
             <div className="font-medium">{user.fullName}</div>
             <div className="text-xs">{user.roleDescription}</div>
           </div>
@@ -263,7 +263,7 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children, currentRoute = '/', pag
         <header className="bg-white shadow-sm border-b border-gray-200">
           <div className="px-6 py-4 flex justify-between items-center">
             <div className="flex items-center gap-4">
-              <span className="text-lg font-bold text-gray-800">
+              <span className="text-xl font-bold text-gray-800">
                 {displayPageTitle}
               </span>
             </div>

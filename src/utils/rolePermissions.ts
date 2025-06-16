@@ -12,6 +12,8 @@ export const USER_ROLES: Record<number, UserRole> = {
   2: { code: 2, name: 'ראש צוות', defaultRoute: '/' },
   3: { code: 3, name: 'קניין', defaultRoute: '/' },
   4: { code: 4, name: 'גורם דורש', defaultRoute: '/' },
+  5: { code: 5, name: 'מנהל יחידה', defaultRoute: '/' },
+  6: { code: 6, name: 'חברי הנהלה וגורם מטה ארגוני', defaultRoute: '/' },
   9: { code: 9, name: 'גורם טכני', defaultRoute: '/infrastructure-maintenance' }
 };
 
@@ -23,12 +25,15 @@ export const hasPermissionForRoute = (roleCode: number, route: string): boolean 
   const permissions: Record<string, number[]> = {
     '/': [1, 2, 3, 4], // שולחן עבודה
     '/new-task': [1, 4], // דרישה חדשה
-    '/engagement-types': [1, 0], // סוגי התקשרויות
-    '/procurement-staff': [1, 0], // עובדי הרכש
     '/progress-tracking': [1], // מעקב התקדמות
     '/planning-convergence': [1], // התכנסות תכנון
     '/procurement-load': [1, 2], // העמסת קניינים
-    '/planning-helpers': [1, 0], // עזרי תכנון
+    '/work-plan': [1, 4, 5, 6], // תוכנית עבודה
+    '/overall-tracking': [1, 4, 5, 6], // מעקב כולל
+    '/detailed-tracking': [1, 4, 5, 6], // מעקב מפורט
+    '/procurement-staff': [0, 1], // עובדי הרכש
+    '/engagement-types': [0, 1, 9], // סוגי התקשרויות
+    '/planning-helpers': [0, 1, 9], // עזרי תכנון
     '/system-settings': [0, 9], // הגדרות מערכת
     '/infrastructure-maintenance': [9], // תחזוקת תשתיות
   };

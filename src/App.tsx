@@ -26,6 +26,7 @@ import ProgressTracking from './pages/ProgressTracking';
 import PlanningConvergence from './pages/PlanningConvergence';
 import ProcurementLoad from './pages/ProcurementLoad';
 import PlanningHelpers from './pages/PlanningHelpers';
+import PlaceholderPage from './pages/PlaceholderPage';
 import { getDefaultRouteForRole } from './utils/rolePermissions';
 
 const AppContent: React.FC = () => {
@@ -57,18 +58,6 @@ const AppContent: React.FC = () => {
         </ProtectedRoute>
       } />
       
-      <Route path="/engagement-types" element={
-        <ProtectedRoute route="/engagement-types">
-          <EngagementTypes />
-        </ProtectedRoute>
-      } />
-      
-      <Route path="/procurement-staff" element={
-        <ProtectedRoute route="/procurement-staff">
-          <ProcurementStaff />
-        </ProtectedRoute>
-      } />
-      
       <Route path="/progress-tracking" element={
         <ProtectedRoute route="/progress-tracking">
           <ProgressTracking />
@@ -84,6 +73,37 @@ const AppContent: React.FC = () => {
       <Route path="/procurement-load" element={
         <ProtectedRoute route="/procurement-load">
           <ProcurementLoad />
+        </ProtectedRoute>
+      } />
+      
+      {/* Placeholder routes for future screens */}
+      <Route path="/work-plan" element={
+        <ProtectedRoute route="/work-plan">
+          <PlaceholderPage title="תוכנית עבודה" description="מסך זה יכלול תצוגה של תוכנית העבודה השנתית ומעקב אחר יעדים." />
+        </ProtectedRoute>
+      } />
+      
+      <Route path="/overall-tracking" element={
+        <ProtectedRoute route="/overall-tracking">
+          <PlaceholderPage title="מעקב כולל" description="מסך זה יכלול תצוגה כוללת של כל המשימות והפרויקטים בארגון." />
+        </ProtectedRoute>
+      } />
+      
+      <Route path="/detailed-tracking" element={
+        <ProtectedRoute route="/detailed-tracking">
+          <PlaceholderPage title="מעקב מפורט" description="מסך זה יכלול מעקב מפורט אחר משימות ספציפיות עם אפשרויות דיווח מתקדמות." />
+        </ProtectedRoute>
+      } />
+      
+      <Route path="/procurement-staff" element={
+        <ProtectedRoute route="/procurement-staff">
+          <ProcurementStaff />
+        </ProtectedRoute>
+      } />
+      
+      <Route path="/engagement-types" element={
+        <ProtectedRoute route="/engagement-types">
+          <EngagementTypes />
         </ProtectedRoute>
       } />
       
