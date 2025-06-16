@@ -39,7 +39,24 @@ const Dashboard = () => {
       if (response.ok) {
         const data = await response.json();
         console.log('Loaded programs from database:', data);
-        setPrograms(data);
+        
+        // Convert date strings to Date objects
+        const programsWithDates = data.map((program: any) => ({
+          ...program,
+          requiredQuarter: program.requiredQuarter ? new Date(program.requiredQuarter) : null,
+          startDate: program.startDate ? new Date(program.startDate) : null,
+          lastUpdate: program.lastUpdate ? new Date(program.lastUpdate) : new Date(),
+          createdAt: program.createdAt ? new Date(program.createdAt) : new Date(),
+          requiredDate: program.requiredDate ? new Date(program.requiredDate) : null,
+          completionDate: program.completionDate ? new Date(program.completionDate) : null,
+          stations: program.stations?.map((station: any) => ({
+            ...station,
+            completionDate: station.completionDate ? new Date(station.completionDate) : null,
+            lastUpdate: station.lastUpdate ? new Date(station.lastUpdate) : new Date()
+          })) || []
+        }));
+        
+        setPrograms(programsWithDates);
       } else {
         console.error('Failed to load programs:', response.status);
       }

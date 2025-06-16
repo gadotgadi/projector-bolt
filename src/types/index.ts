@@ -104,7 +104,7 @@ export interface ProgramTask {
   };
   assignedOfficerId?: number;
   assignedOfficerName?: string;
-  completionDate?: Date;
+  completionDate?: Date | null;
   reportingUserId?: number;
   reportingUserName?: string;
   reference?: string;
@@ -117,7 +117,7 @@ export interface ProgramTask {
 export interface Program {
   taskId: number;
   workYear: number;
-  requiredQuarter: Date;
+  requiredQuarter: Date | null;
   title: string;
   description?: string;
   requesterId: number;
@@ -141,7 +141,7 @@ export interface Program {
   assignedOfficerName?: string;
   teamId?: number;
   teamName?: string;
-  startDate?: Date;
+  startDate?: Date | null;
   planningNotes?: string;
   officerNotes?: string;
   lastUpdate: Date;
@@ -152,10 +152,10 @@ export interface Program {
   requesterDepartment?: string;
   domain?: string;
   assignedOfficer?: string;
-  requiredDate?: Date;
+  requiredDate?: Date | null;
   plannedDays?: number;
   actualDays?: number;
-  completionDate?: Date;
+  completionDate?: Date | null;
 }
 
 // User entity
