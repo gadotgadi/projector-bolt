@@ -68,6 +68,11 @@ async function createExpressApp() {
       await seedDatabase();
       console.log('✅ Database seeded successfully');
       
+      // Add demo tasks for better demonstration
+      const { addDemoTasks } = await import('./scripts/addDemoTasks.js');
+      await addDemoTasks();
+      console.log('✅ Demo tasks added successfully');
+      
       isAppInitialized = true;
     } catch (error) {
       console.error('❌ Database initialization failed:', error);
