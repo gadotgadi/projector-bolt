@@ -71,8 +71,9 @@ const WorkerFormDialog: React.FC<WorkerFormDialogProps> = ({
   useEffect(() => {
     if (isOpen) {
       console.log('🔍 Dialog opened with roles:', organizationalRoles);
+      console.log('🔍 Current formData.roleCode:', formData.roleCode);
     }
-  }, [isOpen, organizationalRoles]);
+  }, [isOpen, organizationalRoles, formData.roleCode]);
 
   const isFieldRelevant = (field: string, roleCode?: number) => {
     if (!roleCode) return true;
@@ -90,18 +91,40 @@ const WorkerFormDialog: React.FC<WorkerFormDialogProps> = ({
     }
   };
 
-  // Hardcoded roles as fallback
-  const fallbackRoles = [
-    { id: 1, roleCode: 0, description: 'מנהלן מערכת' },
-    { id: 2, roleCode: 1, description: 'מנהל רכש' },
-    { id: 3, roleCode: 2, description: 'ראש צוות' },
-    { id: 4, roleCode: 3, description: 'קניין' },
-    { id: 5, roleCode: 4, description: 'גורם דורש' },
-    { id: 6, roleCode: 5, description: 'מנהלן מערכת' },
-    { id: 7, roleCode: 9, description: 'גורם טכני' }
-  ];
+  // Enhanced roles with better fallback
+  const getAvailableRoles = () => {
+    // If we have roles from the server, use them
+    if (organizationalRoles && organizationalRoles.length > 0) {
+      console.log('✅ Using server roles:', organizationalRoles);
+      return organizationalRoles.filter(role => 
+        role.roleCode !== undefined && 
+        role.roleCode !== null && 
+        role.description
+      );
+    }
+    
+    // Fallback to hardcoded roles
+    console.log('⚠️ Using fallback roles');
+    return [
+      { id: 1, roleCode: 0, description: 'מנהלן מערכת' },
+      { id: 2, roleCode: 1, description: 'מנהל רכש' },
+      { id: 3, roleCode: 2, description: 'ראש צוות' },
+      { id: 4, roleCode: 3, description: 'קניין' },
+      { id: 5, roleCode: 4, description: 'גורם דורש' },
+      { id: 6, roleCode: 5, description: 'מנהל יחידה' },
+      { id: 7, roleCode: 6, description: 'חברי הנהלה וגורם מטה ארגוני' },
+      { id: 8, roleCode: 9, description: 'גורם טכני' }
+    ];
+  };
 
-  const rolesToUse = organizationalRoles && organizationalRoles.length > 0 ? organizationalRoles : fallbackRoles;
+  const availableRoles = getAvailableRoles();
+
+  const handleRoleChange = (value: string) => {
+    console.log('🔍 Role selection changed to:', value);
+    const roleCode = value ? parseInt(value) : undefined;
+    console.log('🔍 Parsed roleCode:', roleCode);
+    onInputChange('roleCode', roleCode);
+  };
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -117,23 +140,18 @@ const WorkerFormDialog: React.FC<WorkerFormDialogProps> = ({
               תפקיד <span className="text-red-500">*</span>
             </Label>
             <Select
-              value={formData.roleCode ? formData.roleCode.toString() : ''}
-              onValueChange={(value) => {
-                console.log('🔍 Role selected:', value);
-                onInputChange('roleCode', value ? parseInt(value) : undefined);
-              }}
+              value={formData.roleCode !== undefined ? formData.roleCode.toString() : ''}
+              onValueChange={handleRoleChange}
             >
               <SelectTrigger className="text-right">
                 <SelectValue placeholder="בחר תפקיד" />
               </SelectTrigger>
               <SelectContent>
-                {rolesToUse
-                  .filter(role => role.roleCode !== undefined && role.roleCode !== null)
-                  .map(role => (
-                    <SelectItem key={role.roleCode} value={role.roleCode.toString()}>
-                      {role.description}
-                    </SelectItem>
-                  ))}
+                {availableRoles.map(role => (
+                  <SelectItem key={`role-${role.roleCode}`} value={role.roleCode.toString()}>
+                    {role.description}
+                  </SelectItem>
+                ))}
               </SelectContent>
             </Select>
             <div className="text-xs text-gray-500">
