@@ -1,8 +1,7 @@
-
 import React, { useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import AppLayout from '../components/layout/AppLayout';
-import { Program, currentUser, STATUS_CONFIG, mockPrograms } from '../types';
+import { Program, STATUS_CONFIG } from '../types';
 import { Button } from '../components/ui/button';
 import { ArrowRight, Save, Lock } from 'lucide-react';
 import { useToast } from '../components/ui/use-toast';
@@ -10,6 +9,8 @@ import ProgramForm from '../components/program/ProgramForm';
 import StationAssignmentForm from '../components/stations/StationAssignmentForm';
 import StatusBadge from '../components/common/StatusBadge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '../components/ui/dialog';
+import { mockPrograms } from '../data/mockPrograms';
+import { useAuth } from '../components/auth/AuthProvider';
 
 // Declare global validation function
 declare global {
@@ -22,6 +23,7 @@ const StationAssignment = () => {
   const navigate = useNavigate();
   const { taskId } = useParams();
   const { toast } = useToast();
+  const { user } = useAuth();
   const [showPermissionDialog, setShowPermissionDialog] = useState(false);
 
   // Find program from mock data
@@ -82,15 +84,15 @@ const StationAssignment = () => {
   };
 
   // Check permissions - allowing full access for technical users and procurement managers
-  const canEdit = currentUser.role === 'procurement_manager' || currentUser.role === 'technical_maintainer';
+  const canEdit = user?.roleCode === 1 || user?.roleCode === 0 || user?.roleCode === 9;
   const canSave = canEdit || 
-    (currentUser.role === 'requester' && program.status === 'Open') ||
-    (['procurement_officer', 'team_leader'].includes(currentUser.role) && 
+    (user?.roleCode === 4 && program.status === 'Open') ||
+    ([2, 3].includes(user?.roleCode || 0) && 
      ['Open', 'Plan', 'In Progress'].includes(program.status));
   
   const canView = canEdit || 
-    (currentUser.role === 'requester') ||
-    (['procurement_officer', 'team_leader'].includes(currentUser.role) && 
+    (user?.roleCode === 4) ||
+    ([2, 3].includes(user?.roleCode || 0) && 
      ['Open', 'Plan', 'In Progress'].includes(program.status));
 
   const canFreeze = canEdit && ['Open', 'Plan'].includes(program.status);

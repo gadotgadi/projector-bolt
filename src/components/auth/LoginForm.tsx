@@ -5,6 +5,7 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { useToast } from '@/hooks/use-toast';
+import { findUserByEmployeeId, validateUserPassword } from '../../data/mockUsers';
 
 interface LoginFormProps {
   onLogin: (user: any) => void;
@@ -36,56 +37,45 @@ const LoginForm: React.FC<LoginFormProps> = ({ onLogin }) => {
     }
 
     try {
-      const response = await fetch('/api/auth/login', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          employeeId,
-          password,
-        }),
-      });
-
-      let data;
+      // Find user in mock data
+      const user = findUserByEmployeeId(employeeId);
       
-      if (response.ok) {
-        // Only parse JSON if response is successful
-        data = await response.json();
-        
-        // Store the token
-        localStorage.setItem('authToken', data.token);
-        
-        // Transform the user data to match our frontend format
-        const user = {
-          id: data.user.id,
-          employeeId: data.user.employeeId,
-          fullName: data.user.fullName,
-          roleCode: data.user.roleCode,
-          roleDescription: data.user.roleDescription,
-          procurementTeam: data.user.procurementTeam,
-          email: data.user.email
-        };
-
-        toast({
-          title: "התחברות הצליחה",
-          description: `ברוך הבא ${user.fullName}`,
-        });
-        
-        onLogin(user);
-      } else {
-        // Handle error responses - try to parse JSON, but fall back to generic error
-        try {
-          data = await response.json();
-          setError(data.error || 'שגיאה בהתחברות');
-        } catch (jsonError) {
-          // If JSON parsing fails, use a generic error message
-          setError('שגיאה בהתחברות. אנא נסה שוב.');
-        }
+      if (!user) {
+        setError('קוד משתמש לא נמצא במערכת');
+        setIsLoading(false);
+        return;
       }
+
+      // Validate password
+      if (!validateUserPassword(user, password)) {
+        setError('סיסמה שגויה');
+        setIsLoading(false);
+        return;
+      }
+
+      // Store mock token
+      localStorage.setItem('authToken', 'mock-token-' + user.id);
+      
+      // Transform the user data to match our frontend format
+      const transformedUser = {
+        id: user.id,
+        employeeId: user.employeeId,
+        fullName: user.fullName,
+        roleCode: user.roleCode,
+        roleDescription: user.roleDescription,
+        procurementTeam: user.procurementTeam,
+        email: user.email
+      };
+
+      toast({
+        title: "התחברות הצליחה",
+        description: `ברוך הבא ${user.fullName}`,
+      });
+      
+      onLogin(transformedUser);
     } catch (error) {
       console.error('Login error:', error);
-      setError('שגיאה בחיבור לשרת. אנא נסה שוב.');
+      setError('שגיאה בהתחברות. אנא נסה שוב.');
     } finally {
       setIsLoading(false);
     }
@@ -163,6 +153,12 @@ const LoginForm: React.FC<LoginFormProps> = ({ onLogin }) => {
               <div className="space-y-1 text-xs">
                 <p>מנהל מערכת: 9999 / 123456</p>
                 <p>מנהל רכש: 1001 / 123456</p>
+                <p>ראש צוות: 2001 / 123456</p>
+                <p>קניין: 3001 / 123456</p>
+                <p>גורם דורש: 4001 / 123456</p>
+                <p>מנהל יחידה: 5001 / 123456</p>
+                <p>חברי הנהלה: 6001 / 123456</p>
+                <p>גורם טכני: 9001 / 123456</p>
               </div>
             </div>
           </div>

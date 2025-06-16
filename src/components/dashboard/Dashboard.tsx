@@ -3,8 +3,8 @@ import { Program } from '../../types';
 import { useNavigate } from 'react-router-dom';
 import DashboardFilters from './DashboardFilters';
 import TaskCard from './TaskCard';
-import { apiRequest } from '../../utils/api';
 import { useAuth } from '../auth/AuthProvider';
+import { mockPrograms } from '../../data/mockPrograms';
 
 interface FilterState {
   status: string[];
@@ -26,7 +26,7 @@ const Dashboard = () => {
   const [programs, setPrograms] = useState<Program[]>([]);
   const [loading, setLoading] = useState(true);
 
-  // Load programs from database
+  // Load programs from mock data
   useEffect(() => {
     loadPrograms();
   }, []);
@@ -34,32 +34,29 @@ const Dashboard = () => {
   const loadPrograms = async () => {
     try {
       setLoading(true);
-      const response = await apiRequest.get('/programs');
       
-      if (response.ok) {
-        const data = await response.json();
-        console.log('Loaded programs from database:', data);
-        
-        // Convert date strings to Date objects
-        const programsWithDates = data.map((program: any) => ({
-          ...program,
-          requiredQuarter: program.requiredQuarter ? new Date(program.requiredQuarter) : null,
-          startDate: program.startDate ? new Date(program.startDate) : null,
-          lastUpdate: program.lastUpdate ? new Date(program.lastUpdate) : new Date(),
-          createdAt: program.createdAt ? new Date(program.createdAt) : new Date(),
-          requiredDate: program.requiredDate ? new Date(program.requiredDate) : null,
-          completionDate: program.completionDate ? new Date(program.completionDate) : null,
-          stations: program.stations?.map((station: any) => ({
-            ...station,
-            completionDate: station.completionDate ? new Date(station.completionDate) : null,
-            lastUpdate: station.lastUpdate ? new Date(station.lastUpdate) : new Date()
-          })) || []
-        }));
-        
-        setPrograms(programsWithDates);
-      } else {
-        console.error('Failed to load programs:', response.status);
-      }
+      // Simulate loading delay
+      await new Promise(resolve => setTimeout(resolve, 500));
+      
+      console.log('Loading programs from mock data:', mockPrograms);
+      
+      // Convert date strings to Date objects if needed
+      const programsWithDates = mockPrograms.map((program: any) => ({
+        ...program,
+        requiredQuarter: program.requiredQuarter ? new Date(program.requiredQuarter) : null,
+        startDate: program.startDate ? new Date(program.startDate) : null,
+        lastUpdate: program.lastUpdate ? new Date(program.lastUpdate) : new Date(),
+        createdAt: program.createdAt ? new Date(program.createdAt) : new Date(),
+        requiredDate: program.requiredDate ? new Date(program.requiredDate) : null,
+        completionDate: program.completionDate ? new Date(program.completionDate) : null,
+        stations: program.stations?.map((station: any) => ({
+          ...station,
+          completionDate: station.completionDate ? new Date(station.completionDate) : null,
+          lastUpdate: station.lastUpdate ? new Date(station.lastUpdate) : new Date()
+        })) || []
+      }));
+      
+      setPrograms(programsWithDates);
     } catch (error) {
       console.error('Error loading programs:', error);
     } finally {

@@ -3,8 +3,9 @@ import react from "@vitejs/plugin-react";
 import path from "path";
 import { componentTagger } from "lovable-tagger";
 
+// COMMENTED OUT - Server integration disabled for mock data mode
 // Set consistent database path before any server modules are imported
-process.env.DB_PATH = './src/server/data/procurement.db';
+// process.env.DB_PATH = './src/server/data/procurement.db';
 
 // https://vitejs.dev/config/
 export default defineConfig(({ mode }) => ({
@@ -17,6 +18,8 @@ export default defineConfig(({ mode }) => ({
     react(),
     mode === 'development' &&
     componentTagger(),
+    // COMMENTED OUT - Express integration disabled for mock data mode
+    /*
     // Custom plugin to integrate Express server
     {
       name: 'express-integration',
@@ -37,6 +40,7 @@ export default defineConfig(({ mode }) => ({
         });
       }
     }
+    */
   ].filter(Boolean),
   resolve: {
     alias: {
