@@ -7,95 +7,93 @@ interface TaskCardProps {
 }
 
 const TaskCard: React.FC<TaskCardProps> = ({ task, onClick }) => {
-  console.log('🚀🚀🚀 TASKCARD V7.0 LOADED! Task:', task.taskId, 'onClick exists:', !!onClick);
+  console.log('🚀🚀🚀 TASKCARD V8.0 LOADED! Task:', task.taskId, 'onClick exists:', !!onClick);
   
   const statusConfig = STATUS_CONFIG[task.status];
   
-  const handleClick = (e: React.MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    console.log('🎯 TaskCard clicked for task:', task.taskId);
+  const navigateToTask = () => {
+    console.log('🎯 DIRECT NAVIGATION to task:', task.taskId);
+    const targetUrl = `/station-assignment/${task.taskId}`;
+    console.log('🎯 Target URL:', targetUrl);
     
-    if (onClick) {
-      console.log('🎯 Calling onClick callback...');
-      onClick();
-    } else {
-      console.log('🎯 No onClick callback provided');
-    }
-  };
-
-  const handleMouseDown = (e: React.MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    console.log('🎯 MOUSE DOWN on task:', task.taskId);
-    
-    if (onClick) {
-      console.log('🎯 Calling onClick from mouseDown...');
-      onClick();
+    // Try multiple navigation methods
+    try {
+      // Method 1: Direct window location
+      window.location.href = targetUrl;
+      console.log('🎯 Navigation method 1 executed');
+    } catch (error) {
+      console.error('🎯 Navigation method 1 failed:', error);
+      
+      try {
+        // Method 2: Window location assign
+        window.location.assign(targetUrl);
+        console.log('🎯 Navigation method 2 executed');
+      } catch (error2) {
+        console.error('🎯 Navigation method 2 failed:', error2);
+        
+        // Method 3: Alert as fallback
+        alert(`Navigation to ${targetUrl}`);
+      }
     }
   };
   
   return (
     <div 
-      className="bg-white rounded-lg border border-gray-300 p-4 relative cursor-pointer hover:shadow-lg transition-shadow select-none"
+      className="bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg border-2 border-yellow-400 p-4 relative cursor-pointer hover:shadow-2xl transition-all transform hover:scale-105"
       style={{ 
         height: '240px', 
         width: '100%',
-        pointerEvents: 'auto',
-        zIndex: 10,
-        userSelect: 'none'
+        zIndex: 1000
       }}
-      onClick={handleClick}
-      onMouseDown={handleMouseDown}
-      onTouchStart={handleMouseDown}
+      onMouseDown={(e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        console.log('🎯 MOUSE DOWN V8.0 on task:', task.taskId);
+        navigateToTask();
+      }}
+      onClick={(e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        console.log('🎯 CLICK V8.0 on task:', task.taskId);
+        navigateToTask();
+      }}
+      onTouchStart={(e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        console.log('🎯 TOUCH START V8.0 on task:', task.taskId);
+        navigateToTask();
+      }}
     >
-      {/* Status Badge */}
-      <div className="absolute top-2 left-2 pointer-events-none">
-        <span 
-          className="px-2 py-1 text-xs rounded-full font-medium border"
-          style={{ 
-            backgroundColor: statusConfig.bgColor,
-            color: statusConfig.color,
-            borderColor: statusConfig.color + '40'
-          }}
-        >
-          {statusConfig.label}
-        </span>
+      {/* Giant Click Me Button */}
+      <div className="text-center text-white font-bold text-2xl mb-4">
+        🎯 CLICK ME! 🎯
       </div>
-
-      {/* Task ID */}
-      <div className="text-right text-lg font-bold text-gray-800 mb-2 mt-6 pointer-events-none">
-        משימה #{task.taskId}
+      
+      {/* Task Info */}
+      <div className="text-center text-white text-lg font-bold mb-2">
+        TASK #{task.taskId}
       </div>
-
-      {/* Title */}
-      <div className="text-right text-base font-semibold text-gray-900 mb-2 line-clamp-2 pointer-events-none">
+      
+      <div className="text-center text-white text-base mb-2">
         {task.title}
       </div>
-
-      {/* Description */}
-      <div className="text-right text-sm text-gray-600 mb-3 line-clamp-2 pointer-events-none">
-        {task.description || 'אין תיאור'}
+      
+      <div className="text-center text-yellow-200 text-sm mb-4">
+        Status: {statusConfig.label}
       </div>
-
-      {/* Details */}
-      <div className="text-right text-xs text-gray-500 space-y-1 pointer-events-none">
-        <div>גורם דורש: {task.requesterName}</div>
-        <div>אגף: {task.divisionName}</div>
-        {task.assignedOfficerName && (
-          <div>קניין מטפל: {task.assignedOfficerName}</div>
-        )}
-        {task.estimatedAmount && (
-          <div>
-            אומדן: {task.estimatedAmount.toLocaleString()} {task.currency}
-          </div>
-        )}
+      
+      {/* Navigation Info */}
+      <div className="text-center text-white text-xs">
+        Will navigate to: /station-assignment/{task.taskId}
       </div>
-
-      {/* Click indicator */}
-      <div className="absolute bottom-2 right-2 text-xs text-blue-600 pointer-events-none">
-        לחץ לפרטים →
-      </div>
+      
+      {/* Extra click areas */}
+      <div 
+        className="absolute inset-0 bg-transparent"
+        onMouseDown={navigateToTask}
+        onClick={navigateToTask}
+        onTouchStart={navigateToTask}
+      />
     </div>
   );
 };
