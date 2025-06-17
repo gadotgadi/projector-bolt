@@ -7,12 +7,6 @@ interface TaskCardProps {
 }
 
 const TaskCard: React.FC<TaskCardProps> = ({ task, onClick }) => {
-  const handleClick = () => {
-    if (onClick) {
-      onClick();
-    }
-  };
-
   const formatDate = (date: Date | null | undefined) => {
     if (!date) return 'לא הוגדר';
     return new Date(date).toLocaleDateString('he-IL');
@@ -58,7 +52,7 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, onClick }) => {
   return (
     <div 
       className="bg-white rounded-lg border border-gray-300 p-4 hover:shadow-md transition-shadow cursor-pointer relative"
-      onClick={handleClick}
+      onClick={onClick}
       style={{ minHeight: '280px' }}
     >
       {/* Header with Title and Task ID */}
@@ -118,23 +112,23 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, onClick }) => {
           
           {/* Below gray line - with circle positioned */}
           <div className="relative">
-            <div className="mb-2">
+            <div className="mb-2 pr-10">
               <span className="text-gray-600">תחום: </span>
               <span className="font-medium">{task.domainName || 'לא הוגדר'}</span>
             </div>
-            <div className="mb-2">
+            <div className="mb-2 pr-10">
               <span className="text-gray-600">צוות: </span>
               <span className="font-medium">{task.teamName || 'לא הוגדר'}</span>
             </div>
-            <div>
+            <div className="pr-10">
               <span className="text-gray-600">קניין: </span>
               <span className="font-medium">{task.assignedOfficerName || 'לא הוגדר'}</span>
             </div>
             
             {/* Blue circle positioned next to these fields */}
-            <div className="absolute -left-2 top-1/2 transform -translate-y-1/2">
+            <div className="absolute left-0 top-1/2 transform -translate-y-1/2">
               <div className="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center text-white text-sm font-bold">
-                {task.assignedOfficerName ? task.assignedOfficerName.charAt(0) : 'T'}1
+                {task.assignedOfficerName ? task.assignedOfficerName.charAt(0) : 'T'}
               </div>
             </div>
           </div>
