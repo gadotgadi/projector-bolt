@@ -7,15 +7,26 @@ interface TaskCardProps {
 }
 
 const TaskCard: React.FC<TaskCardProps> = ({ task, onClick }) => {
-  console.log('🚀🚀🚀 TASKCARD V17.0 LOADED! Task:', task.taskId);
+  console.log('🚀🚀🚀 TASKCARD V18.0 LOADED! Task:', task.taskId);
+  
+  const handleClick = () => {
+    console.log('🎯🎯🎯 BUTTON CLICKED! Task:', task.taskId);
+    alert(`🎯 BUTTON CLICKED: Task ${task.taskId}`);
+    window.location.href = `/station-assignment/${task.taskId}`;
+  };
   
   return (
-    <div 
+    <button 
+      onClick={handleClick}
+      onMouseDown={() => console.log('🎯 BUTTON MOUSE DOWN on task:', task.taskId)}
+      onMouseUp={() => console.log('🎯 BUTTON MOUSE UP on task:', task.taskId)}
+      onMouseEnter={() => console.log('🎯 BUTTON MOUSE ENTER on task:', task.taskId)}
+      onMouseLeave={() => console.log('🎯 BUTTON MOUSE LEAVE on task:', task.taskId)}
       style={{ 
         height: '240px', 
         width: '100%',
-        backgroundColor: '#ff0000',
-        border: '5px solid #ffff00',
+        backgroundColor: '#00ff00',
+        border: '5px solid #0000ff',
         borderRadius: '10px',
         padding: '10px',
         cursor: 'pointer',
@@ -23,15 +34,6 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, onClick }) => {
         alignItems: 'center',
         justifyContent: 'center'
       }}
-      onClick={() => {
-        console.log('🎯🎯🎯 DIV CLICKED! Task:', task.taskId);
-        alert(`🎯 DIV CLICKED: Task ${task.taskId}`);
-        window.location.href = `/station-assignment/${task.taskId}`;
-      }}
-      onMouseDown={() => console.log('🎯 MOUSE DOWN on task:', task.taskId)}
-      onMouseUp={() => console.log('🎯 MOUSE UP on task:', task.taskId)}
-      onMouseEnter={() => console.log('🎯 MOUSE ENTER on task:', task.taskId)}
-      onMouseLeave={() => console.log('🎯 MOUSE LEAVE on task:', task.taskId)}
     >
       <div style={{
         backgroundColor: '#ffffff',
@@ -40,13 +42,14 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, onClick }) => {
         textAlign: 'center',
         fontSize: '20px',
         fontWeight: 'bold',
-        color: '#000000'
+        color: '#000000',
+        pointerEvents: 'none' // Prevent child from interfering
       }}>
-        🎯 CLICK ME! 🎯<br/>
+        🎯 BUTTON CLICK ME! 🎯<br/>
         TASK {task.taskId}<br/>
         {task.title}
       </div>
-    </div>
+    </button>
   );
 };
 
