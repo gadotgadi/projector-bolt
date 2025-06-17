@@ -31,7 +31,29 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, onClick }) => {
     return STATUS_CONFIG[status as keyof typeof STATUS_CONFIG] || STATUS_CONFIG.Open;
   };
 
+  const getStatusTextColor = (status: string) => {
+    switch (status) {
+      case 'In Progress': return 'text-blue-600';
+      case 'Open': return 'text-gray-900';
+      case 'Plan': return 'text-red-600';
+      case 'Complete':
+      case 'Done': return 'text-green-600';
+      case 'Freeze':
+      case 'Cancel': return 'text-gray-500';
+      default: return 'text-gray-900';
+    }
+  };
+
+  const calculateDaysAgo = (date: Date | null | undefined) => {
+    if (!date) return 0;
+    const today = new Date();
+    const diffTime = Math.abs(today.getTime() - new Date(date).getTime());
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    return diffDays;
+  };
+
   const statusConfig = getStatusConfig(task.status);
+  const daysAgo = calculateDaysAgo(task.lastUpdate);
 
   return (
     <div 
@@ -39,41 +61,38 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, onClick }) => {
       onClick={handleClick}
       style={{ minHeight: '280px' }}
     >
-      {/* Header with Task ID and Status */}
-      <div className="flex justify-between items-center mb-4">
-        {/* Task ID on the left */}
+      {/* Header with Task ID above Status Badge */}
+      <div className="flex justify-between items-start mb-4">
+        {/* Task ID above Status Badge */}
         <div className="text-right">
-          <div className="text-lg font-bold text-gray-900">{task.taskId}</div>
-        </div>
-        
-        {/* Status badge on the right */}
-        <div 
-          className="px-3 py-1 rounded text-sm font-medium"
-          style={{ 
-            backgroundColor: statusConfig.bgColor,
-            color: statusConfig.color
-          }}
-        >
-          פתוח
+          <div className="text-lg font-bold text-gray-900 mb-1">{task.taskId}</div>
+          <div 
+            className="px-3 py-1 rounded text-sm font-medium"
+            style={{ 
+              backgroundColor: statusConfig.bgColor,
+              color: statusConfig.color
+            }}
+          >
+            פתוח
+          </div>
         </div>
       </div>
 
-      {/* Title - Large and centered */}
-      <div className="text-center mb-6">
+      {/* Title - Large and right-aligned */}
+      <div className="text-right mb-6">
         <h2 className="text-xl font-bold text-gray-900 leading-tight">
-          הסכם ביצוע הכשרות בטיחות<br />
-          לנהגים ומפעילי ציוד כבד
+          הסכם ביצוע הכשרות בטיחות לנהגים ומפעילי ציוד כבד
         </h2>
-        <div className="text-sm text-gray-600 mt-2">
-          התקשרות עם חברה מתמחה בנושא בטיחות<br />
-          בעבודה
+        <div className="text-sm text-gray-600 mt-2 text-right">
+          התקשרות עם חברה מתמחה בנושא בטיחות בעבודה
         </div>
       </div>
 
       {/* Two column layout */}
       <div className="grid grid-cols-2 gap-6 mb-6">
         {/* Right Column */}
-        <div className="text-right space-y-3">
+        <div className="text-right space-y-2">
+          {/* Above gray line */}
           <div>
             <span className="text-gray-600">אגף: </span>
             <span className="font-medium">לוגיסטיקה</span>
@@ -82,18 +101,30 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, onClick }) => {
             <span className="text-gray-600">דורש: </span>
             <span className="font-medium">שמעון לביא</span>
           </div>
-          <div>
-            <span className="text-gray-600">תחום: </span>
-            <span className="font-medium">רכש לוגיסטי</span>
-          </div>
-          <div>
-            <span className="text-gray-600">קניין: </span>
-            <span className="font-medium">רבקה דקל</span>
+          
+          {/* Gray line separator */}
+          <div className="border-t border-gray-300 my-3"></div>
+          
+          {/* Below gray line - slightly left-aligned for circle space */}
+          <div className="pr-8">
+            <div className="mb-2">
+              <span className="text-gray-600">תחום: </span>
+              <span className="font-medium">רכש לוגיסטי</span>
+            </div>
+            <div className="mb-2">
+              <span className="text-gray-600">צוות: </span>
+              <span className="font-medium">תפעול ורכב</span>
+            </div>
+            <div>
+              <span className="text-gray-600">קניין: </span>
+              <span className="font-medium">רבקה דקל</span>
+            </div>
           </div>
         </div>
 
         {/* Left Column */}
-        <div className="text-left space-y-3">
+        <div className="text-left space-y-2">
+          {/* Above gray line */}
           <div>
             <span className="text-gray-600">רבעון נדרש: </span>
             <span className="font-medium">Q1/26</span>
@@ -102,29 +133,30 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, onClick }) => {
             <span className="text-gray-600">מורכבות: </span>
             <span className="font-medium">פשוט</span>
           </div>
+          
+          {/* Gray line separator */}
+          <div className="border-t border-gray-300 my-3"></div>
+          
+          {/* Below gray line */}
           <div>
             <span className="text-gray-600">תחנה נוכחית: </span>
             <span className="font-medium">8/8</span>
           </div>
           <div>
-            <span className="text-gray-600">צוות: </span>
-            <span className="font-medium">תפעול ורכב</span>
+            <span className={`font-medium ${getStatusTextColor(task.status)}`}>
+              ביצוע הפעילות
+            </span>
+          </div>
+          <div className="text-sm text-gray-600">
+            עדכון אחרון: 13/2/2025 ({daysAgo})
           </div>
         </div>
       </div>
 
-      {/* Bottom section - Execution status */}
-      <div className="absolute bottom-4 left-4 right-4 text-center">
-        <div className="text-green-600 font-medium mb-1">ביצוע הפעילות</div>
-        <div className="text-sm text-gray-600">
-          (77) 13/2/2025 :עדכון אחרון
-        </div>
-        
-        {/* Blue circle with T1 */}
-        <div className="absolute bottom-0 left-0">
-          <div className="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center text-white text-sm font-bold">
-            T1
-          </div>
+      {/* Blue circle with T1 in bottom left corner */}
+      <div className="absolute bottom-4 left-4">
+        <div className="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center text-white text-sm font-bold">
+          T1
         </div>
       </div>
     </div>
