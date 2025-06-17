@@ -7,7 +7,7 @@ interface TaskCardProps {
 }
 
 const TaskCard: React.FC<TaskCardProps> = ({ task, onClick }) => {
-  console.log('🚀🚀🚀 TASKCARD V13.0 LOADED! Task:', task.taskId, 'onClick exists:', !!onClick);
+  console.log('🚀🚀🚀 TASKCARD V14.0 LOADED! Task:', task.taskId, 'onClick exists:', !!onClick);
   
   const statusConfig = STATUS_CONFIG[task.status];
   
@@ -17,17 +17,31 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, onClick }) => {
     // Show alert first to confirm click is working
     alert(`🎯 Going to Station Assignment for task ${task.taskId}`);
     
-    // Use the same method that worked for the test station
-    const stationUrl = `/station-assignment/${task.taskId}`;
-    console.log('🎯🎯🎯 Station URL:', stationUrl);
+    // Try multiple navigation methods
+    console.log('🎯🎯🎯 Current location before navigation:', window.location.href);
     
+    const stationUrl = `/station-assignment/${task.taskId}`;
+    console.log('🎯🎯🎯 Target URL:', stationUrl);
+    
+    // Method 1: Direct window.location.href
     try {
-      // Use window.location.href like the test station back button
+      console.log('🎯🎯🎯 Attempting window.location.href...');
       window.location.href = stationUrl;
-      console.log('🎯🎯🎯 Window location navigation executed');
+      console.log('🎯🎯🎯 Window location navigation command sent');
     } catch (error) {
-      console.error('🎯🎯🎯 Navigation failed:', error);
+      console.error('🎯🎯🎯 Window location navigation failed:', error);
     }
+    
+    // Method 2: window.location.assign as backup
+    setTimeout(() => {
+      try {
+        console.log('🎯🎯🎯 Attempting window.location.assign as backup...');
+        window.location.assign(stationUrl);
+        console.log('🎯🎯🎯 Window assign navigation command sent');
+      } catch (error) {
+        console.error('🎯🎯🎯 Window assign navigation failed:', error);
+      }
+    }, 1000);
   };
   
   return (
