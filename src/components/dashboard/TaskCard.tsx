@@ -7,50 +7,61 @@ interface TaskCardProps {
 }
 
 const TaskCard: React.FC<TaskCardProps> = ({ task, onClick }) => {
-  console.log('🚀🚀🚀 TASKCARD V14.0 LOADED! Task:', task.taskId, 'onClick exists:', !!onClick);
+  console.log('🚀🚀🚀 TASKCARD V15.0 LOADED! Task:', task.taskId, 'onClick exists:', !!onClick);
   
   const statusConfig = STATUS_CONFIG[task.status];
   
-  const navigateToTask = () => {
-    console.log('🎯🎯🎯 NAVIGATION TRIGGERED for task:', task.taskId);
-    
-    // Show alert first to confirm click is working
-    alert(`🎯 Going to Station Assignment for task ${task.taskId}`);
-    
-    // Try multiple navigation methods
-    console.log('🎯🎯🎯 Current location before navigation:', window.location.href);
-    
-    const stationUrl = `/station-assignment/${task.taskId}`;
-    console.log('🎯🎯🎯 Target URL:', stationUrl);
-    
-    // Method 1: Direct window.location.href
-    try {
-      console.log('🎯🎯🎯 Attempting window.location.href...');
-      window.location.href = stationUrl;
-      console.log('🎯🎯🎯 Window location navigation command sent');
-    } catch (error) {
-      console.error('🎯🎯🎯 Window location navigation failed:', error);
-    }
-    
-    // Method 2: window.location.assign as backup
-    setTimeout(() => {
-      try {
-        console.log('🎯🎯🎯 Attempting window.location.assign as backup...');
-        window.location.assign(stationUrl);
-        console.log('🎯🎯🎯 Window assign navigation command sent');
-      } catch (error) {
-        console.error('🎯🎯🎯 Window assign navigation failed:', error);
-      }
-    }, 1000);
-  };
-  
   return (
     <div 
-      className="bg-white rounded-lg border border-gray-200 shadow-sm hover:shadow-md transition-shadow cursor-pointer"
+      className="bg-white rounded-lg border-4 border-red-500 shadow-lg hover:shadow-xl transition-shadow cursor-pointer"
       style={{ height: '240px', width: '100%' }}
-      onClick={navigateToTask}
+      onMouseDown={(e) => {
+        console.log('🎯🎯🎯 MOUSE DOWN EVENT for task:', task.taskId);
+        e.preventDefault();
+        e.stopPropagation();
+        
+        // Show alert first
+        alert(`🎯 MOUSE DOWN: Going to Station Assignment for task ${task.taskId}`);
+        
+        // Navigate
+        const stationUrl = `/station-assignment/${task.taskId}`;
+        console.log('🎯🎯🎯 Navigating to:', stationUrl);
+        window.location.href = stationUrl;
+      }}
+      onClick={(e) => {
+        console.log('🎯🎯🎯 CLICK EVENT for task:', task.taskId);
+        e.preventDefault();
+        e.stopPropagation();
+        
+        // Show alert first
+        alert(`🎯 CLICK: Going to Station Assignment for task ${task.taskId}`);
+        
+        // Navigate
+        const stationUrl = `/station-assignment/${task.taskId}`;
+        console.log('🎯🎯🎯 Navigating to:', stationUrl);
+        window.location.href = stationUrl;
+      }}
+      onTouchStart={(e) => {
+        console.log('🎯🎯🎯 TOUCH START EVENT for task:', task.taskId);
+        e.preventDefault();
+        e.stopPropagation();
+        
+        // Show alert first
+        alert(`🎯 TOUCH: Going to Station Assignment for task ${task.taskId}`);
+        
+        // Navigate
+        const stationUrl = `/station-assignment/${task.taskId}`;
+        console.log('🎯🎯🎯 Navigating to:', stationUrl);
+        window.location.href = stationUrl;
+      }}
     >
-      <div className="p-4 h-full flex flex-col">
+      <div className="p-4 h-full flex flex-col bg-yellow-100">
+        {/* GIANT CLICK ME BUTTON */}
+        <div className="text-center mb-4">
+          <div className="text-2xl font-bold text-red-600">🎯 CLICK ME! 🎯</div>
+          <div className="text-lg font-bold text-blue-600">TASK {task.taskId}</div>
+        </div>
+
         {/* Status Badge */}
         <div className="flex justify-between items-start mb-3">
           <span 
@@ -70,28 +81,11 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, onClick }) => {
           {task.title}
         </h3>
 
-        {/* Description */}
-        {task.description && (
-          <p className="text-sm text-gray-600 mb-3 line-clamp-2 text-right">
-            {task.description}
-          </p>
-        )}
-
-        {/* Details */}
-        <div className="mt-auto space-y-1 text-xs text-gray-500 text-right">
-          <div>גורם דורש: {task.requesterName}</div>
-          <div>אגף: {task.divisionName}</div>
-          {task.assignedOfficerName && (
-            <div>קניין מטפל: {task.assignedOfficerName}</div>
-          )}
-          {task.requiredQuarter && (
-            <div>רבעון נדרש: {task.requiredQuarter.toLocaleDateString('he-IL')}</div>
-          )}
-        </div>
-
-        {/* Click indicator */}
-        <div className="mt-2 text-center">
-          <span className="text-xs text-blue-600 font-medium">🎯 לחץ לטיפול</span>
+        {/* ANOTHER CLICK INDICATOR */}
+        <div className="mt-auto text-center">
+          <div className="bg-red-500 text-white p-2 rounded font-bold">
+            🎯 CLICK ANYWHERE ON THIS CARD! 🎯
+          </div>
         </div>
       </div>
     </div>
