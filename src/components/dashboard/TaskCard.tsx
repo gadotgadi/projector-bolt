@@ -1,5 +1,5 @@
 import React from 'react';
-import { Program } from '../../types';
+import { Program, STATUS_CONFIG } from '../../types';
 
 interface TaskCardProps {
   task: Program;
@@ -7,51 +7,78 @@ interface TaskCardProps {
 }
 
 const TaskCard: React.FC<TaskCardProps> = ({ task, onClick }) => {
-  console.log('🚀🚀🚀 TASKCARD V5.0 LOADED! Task:', task.taskId, 'onClick exists:', !!onClick);
+  console.log('🚀🚀🚀 TASKCARD V6.0 LOADED! Task:', task.taskId, 'onClick exists:', !!onClick);
+  
+  const statusConfig = STATUS_CONFIG[task.status];
+  
+  const handleClick = () => {
+    console.log('🎯 TaskCard clicked for task:', task.taskId);
+    
+    if (onClick) {
+      console.log('🎯 Calling onClick callback...');
+      onClick();
+    } else {
+      console.log('🎯 No onClick callback provided');
+    }
+  };
   
   return (
     <div 
-      className="bg-purple-500 rounded-lg border border-gray-300 p-4 relative"
+      className="bg-white rounded-lg border border-gray-300 p-4 relative cursor-pointer hover:shadow-lg transition-shadow"
       style={{ 
         height: '240px', 
         width: '100%',
         pointerEvents: 'auto',
         zIndex: 10
       }}
+      onClick={handleClick}
     >
-      <div className="text-white font-bold text-center text-lg">
-        🚀 TASKCARD V5.0 🚀
+      {/* Status Badge */}
+      <div className="absolute top-2 left-2">
+        <span 
+          className="px-2 py-1 text-xs rounded-full font-medium border"
+          style={{ 
+            backgroundColor: statusConfig.bgColor,
+            color: statusConfig.color,
+            borderColor: statusConfig.color + '40'
+          }}
+        >
+          {statusConfig.label}
+        </span>
       </div>
-      <div className="text-white text-center text-base mt-2">
-        TASK {task.taskId}
+
+      {/* Task ID */}
+      <div className="text-right text-lg font-bold text-gray-800 mb-2 mt-6">
+        משימה #{task.taskId}
       </div>
-      
-      {/* כפתור פשוט עם onMouseDown */}
-      <button
-        onMouseDown={(e) => {
-          console.log('🎯 MOUSE DOWN!', task.taskId);
-          alert(`MOUSE DOWN ${task.taskId}`);
-        }}
-        onClick={(e) => {
-          console.log('🎯 CLICK!', task.taskId);
-          alert(`CLICK ${task.taskId}`);
-        }}
-        onTouchStart={(e) => {
-          console.log('🎯 TOUCH!', task.taskId);
-          alert(`TOUCH ${task.taskId}`);
-        }}
-        className="bg-green-500 hover:bg-green-600 text-white font-bold py-4 px-8 rounded mt-4 mx-auto block text-xl"
-        style={{ 
-          pointerEvents: 'auto',
-          zIndex: 20,
-          position: 'relative'
-        }}
-      >
-        🎯 TEST BUTTON 🎯
-      </button>
-      
-      <div className="text-white text-center text-xs mt-2">
-        Purple Card V5.0
+
+      {/* Title */}
+      <div className="text-right text-base font-semibold text-gray-900 mb-2 line-clamp-2">
+        {task.title}
+      </div>
+
+      {/* Description */}
+      <div className="text-right text-sm text-gray-600 mb-3 line-clamp-2">
+        {task.description || 'אין תיאור'}
+      </div>
+
+      {/* Details */}
+      <div className="text-right text-xs text-gray-500 space-y-1">
+        <div>גורם דורש: {task.requesterName}</div>
+        <div>אגף: {task.divisionName}</div>
+        {task.assignedOfficerName && (
+          <div>קניין מטפל: {task.assignedOfficerName}</div>
+        )}
+        {task.estimatedAmount && (
+          <div>
+            אומדן: {task.estimatedAmount.toLocaleString()} {task.currency}
+          </div>
+        )}
+      </div>
+
+      {/* Click indicator */}
+      <div className="absolute bottom-2 right-2 text-xs text-blue-600">
+        לחץ לפרטים →
       </div>
     </div>
   );
