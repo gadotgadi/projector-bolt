@@ -61,11 +61,32 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, onClick }) => {
       onClick={handleClick}
       style={{ minHeight: '280px' }}
     >
-      {/* Header with Task ID above Status Badge */}
-      <div className="flex justify-between items-start mb-4">
-        {/* Task ID above Status Badge */}
-        <div className="text-right">
-          <div className="text-lg font-bold text-gray-900 mb-1">{task.taskId}</div>
+      {/* Header with Title and Task ID */}
+      <div className="flex justify-between items-start mb-2">
+        {/* Title - Large and right-aligned */}
+        <div className="text-right flex-1">
+          <h2 className="text-xl font-bold text-gray-900 leading-tight">
+            הסכם ביצוע הכשרות בטיחות לנהגים ומפעילי ציוד כבד
+          </h2>
+        </div>
+        
+        {/* Task ID in top left */}
+        <div className="text-left ml-4">
+          <div className="text-lg font-bold text-gray-900">{task.taskId}</div>
+        </div>
+      </div>
+
+      {/* Subtitle and Status */}
+      <div className="flex justify-between items-start mb-6">
+        {/* Subtitle - right-aligned */}
+        <div className="text-right flex-1">
+          <div className="text-sm text-gray-600">
+            התקשרות עם חברה מתמחה בנושא בטיחות בעבודה
+          </div>
+        </div>
+        
+        {/* Status Badge under Task ID */}
+        <div className="text-left ml-4">
           <div 
             className="px-3 py-1 rounded text-sm font-medium"
             style={{ 
@@ -75,16 +96,6 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, onClick }) => {
           >
             פתוח
           </div>
-        </div>
-      </div>
-
-      {/* Title - Large and right-aligned */}
-      <div className="text-right mb-6">
-        <h2 className="text-xl font-bold text-gray-900 leading-tight">
-          הסכם ביצוע הכשרות בטיחות לנהגים ומפעילי ציוד כבד
-        </h2>
-        <div className="text-sm text-gray-600 mt-2 text-right">
-          התקשרות עם חברה מתמחה בנושא בטיחות בעבודה
         </div>
       </div>
 
@@ -105,8 +116,8 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, onClick }) => {
           {/* Gray line separator */}
           <div className="border-t border-gray-300 my-3"></div>
           
-          {/* Below gray line - slightly left-aligned for circle space */}
-          <div className="pr-8">
+          {/* Below gray line - with circle positioned */}
+          <div className="relative">
             <div className="mb-2">
               <span className="text-gray-600">תחום: </span>
               <span className="font-medium">רכש לוגיסטי</span>
@@ -118,6 +129,13 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, onClick }) => {
             <div>
               <span className="text-gray-600">קניין: </span>
               <span className="font-medium">רבקה דקל</span>
+            </div>
+            
+            {/* Blue circle positioned next to these fields */}
+            <div className="absolute -left-2 top-1/2 transform -translate-y-1/2">
+              <div className="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center text-white text-sm font-bold">
+                T1
+              </div>
             </div>
           </div>
         </div>
@@ -150,13 +168,6 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, onClick }) => {
           <div className="text-sm text-gray-600">
             עדכון אחרון: 13/2/2025 ({daysAgo})
           </div>
-        </div>
-      </div>
-
-      {/* Blue circle with T1 in bottom left corner */}
-      <div className="absolute bottom-4 left-4">
-        <div className="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center text-white text-sm font-bold">
-          T1
         </div>
       </div>
     </div>
