@@ -66,7 +66,7 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, onClick }) => {
         {/* Title - Large and right-aligned */}
         <div className="text-right flex-1">
           <h2 className="text-xl font-bold text-gray-900 leading-tight">
-            הסכם ביצוע הכשרות בטיחות לנהגים ומפעילי ציוד כבד
+            {task.title}
           </h2>
         </div>
         
@@ -81,7 +81,7 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, onClick }) => {
         {/* Subtitle - right-aligned */}
         <div className="text-right flex-1">
           <div className="text-sm text-gray-600">
-            התקשרות עם חברה מתמחה בנושא בטיחות בעבודה
+            {task.description || 'אין תיאור'}
           </div>
         </div>
         
@@ -94,7 +94,7 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, onClick }) => {
               color: statusConfig.color
             }}
           >
-            פתוח
+            {statusConfig.label}
           </div>
         </div>
       </div>
@@ -106,11 +106,11 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, onClick }) => {
           {/* Above gray line */}
           <div>
             <span className="text-gray-600">אגף: </span>
-            <span className="font-medium">לוגיסטיקה</span>
+            <span className="font-medium">{task.divisionName || 'לא הוגדר'}</span>
           </div>
           <div>
             <span className="text-gray-600">דורש: </span>
-            <span className="font-medium">שמעון לביא</span>
+            <span className="font-medium">{task.requesterName || 'לא הוגדר'}</span>
           </div>
           
           {/* Gray line separator */}
@@ -120,21 +120,21 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, onClick }) => {
           <div className="relative">
             <div className="mb-2">
               <span className="text-gray-600">תחום: </span>
-              <span className="font-medium">רכש לוגיסטי</span>
+              <span className="font-medium">{task.domainName || 'לא הוגדר'}</span>
             </div>
             <div className="mb-2">
               <span className="text-gray-600">צוות: </span>
-              <span className="font-medium">תפעול ורכב</span>
+              <span className="font-medium">{task.teamName || 'לא הוגדר'}</span>
             </div>
             <div>
               <span className="text-gray-600">קניין: </span>
-              <span className="font-medium">רבקה דקל</span>
+              <span className="font-medium">{task.assignedOfficerName || 'לא הוגדר'}</span>
             </div>
             
             {/* Blue circle positioned next to these fields */}
             <div className="absolute -left-2 top-1/2 transform -translate-y-1/2">
               <div className="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center text-white text-sm font-bold">
-                T1
+                {task.assignedOfficerName ? task.assignedOfficerName.charAt(0) : 'T'}1
               </div>
             </div>
           </div>
@@ -145,11 +145,11 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, onClick }) => {
           {/* Above gray line */}
           <div>
             <span className="text-gray-600">רבעון נדרש: </span>
-            <span className="font-medium">Q1/26</span>
+            <span className="font-medium">{formatDate(task.requiredQuarter)}</span>
           </div>
           <div>
             <span className="text-gray-600">מורכבות: </span>
-            <span className="font-medium">פשוט</span>
+            <span className="font-medium">{getComplexityLabel(task.complexity)}</span>
           </div>
           
           {/* Gray line separator */}
@@ -166,7 +166,7 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, onClick }) => {
             </span>
           </div>
           <div className="text-sm text-gray-600">
-            עדכון אחרון: 13/2/2025 ({daysAgo})
+            עדכון אחרון: {formatDate(task.lastUpdate)} ({daysAgo})
           </div>
         </div>
       </div>
