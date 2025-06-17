@@ -70,21 +70,53 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, onClick }) => {
 
   const progressDisplay = getProgressDisplay();
 
+  const handleClick = (e: React.MouseEvent) => {
+    console.log('🎯🎯🎯 CLICK EVENT FIRED! Task:', task.taskId);
+    console.log('🎯🎯🎯 Event details:', e.type, e.target);
+    console.log('🎯🎯🎯 onClick function exists:', !!onClick);
+    
+    // Prevent any default behavior
+    e.preventDefault();
+    e.stopPropagation();
+    
+    if (onClick) {
+      console.log('🎯🎯🎯 Calling onClick for task:', task.taskId);
+      try {
+        onClick();
+        console.log('🎯🎯🎯 onClick called successfully');
+      } catch (error) {
+        console.error('❌ Error calling onClick:', error);
+      }
+    } else {
+      console.log('❌ No onClick function provided!');
+    }
+  };
+
+  const handleMouseDown = (e: React.MouseEvent) => {
+    console.log('🔥 MouseDown on task:', task.taskId);
+  };
+
+  const handleMouseUp = (e: React.MouseEvent) => {
+    console.log('🔥 MouseUp on task:', task.taskId);
+  };
+
   return (
     <div 
       className="bg-white rounded-lg border border-gray-300 p-4 cursor-pointer hover:shadow-xl hover:border-blue-500 transition-all duration-200 transform hover:scale-[1.02] active:scale-[0.98] select-none"
-      style={{ height: '240px', width: '100%' }}
-      onClick={() => {
-        console.log('🎯🎯🎯 CLICK DETECTED! Task:', task.taskId);
-        if (onClick) {
-          console.log('🎯🎯🎯 Calling onClick for task:', task.taskId);
-          onClick();
-        } else {
-          console.log('❌ No onClick function!');
-        }
+      style={{ 
+        height: '240px', 
+        width: '100%',
+        pointerEvents: 'auto', // Ensure pointer events are enabled
+        zIndex: 1 // Ensure it's above other elements
       }}
+      onClick={handleClick}
+      onMouseDown={handleMouseDown}
+      onMouseUp={handleMouseUp}
       onMouseEnter={() => console.log('🔥 Mouse entered card:', task.taskId)}
       onMouseLeave={() => console.log('🔥 Mouse left card:', task.taskId)}
+      // Add additional event handlers for debugging
+      onPointerDown={() => console.log('🔥 Pointer down on task:', task.taskId)}
+      onPointerUp={() => console.log('🔥 Pointer up on task:', task.taskId)}
     >
       {/* Header Row - Title with Task ID, Description with Status */}
       <div className="mb-4">
