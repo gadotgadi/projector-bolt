@@ -85,7 +85,7 @@ const PlanningHelpers: React.FC = () => {
       const acceptanceRes = await apiRequest.get('/planning/acceptance-options');
       if (acceptanceRes.ok) {
         const acceptanceData = await acceptanceRes.json();
-        setAcceptanceOptions(acceptanceData);
+        setAcceptanceOptions(acceptanceData.data || []);
       }
 
     } catch (error) {
