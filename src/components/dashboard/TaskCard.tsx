@@ -1,4 +1,4 @@
-import React, { useRef, useEffect } from 'react';
+import React from 'react';
 import { Program, STATUS_CONFIG } from '../../types';
 
 interface TaskCardProps {
@@ -7,8 +7,6 @@ interface TaskCardProps {
 }
 
 const TaskCard: React.FC<TaskCardProps> = ({ task, onClick }) => {
-  const cardRef = useRef<HTMLDivElement>(null);
-  
   console.log('🔥 TaskCard רנדר עבור משימה:', task.taskId, 'עם onClick:', !!onClick);
   
   const statusConfig = STATUS_CONFIG[task.status];
@@ -72,26 +70,38 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, onClick }) => {
 
   const progressDisplay = getProgressDisplay();
 
-  // Simple test function
-  const testNavigation = () => {
-    console.log('🚀🚀🚀 NAVIGATION TEST for task:', task.taskId);
-    alert(`Navigation test for task ${task.taskId}`);
+  // Direct navigation function
+  const directNavigate = () => {
+    console.log('🚀🚀🚀 DIRECT NAVIGATION for task:', task.taskId);
+    alert(`Direct navigation test for task ${task.taskId}`);
     
-    if (onClick) {
-      console.log('🚀🚀🚀 Calling onClick from test');
-      onClick();
+    // Try direct window navigation
+    try {
+      window.location.href = `/station-assignment/${task.taskId}`;
+    } catch (error) {
+      console.error('Navigation error:', error);
+      alert('Navigation failed: ' + error);
     }
   };
 
   return (
     <div className="bg-white rounded-lg border border-gray-300 p-4 relative" style={{ height: '240px', width: '100%' }}>
-      {/* BIG TEST BUTTON */}
+      {/* SUPER SIMPLE TEST BUTTON */}
       <div className="absolute top-2 left-2 right-2 z-50">
         <button
-          onClick={testNavigation}
-          className="w-full bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-4 rounded"
+          onClick={directNavigate}
+          style={{
+            width: '100%',
+            backgroundColor: '#10B981',
+            color: 'white',
+            fontWeight: 'bold',
+            padding: '8px 16px',
+            borderRadius: '4px',
+            border: 'none',
+            cursor: 'pointer'
+          }}
         >
-          🚀 CLICK TO NAVIGATE TO TASK {task.taskId} 🚀
+          🚀 NAVIGATE TO TASK {task.taskId} 🚀
         </button>
       </div>
 
