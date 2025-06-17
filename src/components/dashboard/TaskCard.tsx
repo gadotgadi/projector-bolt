@@ -7,6 +7,8 @@ interface TaskCardProps {
 }
 
 const TaskCard: React.FC<TaskCardProps> = ({ task, onClick }) => {
+  console.log('🔥 TaskCard רנדר עבור משימה:', task.taskId, 'עם onClick:', !!onClick);
+  
   const statusConfig = STATUS_CONFIG[task.status];
   
   const formatDate = (date?: Date) => {
@@ -84,6 +86,8 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, onClick }) => {
     <div 
       className="bg-white rounded-lg border border-gray-300 p-4 cursor-pointer hover:shadow-xl hover:border-blue-500 transition-all duration-200 transform hover:scale-[1.02] active:scale-[0.98] select-none"
       onClick={handleClick}
+      onMouseDown={() => console.log('🔥 TaskCard: mouseDown על משימה', task.taskId)}
+      onMouseUp={() => console.log('🔥 TaskCard: mouseUp על משימה', task.taskId)}
       style={{ height: '240px', width: '100%' }}
     >
       {/* Header Row - Title with Task ID, Description with Status */}
