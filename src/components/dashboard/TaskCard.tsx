@@ -70,25 +70,19 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, onClick }) => {
 
   const progressDisplay = getProgressDisplay();
 
-  // Simple click handler
-  const handleCardClick = (e: React.MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    console.log('🎯🎯🎯 CARD CLICKED! Task ID:', task.taskId);
-    
-    if (onClick) {
-      console.log('🎯🎯🎯 Calling onClick function for task:', task.taskId);
-      onClick();
-    } else {
-      console.log('❌ No onClick function provided!');
-    }
-  };
-
   return (
     <div 
       className="bg-white rounded-lg border border-gray-300 p-4 cursor-pointer hover:shadow-xl hover:border-blue-500 transition-all duration-200 transform hover:scale-[1.02] active:scale-[0.98] select-none"
       style={{ height: '240px', width: '100%' }}
-      onClick={handleCardClick}
+      onClick={() => {
+        console.log('🎯🎯🎯 CLICK DETECTED! Task:', task.taskId);
+        if (onClick) {
+          console.log('🎯🎯🎯 Calling onClick for task:', task.taskId);
+          onClick();
+        } else {
+          console.log('❌ No onClick function!');
+        }
+      }}
       onMouseEnter={() => console.log('🔥 Mouse entered card:', task.taskId)}
       onMouseLeave={() => console.log('🔥 Mouse left card:', task.taskId)}
     >
