@@ -70,12 +70,14 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, onClick }) => {
 
   const progressDisplay = getProgressDisplay();
 
-  // SUPER SIMPLE TEST FUNCTION
+  // ENHANCED TEST FUNCTION WITH MORE DEBUG
   const handleButtonClick = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
     
     console.log('🔥🔥🔥 BUTTON CLICKED! Task ID:', task.taskId);
+    console.log('🔥 Current URL:', window.location.href);
+    console.log('🔥 Target URL:', `/station-assignment/${task.taskId}`);
     
     // Show alert first
     alert(`BUTTON CLICKED FOR TASK ${task.taskId}!`);
@@ -87,21 +89,32 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, onClick }) => {
     // Try calling onClick
     if (onClick) {
       console.log('🔥 Calling onClick...');
-      onClick();
+      try {
+        onClick();
+        console.log('🔥 onClick called successfully');
+      } catch (error) {
+        console.error('🔥 Error calling onClick:', error);
+      }
+    } else {
+      console.log('🔥 No onClick function provided');
     }
     
     // Try direct navigation
     console.log('🔥 Trying direct navigation...');
     try {
-      window.location.href = `/station-assignment/${task.taskId}`;
+      const targetUrl = `/station-assignment/${task.taskId}`;
+      console.log('🔥 Navigating to:', targetUrl);
+      window.location.href = targetUrl;
+      console.log('🔥 Navigation command executed');
     } catch (error) {
       console.error('🔥 Navigation error:', error);
+      alert('Navigation failed: ' + error);
     }
   };
 
   return (
     <div className="bg-white rounded-lg border border-gray-300 p-4 relative" style={{ height: '240px', width: '100%' }}>
-      {/* SUPER SIMPLE TEST BUTTON */}
+      {/* ENHANCED TEST BUTTON */}
       <div className="absolute top-2 left-2 right-2 z-50">
         <button
           onClick={handleButtonClick}
@@ -122,10 +135,11 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, onClick }) => {
             border: 'none',
             cursor: 'pointer',
             fontSize: '14px',
-            zIndex: 9999
+            zIndex: 9999,
+            position: 'relative'
           }}
         >
-          🔧 CLICK ME - TASK {task.taskId} 🔧
+          🔧 DEBUG CLICK - TASK {task.taskId} 🔧
         </button>
       </div>
 
