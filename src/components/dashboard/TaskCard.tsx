@@ -70,7 +70,7 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, onClick }) => {
 
   return (
     <div 
-      className="bg-white rounded-lg border border-gray-300 p-4 cursor-pointer hover:shadow-md transition-all duration-200"
+      className="bg-white rounded-lg border border-gray-300 p-4 cursor-pointer hover:shadow-md transition-all duration-200 hover:border-blue-400"
       onClick={onClick}
       style={{ height: '240px', width: '100%' }}
     >
