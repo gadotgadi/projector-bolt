@@ -71,11 +71,21 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, onClick }) => {
   const handleClick = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    console.log('🔥 TaskCard: לחיצה על משימה', task.taskId);
-    console.log('🔥 TaskCard: onClick function exists:', !!onClick);
+    console.log('🔥🔥🔥 TaskCard: לחיצה על משימה', task.taskId);
+    console.log('🔥🔥🔥 TaskCard: onClick function exists:', !!onClick);
+    
+    // Add visual feedback
+    const target = e.currentTarget as HTMLElement;
+    target.style.transform = 'scale(0.95)';
+    setTimeout(() => {
+      target.style.transform = 'scale(1)';
+    }, 150);
+    
     if (onClick) {
-      console.log('🔥 TaskCard: קורא לפונקציית onClick');
-      onClick();
+      console.log('🔥🔥🔥 TaskCard: קורא לפונקציית onClick');
+      setTimeout(() => {
+        onClick();
+      }, 200);
     } else {
       console.log('❌ TaskCard: אין פונקציית onClick!');
     }
@@ -83,7 +93,7 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, onClick }) => {
 
   return (
     <div 
-      className="bg-white rounded-lg border border-gray-300 p-4 cursor-pointer hover:shadow-lg hover:border-blue-500 transition-all duration-200 transform hover:scale-[1.02] active:scale-[0.98]"
+      className="bg-white rounded-lg border border-gray-300 p-4 cursor-pointer hover:shadow-xl hover:border-blue-500 transition-all duration-200 transform hover:scale-[1.02] active:scale-[0.98] select-none"
       onClick={handleClick}
       style={{ height: '240px', width: '100%' }}
     >

@@ -86,14 +86,16 @@ const Dashboard = () => {
   }, [programs, filters, user]);
 
   const handleProgramClick = (program: Program) => {
-    console.log('🔥 Dashboard: נלחץ על משימה:', program.taskId);
-    console.log('🔥 Dashboard: מנווט לנתיב:', `/station-assignment/${program.taskId}`);
+    console.log('🔥🔥🔥 Dashboard: נלחץ על משימה:', program.taskId);
+    console.log('🔥🔥🔥 Dashboard: מנווט לנתיב:', `/station-assignment/${program.taskId}`);
     
     try {
-      navigate(`/station-assignment/${program.taskId}`);
-      console.log('🔥 Dashboard: ניווט הושלם בהצלחה');
+      // Force navigation with replace to ensure it works
+      window.location.href = `/station-assignment/${program.taskId}`;
     } catch (error) {
       console.error('❌ Dashboard: שגיאה בניווט:', error);
+      // Fallback to regular navigation
+      navigate(`/station-assignment/${program.taskId}`);
     }
   };
 
@@ -128,7 +130,7 @@ const Dashboard = () => {
               key={program.taskId} 
               task={program}
               onClick={() => {
-                console.log('🔥 Dashboard: onClick callback נקרא עבור משימה:', program.taskId);
+                console.log('🔥🔥🔥 Dashboard: onClick callback נקרא עבור משימה:', program.taskId);
                 handleProgramClick(program);
               }}
             />
