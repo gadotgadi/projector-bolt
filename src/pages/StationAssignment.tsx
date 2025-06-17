@@ -41,6 +41,9 @@ const StationAssignment = () => {
       <AppLayout currentRoute="/station-assignment">
         <div className="text-center py-12">
           <p className="text-gray-500">משימה לא נמצאה (ID: {taskId})</p>
+          <p className="text-gray-400 text-sm mt-2">
+            משימות זמינות: {mockPrograms.map(p => p.taskId).join(', ')}
+          </p>
           <Button onClick={() => navigate('/')} className="mt-4">
             חזרה לשולחן העבודה
           </Button>

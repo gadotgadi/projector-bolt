@@ -88,7 +88,6 @@ const Dashboard = () => {
   const handleProgramClick = (program: Program) => {
     console.log('🔥 Dashboard: נלחץ על משימה:', program.taskId);
     console.log('🔥 Dashboard: מנווט לנתיב:', `/station-assignment/${program.taskId}`);
-    console.log('🔥 Dashboard: navigate function:', navigate);
     
     try {
       navigate(`/station-assignment/${program.taskId}`);
