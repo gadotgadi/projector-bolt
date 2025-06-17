@@ -99,6 +99,17 @@ const Dashboard = () => {
     }
   };
 
+  // Test function for direct navigation
+  const testDirectNavigation = () => {
+    console.log('🧪 TESTING DIRECT NAVIGATION');
+    alert('🧪 Direct navigation test - going to task 1001');
+    try {
+      window.location.href = '/station-assignment/1001';
+    } catch (error) {
+      console.error('🧪 Direct navigation failed:', error);
+    }
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
@@ -121,17 +132,50 @@ const Dashboard = () => {
         programs={programs}
       />
 
-      {/* TEST BUTTON */}
-      <div className="bg-red-500 text-white p-4 rounded">
+      {/* MEGA TEST SECTION */}
+      <div className="bg-purple-500 text-white p-6 rounded-lg border-4 border-yellow-400">
+        <h2 className="text-2xl font-bold mb-4">🧪 NAVIGATION TEST ZONE 🧪</h2>
+        
+        {/* Test Button 1 - Simple Alert */}
         <button 
           onClick={() => {
-            console.log('🎯🎯🎯 DASHBOARD TEST BUTTON CLICKED!');
-            alert('Dashboard test button works!');
-            handleProgramClick(filteredPrograms[0]);
+            console.log('🧪 TEST 1: Simple alert');
+            alert('🧪 TEST 1: Simple click works!');
           }}
-          className="bg-yellow-500 text-black px-4 py-2 rounded font-bold"
+          className="bg-red-500 hover:bg-red-600 text-white font-bold py-3 px-6 rounded mr-4 mb-4"
         >
-          🎯 TEST DASHBOARD NAVIGATION 🎯
+          TEST 1: Simple Alert
+        </button>
+
+        {/* Test Button 2 - Console Log */}
+        <button 
+          onClick={() => {
+            console.log('🧪 TEST 2: Console log test');
+            console.log('🧪 Current location:', window.location.href);
+          }}
+          className="bg-blue-500 hover:bg-blue-600 text-white font-bold py-3 px-6 rounded mr-4 mb-4"
+        >
+          TEST 2: Console Log
+        </button>
+
+        {/* Test Button 3 - Direct Navigation */}
+        <button 
+          onClick={testDirectNavigation}
+          className="bg-green-500 hover:bg-green-600 text-white font-bold py-3 px-6 rounded mr-4 mb-4"
+        >
+          TEST 3: Direct Navigation
+        </button>
+
+        {/* Test Button 4 - React Router Navigate */}
+        <button 
+          onClick={() => {
+            console.log('🧪 TEST 4: React Router navigate');
+            alert('🧪 TEST 4: Using React Router');
+            navigate('/station-assignment/1001');
+          }}
+          className="bg-orange-500 hover:bg-orange-600 text-white font-bold py-3 px-6 rounded mr-4 mb-4"
+        >
+          TEST 4: React Router
         </button>
       </div>
 
