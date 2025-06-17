@@ -84,9 +84,19 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, onClick }) => {
     }
   };
 
+  const handleDebugClick = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    console.log('🚀 DEBUG BUTTON CLICKED for task:', task.taskId);
+    alert(`Debug click for task ${task.taskId}`);
+    if (onClick) {
+      onClick();
+    }
+  };
+
   return (
     <div 
-      className="bg-white rounded-lg border border-gray-300 p-4 hover:shadow-xl hover:border-blue-500 transition-all duration-200 transform hover:scale-[1.02] active:scale-[0.98]"
+      className="bg-white rounded-lg border border-gray-300 p-4 hover:shadow-xl hover:border-blue-500 transition-all duration-200 transform hover:scale-[1.02] active:scale-[0.98] relative"
       onClick={handleClick}
       onMouseDown={(e) => {
         console.log('🔥 TaskCard: mouseDown על משימה', task.taskId);
@@ -104,6 +114,26 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, onClick }) => {
         pointerEvents: 'auto'
       }}
     >
+      {/* DEBUG BUTTON - זמני לבדיקה */}
+      <button
+        onClick={handleDebugClick}
+        style={{
+          position: 'absolute',
+          top: '5px',
+          left: '5px',
+          backgroundColor: 'red',
+          color: 'white',
+          padding: '5px 10px',
+          border: 'none',
+          borderRadius: '3px',
+          fontSize: '12px',
+          zIndex: 10,
+          cursor: 'pointer'
+        }}
+      >
+        DEBUG {task.taskId}
+      </button>
+
       {/* Header Row - Title with Task ID, Description with Status */}
       <div className="mb-4">
         {/* Title and Task ID Row */}
