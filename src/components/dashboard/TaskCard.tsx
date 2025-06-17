@@ -7,21 +7,39 @@ interface TaskCardProps {
 }
 
 const TaskCard: React.FC<TaskCardProps> = ({ task, onClick }) => {
-  console.log('🚀🚀🚀 TASKCARD V18.0 LOADED! Task:', task.taskId);
+  console.log('🚀🚀🚀 TASKCARD V19.0 LOADED! Task:', task.taskId);
   
-  const handleClick = () => {
+  const handleClick = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
     console.log('🎯🎯🎯 BUTTON CLICKED! Task:', task.taskId);
     alert(`🎯 BUTTON CLICKED: Task ${task.taskId}`);
     window.location.href = `/station-assignment/${task.taskId}`;
   };
   
+  const handleMouseDown = (e: React.MouseEvent) => {
+    console.log('🎯 BUTTON MOUSE DOWN on task:', task.taskId);
+  };
+  
+  const handleMouseUp = (e: React.MouseEvent) => {
+    console.log('🎯 BUTTON MOUSE UP on task:', task.taskId);
+  };
+  
+  const handleMouseEnter = (e: React.MouseEvent) => {
+    console.log('🎯 BUTTON MOUSE ENTER on task:', task.taskId);
+  };
+  
+  const handleMouseLeave = (e: React.MouseEvent) => {
+    console.log('🎯 BUTTON MOUSE LEAVE on task:', task.taskId);
+  };
+  
   return (
     <button 
       onClick={handleClick}
-      onMouseDown={() => console.log('🎯 BUTTON MOUSE DOWN on task:', task.taskId)}
-      onMouseUp={() => console.log('🎯 BUTTON MOUSE UP on task:', task.taskId)}
-      onMouseEnter={() => console.log('🎯 BUTTON MOUSE ENTER on task:', task.taskId)}
-      onMouseLeave={() => console.log('🎯 BUTTON MOUSE LEAVE on task:', task.taskId)}
+      onMouseDown={handleMouseDown}
+      onMouseUp={handleMouseUp}
+      onMouseEnter={handleMouseEnter}
+      onMouseLeave={handleMouseLeave}
       style={{ 
         height: '240px', 
         width: '100%',
@@ -32,7 +50,10 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, onClick }) => {
         cursor: 'pointer',
         display: 'flex',
         alignItems: 'center',
-        justifyContent: 'center'
+        justifyContent: 'center',
+        position: 'relative',
+        zIndex: 10,
+        pointerEvents: 'auto'
       }}
     >
       <div style={{

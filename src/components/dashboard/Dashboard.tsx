@@ -124,7 +124,7 @@ const Dashboard = () => {
   console.log('🔥 Dashboard: מציג', filteredPrograms.length, 'משימות');
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6" style={{ position: 'relative', zIndex: 1 }}>
       {/* Filters */}
       <DashboardFilters 
         filters={filters}
@@ -132,55 +132,106 @@ const Dashboard = () => {
         programs={programs}
       />
 
-      {/* MEGA TEST SECTION */}
-      <div className="bg-purple-500 text-white p-6 rounded-lg border-4 border-yellow-400">
+      {/* MEGA TEST SECTION - FIXED WITH PROPER Z-INDEX AND POSITIONING */}
+      <div 
+        className="bg-purple-500 text-white p-6 rounded-lg border-4 border-yellow-400"
+        style={{ 
+          position: 'relative', 
+          zIndex: 1000,
+          pointerEvents: 'auto'
+        }}
+      >
         <h2 className="text-2xl font-bold mb-4">🧪 NAVIGATION TEST ZONE 🧪</h2>
         
         {/* Test Button 1 - Simple Alert */}
         <button 
-          onClick={() => {
+          onClick={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
             console.log('🧪 TEST 1: Simple alert');
             alert('🧪 TEST 1: Simple click works!');
           }}
+          onMouseDown={(e) => {
+            console.log('🧪 TEST 1: Mouse down');
+          }}
           className="bg-red-500 hover:bg-red-600 text-white font-bold py-3 px-6 rounded mr-4 mb-4"
+          style={{ 
+            position: 'relative', 
+            zIndex: 1001,
+            pointerEvents: 'auto',
+            cursor: 'pointer'
+          }}
         >
           TEST 1: Simple Alert
         </button>
 
         {/* Test Button 2 - Console Log */}
         <button 
-          onClick={() => {
+          onClick={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
             console.log('🧪 TEST 2: Console log test');
             console.log('🧪 Current location:', window.location.href);
           }}
           className="bg-blue-500 hover:bg-blue-600 text-white font-bold py-3 px-6 rounded mr-4 mb-4"
+          style={{ 
+            position: 'relative', 
+            zIndex: 1001,
+            pointerEvents: 'auto',
+            cursor: 'pointer'
+          }}
         >
           TEST 2: Console Log
         </button>
 
         {/* Test Button 3 - Direct Navigation */}
         <button 
-          onClick={testDirectNavigation}
+          onClick={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            testDirectNavigation();
+          }}
           className="bg-green-500 hover:bg-green-600 text-white font-bold py-3 px-6 rounded mr-4 mb-4"
+          style={{ 
+            position: 'relative', 
+            zIndex: 1001,
+            pointerEvents: 'auto',
+            cursor: 'pointer'
+          }}
         >
           TEST 3: Direct Navigation
         </button>
 
         {/* Test Button 4 - React Router Navigate */}
         <button 
-          onClick={() => {
+          onClick={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
             console.log('🧪 TEST 4: React Router navigate');
             alert('🧪 TEST 4: Using React Router');
             navigate('/station-assignment/1001');
           }}
           className="bg-orange-500 hover:bg-orange-600 text-white font-bold py-3 px-6 rounded mr-4 mb-4"
+          style={{ 
+            position: 'relative', 
+            zIndex: 1001,
+            pointerEvents: 'auto',
+            cursor: 'pointer'
+          }}
         >
           TEST 4: React Router
         </button>
       </div>
 
-      {/* DIRECT TASK CARD TEST */}
-      <div className="bg-yellow-300 p-4 rounded-lg border-4 border-red-500">
+      {/* DIRECT TASK CARD TEST - FIXED */}
+      <div 
+        className="bg-yellow-300 p-4 rounded-lg border-4 border-red-500"
+        style={{ 
+          position: 'relative', 
+          zIndex: 999,
+          pointerEvents: 'auto'
+        }}
+      >
         <h3 className="text-xl font-bold mb-4 text-black">🎯 DIRECT TASK CARD TEST</h3>
         <div 
           style={{
@@ -195,13 +246,19 @@ const Dashboard = () => {
             cursor: 'pointer',
             fontSize: '18px',
             fontWeight: 'bold',
-            color: 'white'
+            color: 'white',
+            position: 'relative',
+            zIndex: 1000,
+            pointerEvents: 'auto'
           }}
-          onClick={() => {
+          onClick={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
             console.log('🎯🎯🎯 DIRECT TEST CARD CLICKED!');
             alert('🎯 DIRECT TEST CARD WORKS!');
-            window.location.href = '/station-assignment/9999';
+            window.location.href = '/test-station/9999';
           }}
+          onMouseDown={() => console.log('🎯 DIRECT TEST: Mouse Down')}
           onMouseEnter={() => console.log('🎯 DIRECT TEST: Mouse Enter')}
           onMouseLeave={() => console.log('🎯 DIRECT TEST: Mouse Leave')}
         >
@@ -210,18 +267,33 @@ const Dashboard = () => {
       </div>
 
       {/* Programs Grid - 3 columns for wider cards */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
+      <div 
+        className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6"
+        style={{ 
+          position: 'relative', 
+          zIndex: 1,
+          pointerEvents: 'auto'
+        }}
+      >
         {filteredPrograms.map(program => {
           console.log('🔥 Dashboard: יוצר TaskCard עבור משימה:', program.taskId);
           return (
-            <TaskCard 
-              key={program.taskId} 
-              task={program}
-              onClick={() => {
-                console.log('🎯🎯🎯 Dashboard: onClick callback נקרא עבור משימה:', program.taskId);
-                handleProgramClick(program);
+            <div
+              key={program.taskId}
+              style={{ 
+                position: 'relative', 
+                zIndex: 2,
+                pointerEvents: 'auto'
               }}
-            />
+            >
+              <TaskCard 
+                task={program}
+                onClick={() => {
+                  console.log('🎯🎯🎯 Dashboard: onClick callback נקרא עבור משימה:', program.taskId);
+                  handleProgramClick(program);
+                }}
+              />
+            </div>
           );
         })}
       </div>
