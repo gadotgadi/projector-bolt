@@ -70,7 +70,9 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, onClick }) => {
 
   const progressDisplay = getProgressDisplay();
 
-  const handleClick = () => {
+  const handleClick = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
     console.log('🔥🔥🔥 TaskCard: לחיצה על משימה', task.taskId);
     console.log('🔥🔥🔥 TaskCard: onClick function exists:', !!onClick);
     
@@ -84,11 +86,23 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, onClick }) => {
 
   return (
     <div 
-      className="bg-white rounded-lg border border-gray-300 p-4 cursor-pointer hover:shadow-xl hover:border-blue-500 transition-all duration-200 transform hover:scale-[1.02] active:scale-[0.98] select-none"
+      className="bg-white rounded-lg border border-gray-300 p-4 hover:shadow-xl hover:border-blue-500 transition-all duration-200 transform hover:scale-[1.02] active:scale-[0.98]"
       onClick={handleClick}
-      onMouseDown={() => console.log('🔥 TaskCard: mouseDown על משימה', task.taskId)}
-      onMouseUp={() => console.log('🔥 TaskCard: mouseUp על משימה', task.taskId)}
-      style={{ height: '240px', width: '100%' }}
+      onMouseDown={(e) => {
+        console.log('🔥 TaskCard: mouseDown על משימה', task.taskId);
+        e.preventDefault();
+      }}
+      onMouseUp={(e) => {
+        console.log('🔥 TaskCard: mouseUp על משימה', task.taskId);
+        e.preventDefault();
+      }}
+      style={{ 
+        height: '240px', 
+        width: '100%',
+        cursor: 'pointer',
+        userSelect: 'none',
+        pointerEvents: 'auto'
+      }}
     >
       {/* Header Row - Title with Task ID, Description with Status */}
       <div className="mb-4">
