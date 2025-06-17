@@ -1,5 +1,4 @@
 import React from 'react';
-import { useNavigate } from 'react-router-dom';
 import { Program, STATUS_CONFIG } from '../../types';
 
 interface TaskCardProps {
@@ -8,26 +7,24 @@ interface TaskCardProps {
 }
 
 const TaskCard: React.FC<TaskCardProps> = ({ task, onClick }) => {
-  const navigate = useNavigate();
-  
-  console.log('🚀🚀🚀 TASKCARD V12.0 LOADED! Task:', task.taskId, 'onClick exists:', !!onClick);
+  console.log('🚀🚀🚀 TASKCARD V13.0 LOADED! Task:', task.taskId, 'onClick exists:', !!onClick);
   
   const statusConfig = STATUS_CONFIG[task.status];
   
   const navigateToTask = () => {
     console.log('🎯🎯🎯 NAVIGATION TRIGGERED for task:', task.taskId);
     
-    // Navigate to the actual station assignment page
-    const stationUrl = `/station-assignment/${task.taskId}`;
-    console.log('🎯🎯🎯 Station URL:', stationUrl);
-    
     // Show alert first to confirm click is working
     alert(`🎯 Going to Station Assignment for task ${task.taskId}`);
     
-    // Use React Router to navigate to station assignment
+    // Use the same method that worked for the test station
+    const stationUrl = `/station-assignment/${task.taskId}`;
+    console.log('🎯🎯🎯 Station URL:', stationUrl);
+    
     try {
-      navigate(stationUrl);
-      console.log('🎯🎯🎯 React Router navigation to station assignment executed');
+      // Use window.location.href like the test station back button
+      window.location.href = stationUrl;
+      console.log('🎯🎯🎯 Window location navigation executed');
     } catch (error) {
       console.error('🎯🎯🎯 Navigation failed:', error);
     }
