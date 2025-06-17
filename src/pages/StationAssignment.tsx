@@ -27,11 +27,15 @@ const StationAssignment = () => {
   const [showPermissionDialog, setShowPermissionDialog] = useState(false);
 
   console.log('🔥🔥🔥 STATION ASSIGNMENT COMPONENT LOADED!');
-  console.log('🔥 StationAssignment: נטען עם taskId:', taskId);
+  console.log('🔥 StationAssignment: נטען עם taskId:', taskId, 'type:', typeof taskId);
   console.log('🔥 StationAssignment: משימות זמינות:', mockPrograms.map(p => p.taskId));
 
-  // Find program from mock data
-  const initialProgram = mockPrograms.find(p => p.taskId === Number(taskId));
+  // Convert taskId from string to number for comparison
+  const taskIdNumber = taskId ? parseInt(taskId, 10) : null;
+  console.log('🔥 StationAssignment: taskIdNumber:', taskIdNumber, 'type:', typeof taskIdNumber);
+
+  // Find program from mock data using the converted number
+  const initialProgram = mockPrograms.find(p => p.taskId === taskIdNumber);
   
   console.log('🔥 StationAssignment: משימה נמצאה:', !!initialProgram);
   console.log('🔥 StationAssignment: פרטי משימה:', initialProgram);
@@ -43,10 +47,10 @@ const StationAssignment = () => {
         <div className="text-center py-12">
           <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
             <strong>🚨 DEBUG INFO:</strong>
-            <div>TaskId from URL: {taskId}</div>
+            <div>TaskId from URL: {taskId} (type: {typeof taskId})</div>
+            <div>TaskId as number: {taskIdNumber} (type: {typeof taskIdNumber})</div>
             <div>Available TaskIds: {mockPrograms.map(p => p.taskId).join(', ')}</div>
-            <div>Type of taskId: {typeof taskId}</div>
-            <div>Type of first program taskId: {typeof mockPrograms[0]?.taskId}</div>
+            <div>First program taskId: {mockPrograms[0]?.taskId} (type: {typeof mockPrograms[0]?.taskId})</div>
           </div>
           <p className="text-gray-500">משימה לא נמצאה (ID: {taskId})</p>
           <Button onClick={() => navigate('/')} className="mt-4">
@@ -129,6 +133,9 @@ const StationAssignment = () => {
         {/* SUCCESS MESSAGE */}
         <div className="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded mb-4">
           <strong>🎉 SUCCESS!</strong> StationAssignment component loaded successfully for task {program.taskId}!
+          <div className="text-sm mt-2">
+            URL taskId: {taskId} → Converted to: {taskIdNumber} → Found program: {program.title}
+          </div>
         </div>
 
         {/* Header */}
@@ -208,7 +215,7 @@ const StationAssignment = () => {
                 סגור
               </Button>
             </div>
-          </DialogContent>
+          </div>
         </Dialog>
       </div>
     </AppLayout>
