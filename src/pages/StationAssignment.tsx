@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import AppLayout from '../components/layout/AppLayout';
-import { Program, STATUS_CONFIG } from '../types';
+import { Program } from '../types';
 import { Button } from '../components/ui/button';
 import { ArrowRight, Save, Lock } from 'lucide-react';
 import { useToast } from '../components/ui/use-toast';
