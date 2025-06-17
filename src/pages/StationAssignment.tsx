@@ -215,7 +215,7 @@ const StationAssignment = () => {
                 סגור
               </Button>
             </div>
-          </div>
+          </DialogContent>
         </Dialog>
       </div>
     </AppLayout>
