@@ -1,4 +1,5 @@
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Program, STATUS_CONFIG } from '../../types';
 
 interface TaskCardProps {
@@ -7,7 +8,9 @@ interface TaskCardProps {
 }
 
 const TaskCard: React.FC<TaskCardProps> = ({ task, onClick }) => {
-  console.log('🚀🚀🚀 TASKCARD V9.0 LOADED! Task:', task.taskId, 'onClick exists:', !!onClick);
+  const navigate = useNavigate();
+  
+  console.log('🚀🚀🚀 TASKCARD V10.0 LOADED! Task:', task.taskId, 'onClick exists:', !!onClick);
   
   const statusConfig = STATUS_CONFIG[task.status];
   
@@ -19,10 +22,10 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, onClick }) => {
     // Show alert first to confirm click is working
     alert(`🎯 CLICK DETECTED! Navigating to task ${task.taskId}`);
     
-    // Then navigate
+    // Use React Router instead of window.location.href
     try {
-      window.location.href = targetUrl;
-      console.log('🎯🎯🎯 Navigation executed');
+      navigate(targetUrl);
+      console.log('🎯🎯🎯 React Router navigation executed');
     } catch (error) {
       console.error('🎯🎯🎯 Navigation failed:', error);
     }
@@ -30,40 +33,53 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, onClick }) => {
   
   return (
     <div 
-      className="bg-red-500 rounded-lg border-4 border-yellow-400 p-4 relative"
-      style={{ 
-        height: '280px', 
-        width: '100%',
-        zIndex: 1000
-      }}
+      className="bg-white rounded-lg border border-gray-200 shadow-sm hover:shadow-md transition-shadow cursor-pointer"
+      style={{ height: '240px', width: '100%' }}
+      onClick={navigateToTask}
     >
-      {/* Giant HTML Button */}
-      <button
-        type="button"
-        onClick={navigateToTask}
-        onMouseDown={navigateToTask}
-        className="w-full h-full bg-green-500 hover:bg-green-600 text-white font-bold text-xl rounded border-2 border-white cursor-pointer"
-        style={{ minHeight: '250px' }}
-      >
-        <div className="text-center">
-          <div className="text-3xl mb-4">🎯 CLICK HERE! 🎯</div>
-          <div className="text-xl mb-2">TASK #{task.taskId}</div>
-          <div className="text-lg mb-2">{task.title}</div>
-          <div className="text-base">Status: {statusConfig.label}</div>
-          <div className="text-sm mt-4">HTML BUTTON TEST</div>
+      <div className="p-4 h-full flex flex-col">
+        {/* Status Badge */}
+        <div className="flex justify-between items-start mb-3">
+          <span 
+            className="px-2 py-1 rounded text-xs font-medium"
+            style={{ 
+              backgroundColor: statusConfig.bgColor,
+              color: statusConfig.color 
+            }}
+          >
+            {statusConfig.label}
+          </span>
+          <span className="text-sm font-bold text-gray-600">#{task.taskId}</span>
         </div>
-      </button>
-      
-      {/* Backup div with inline onclick */}
-      <div 
-        className="absolute top-2 right-2 bg-yellow-500 text-black p-2 rounded cursor-pointer"
-        onClick={() => {
-          console.log('🎯🎯🎯 BACKUP DIV CLICKED!');
-          alert('BACKUP CLICK WORKS!');
-          navigateToTask();
-        }}
-      >
-        BACKUP
+
+        {/* Title */}
+        <h3 className="text-lg font-semibold text-gray-900 mb-2 line-clamp-2 text-right">
+          {task.title}
+        </h3>
+
+        {/* Description */}
+        {task.description && (
+          <p className="text-sm text-gray-600 mb-3 line-clamp-2 text-right">
+            {task.description}
+          </p>
+        )}
+
+        {/* Details */}
+        <div className="mt-auto space-y-1 text-xs text-gray-500 text-right">
+          <div>גורם דורש: {task.requesterName}</div>
+          <div>אגף: {task.divisionName}</div>
+          {task.assignedOfficerName && (
+            <div>קניין מטפל: {task.assignedOfficerName}</div>
+          )}
+          {task.requiredQuarter && (
+            <div>רבעון נדרש: {task.requiredQuarter.toLocaleDateString('he-IL')}</div>
+          )}
+        </div>
+
+        {/* Click indicator */}
+        <div className="mt-2 text-center">
+          <span className="text-xs text-blue-600 font-medium">לחץ לפתיחה</span>
+        </div>
       </div>
     </div>
   );
