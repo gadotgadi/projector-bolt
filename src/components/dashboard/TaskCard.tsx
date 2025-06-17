@@ -7,53 +7,44 @@ interface TaskCardProps {
 }
 
 const TaskCard: React.FC<TaskCardProps> = ({ task, onClick }) => {
-  console.log('🚀🚀🚀 TASKCARD V3.0 LOADED! Task:', task.taskId, 'onClick exists:', !!onClick);
+  console.log('🚀🚀🚀 TASKCARD V4.0 LOADED! Task:', task.taskId, 'onClick exists:', !!onClick);
   
-  const handleClick = (e: React.MouseEvent) => {
+  const handleCardClick = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
     
-    console.log('🔥🔥🔥 REACT ONCLICK TRIGGERED! Task ID:', task.taskId);
-    console.log('🔥🔥🔥 Event details:', e.type, e.currentTarget);
-    console.log('🔥🔥🔥 Current URL:', window.location.href);
-    console.log('🔥🔥🔥 Target URL:', `/station-assignment/${task.taskId}`);
+    console.log('🔥🔥🔥 CARD CLICK TRIGGERED! Task ID:', task.taskId);
+    alert(`🔥 CARD CLICK FOR TASK ${task.taskId}! 🔥`);
     
-    // Show alert first
-    alert(`🔥 REACT CLICK FOR TASK ${task.taskId}! 🔥`);
-    
-    // Try onClick callback
     if (onClick) {
-      console.log('🔥🔥🔥 Calling onClick callback...');
-      try {
-        onClick();
-        console.log('🔥🔥🔥 onClick callback SUCCESS');
-      } catch (error) {
-        console.error('🔥🔥🔥 onClick callback FAILED:', error);
-      }
-    } else {
-      console.log('🔥🔥🔥 No onClick callback provided');
+      onClick();
     }
     
-    // Try direct navigation
-    console.log('🔥🔥🔥 Trying direct navigation...');
-    try {
-      const targetUrl = `/station-assignment/${task.taskId}`;
-      console.log('🔥🔥🔥 Navigating to:', targetUrl);
-      window.location.href = targetUrl;
-      console.log('🔥🔥🔥 Navigation command sent');
-    } catch (error) {
-      console.error('🔥🔥🔥 Navigation FAILED:', error);
+    window.location.href = `/station-assignment/${task.taskId}`;
+  };
+
+  const handleButtonClick = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    
+    console.log('🎯🎯🎯 BUTTON CLICK TRIGGERED! Task ID:', task.taskId);
+    alert(`🎯 BUTTON CLICK FOR TASK ${task.taskId}! 🎯`);
+    
+    if (onClick) {
+      onClick();
     }
+    
+    window.location.href = `/station-assignment/${task.taskId}`;
   };
 
   return (
     <div 
-      onClick={handleClick}
-      className="bg-purple-500 rounded-lg border border-gray-300 p-4 relative cursor-pointer hover:bg-purple-600 transition-colors"
+      onClick={handleCardClick}
+      className="bg-red-500 rounded-lg border border-gray-300 p-4 relative cursor-pointer hover:bg-red-600 transition-colors"
       style={{ height: '240px', width: '100%' }}
     >
       <div className="text-white font-bold text-center text-lg">
-        🔥🔥🔥 CLICK ME V3! 🔥🔥🔥
+        🔥🔥🔥 CLICK CARD V4! 🔥🔥🔥
       </div>
       <div className="text-white text-center text-base mt-2">
         TASK {task.taskId}
@@ -61,11 +52,17 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, onClick }) => {
       <div className="text-white text-center text-sm mt-2">
         {task.title}
       </div>
-      <div className="text-white text-center text-xs mt-4">
-        React onClick v3.0
-      </div>
+      
+      {/* כפתור נפרד שיעבוד בוודאות */}
+      <button
+        onClick={handleButtonClick}
+        className="bg-yellow-500 hover:bg-yellow-600 text-black font-bold py-2 px-4 rounded mt-4 mx-auto block"
+      >
+        🎯 CLICK BUTTON 🎯
+      </button>
+      
       <div className="text-white text-center text-xs mt-2">
-        Purple = React Handler
+        Red Card + Yellow Button
       </div>
     </div>
   );
