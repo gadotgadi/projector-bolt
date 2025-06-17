@@ -113,8 +113,9 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, onClick }) => {
       style={{ 
         height: '240px', 
         width: '100%',
-        pointerEvents: 'auto', // Ensure pointer events are enabled
-        zIndex: 1 // Ensure it's above other elements
+        position: 'relative',
+        zIndex: 1,
+        pointerEvents: 'auto'
       }}
       onClick={handleClick}
       onMouseDown={handleMouseDown}
@@ -135,7 +136,7 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, onClick }) => {
       </button>
 
       {/* Header Row - Title with Task ID, Description with Status */}
-      <div className="mb-4">
+      <div className="mb-4" style={{ pointerEvents: 'none' }}>
         {/* Title and Task ID Row */}
         <div className="flex justify-between items-start mb-2">
           <div className="font-bold text-gray-800 text-base leading-tight">
@@ -161,7 +162,7 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, onClick }) => {
       </div>
 
       {/* Middle Row - Quarter & Complexity (left), Requester & Division (right) */}
-      <div className="flex justify-between items-center mb-4 text-sm">
+      <div className="flex justify-between items-center mb-4 text-sm" style={{ pointerEvents: 'none' }}>
         <div className="flex gap-4">
           <div className="text-right">
             <span className="text-gray-600">רבעון נדרש: </span>
@@ -185,7 +186,7 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, onClick }) => {
       </div>
 
       {/* Bottom Row */}
-      <div className="flex justify-between items-start text-sm">
+      <div className="flex justify-between items-start text-sm" style={{ pointerEvents: 'none' }}>
         {/* Left Side - Stations Progress */}
         <div className="text-right">
           <div className="mb-1">
