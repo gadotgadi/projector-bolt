@@ -7,7 +7,7 @@ interface TaskCardProps {
 }
 
 const TaskCard: React.FC<TaskCardProps> = ({ task, onClick }) => {
-  console.log('🔥 TaskCard רנדר עבור משימה:', task.taskId, 'עם onClick:', !!onClick);
+  console.log('🚀 TaskCard רנדר עבור משימה:', task.taskId, 'עם onClick:', !!onClick);
   
   const statusConfig = STATUS_CONFIG[task.status];
   
@@ -70,43 +70,67 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, onClick }) => {
 
   const progressDisplay = getProgressDisplay();
 
-  // Direct navigation function
-  const directNavigate = () => {
-    console.log('🚀🚀🚀 DIRECT NAVIGATION for task:', task.taskId);
-    alert(`Direct navigation test for task ${task.taskId}`);
+  // Enhanced navigation function with detailed logging
+  const testNavigation = () => {
+    console.log('🚀🚀🚀 NAVIGATION TEST STARTED for task:', task.taskId);
     
-    // Try direct window navigation
+    // Test 1: Alert to confirm button works
+    alert(`Navigation test for task ${task.taskId} - Button clicked successfully!`);
+    
+    // Test 2: Try onClick callback if provided
+    if (onClick) {
+      console.log('🚀 Calling onClick callback...');
+      try {
+        onClick();
+        console.log('🚀 onClick callback completed successfully');
+      } catch (error) {
+        console.error('❌ onClick callback failed:', error);
+        alert('onClick callback failed: ' + error);
+      }
+    } else {
+      console.log('❌ No onClick callback provided');
+      alert('No onClick callback provided to TaskCard');
+    }
+    
+    // Test 3: Try direct window navigation
+    console.log('🚀 Attempting direct window navigation...');
     try {
-      window.location.href = `/station-assignment/${task.taskId}`;
+      const targetUrl = `/station-assignment/${task.taskId}`;
+      console.log('🚀 Target URL:', targetUrl);
+      
+      // Try window.location.href
+      window.location.href = targetUrl;
+      console.log('🚀 window.location.href set successfully');
     } catch (error) {
-      console.error('Navigation error:', error);
-      alert('Navigation failed: ' + error);
+      console.error('❌ Direct navigation failed:', error);
+      alert('Direct navigation failed: ' + error);
     }
   };
 
   return (
     <div className="bg-white rounded-lg border border-gray-300 p-4 relative" style={{ height: '240px', width: '100%' }}>
-      {/* SUPER SIMPLE TEST BUTTON */}
+      {/* ENHANCED TEST BUTTON */}
       <div className="absolute top-2 left-2 right-2 z-50">
         <button
-          onClick={directNavigate}
+          onClick={testNavigation}
           style={{
             width: '100%',
             backgroundColor: '#10B981',
             color: 'white',
             fontWeight: 'bold',
-            padding: '8px 16px',
-            borderRadius: '4px',
+            padding: '12px 16px',
+            borderRadius: '6px',
             border: 'none',
-            cursor: 'pointer'
+            cursor: 'pointer',
+            fontSize: '14px'
           }}
         >
-          🚀 NAVIGATE TO TASK {task.taskId} 🚀
+          🔧 NAVIGATE TO TASK {task.taskId} 🔧
         </button>
       </div>
 
       {/* Original content - moved down */}
-      <div className="mt-16">
+      <div className="mt-20">
         {/* Header Row - Title with Task ID, Description with Status */}
         <div className="mb-4">
           {/* Title and Task ID Row */}
