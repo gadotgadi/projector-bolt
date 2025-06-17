@@ -13,43 +13,6 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, onClick }) => {
   
   const statusConfig = STATUS_CONFIG[task.status];
   
-  // Add direct event listeners for debugging
-  useEffect(() => {
-    const cardElement = cardRef.current;
-    if (!cardElement) return;
-
-    const handleDirectClick = (e: Event) => {
-      console.log('🎯🎯🎯 DIRECT CLICK EVENT! Task:', task.taskId);
-      console.log('🎯🎯🎯 Event target:', e.target);
-      console.log('🎯🎯🎯 Current target:', e.currentTarget);
-      
-      if (onClick) {
-        console.log('🎯🎯🎯 Calling onClick from direct listener');
-        onClick();
-      }
-    };
-
-    const handleDirectMouseDown = (e: Event) => {
-      console.log('🔥 DIRECT MouseDown on task:', task.taskId);
-    };
-
-    const handleDirectMouseUp = (e: Event) => {
-      console.log('🔥 DIRECT MouseUp on task:', task.taskId);
-    };
-
-    // Add event listeners
-    cardElement.addEventListener('click', handleDirectClick, true);
-    cardElement.addEventListener('mousedown', handleDirectMouseDown, true);
-    cardElement.addEventListener('mouseup', handleDirectMouseUp, true);
-
-    // Cleanup
-    return () => {
-      cardElement.removeEventListener('click', handleDirectClick, true);
-      cardElement.removeEventListener('mousedown', handleDirectMouseDown, true);
-      cardElement.removeEventListener('mouseup', handleDirectMouseUp, true);
-    };
-  }, [task.taskId, onClick]);
-  
   const formatDate = (date?: Date) => {
     if (!date) return '--';
     return date.toLocaleDateString('he-IL');
@@ -109,156 +72,117 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, onClick }) => {
 
   const progressDisplay = getProgressDisplay();
 
-  const handleClick = (e: React.MouseEvent) => {
-    console.log('🎯🎯🎯 REACT CLICK EVENT! Task:', task.taskId);
-    console.log('🎯🎯🎯 Event details:', e.type, e.target);
-    console.log('🎯🎯🎯 onClick function exists:', !!onClick);
-    
-    // Prevent any default behavior
-    e.preventDefault();
-    e.stopPropagation();
+  // Simple test function
+  const testNavigation = () => {
+    console.log('🚀🚀🚀 NAVIGATION TEST for task:', task.taskId);
+    alert(`Navigation test for task ${task.taskId}`);
     
     if (onClick) {
-      console.log('🎯🎯🎯 Calling onClick for task:', task.taskId);
-      try {
-        onClick();
-        console.log('🎯🎯🎯 onClick called successfully');
-      } catch (error) {
-        console.error('❌ Error calling onClick:', error);
-      }
-    } else {
-      console.log('❌ No onClick function provided!');
+      console.log('🚀🚀🚀 Calling onClick from test');
+      onClick();
     }
   };
 
-  const handleMouseDown = (e: React.MouseEvent) => {
-    console.log('🔥 MouseDown on task:', task.taskId);
-  };
-
-  const handleMouseUp = (e: React.MouseEvent) => {
-    console.log('🔥 MouseUp on task:', task.taskId);
-  };
-
-  // Simple test button handler
-  const handleTestButtonClick = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    console.log('🚀🚀🚀 TEST BUTTON CLICKED for task:', task.taskId);
-    alert(`Test button clicked for task ${task.taskId}`);
-  };
-
   return (
-    <div 
-      ref={cardRef}
-      className="bg-white rounded-lg border border-gray-300 p-4 cursor-pointer hover:shadow-xl hover:border-blue-500 transition-all duration-200 transform hover:scale-[1.02] active:scale-[0.98] select-none"
-      style={{ 
-        height: '240px', 
-        width: '100%',
-        position: 'relative',
-        zIndex: 1
-      }}
-      onClick={handleClick}
-      onMouseDown={handleMouseDown}
-      onMouseUp={handleMouseUp}
-      onMouseEnter={() => console.log('🔥 Mouse entered card:', task.taskId)}
-      onMouseLeave={() => console.log('🔥 Mouse left card:', task.taskId)}
-      // Add additional event handlers for debugging
-      onPointerDown={() => console.log('🔥 Pointer down on task:', task.taskId)}
-      onPointerUp={() => console.log('🔥 Pointer up on task:', task.taskId)}
-    >
-      {/* TEST BUTTON - Remove this after debugging */}
-      <button
-        onClick={handleTestButtonClick}
-        className="absolute top-2 left-2 bg-red-500 text-white px-2 py-1 text-xs rounded z-10"
-        style={{ zIndex: 10 }}
-      >
-        TEST {task.taskId}
-      </button>
-
-      {/* Header Row - Title with Task ID, Description with Status */}
-      <div className="mb-4">
-        {/* Title and Task ID Row */}
-        <div className="flex justify-between items-start mb-2">
-          <div className="font-bold text-gray-800 text-base leading-tight">
-            {task.title}
-          </div>
-          <div className="text-sm font-bold text-gray-800">
-            {task.taskId}
-          </div>
-        </div>
-        
-        {/* Description and Status Row */}
-        <div className="flex justify-between items-start">
-          <div className="text-gray-600 text-sm flex-1">
-            {task.description || 'התקשרות עם חברה נתונה בנושא ביצוע בעברית'}
-          </div>
-          <div 
-            className="px-2 py-1 rounded-md text-xs font-medium text-black ml-2"
-            style={{ backgroundColor: statusConfig.bgColor }}
-          >
-            {statusConfig.label}
-          </div>
-        </div>
+    <div className="bg-white rounded-lg border border-gray-300 p-4 relative" style={{ height: '240px', width: '100%' }}>
+      {/* BIG TEST BUTTON */}
+      <div className="absolute top-2 left-2 right-2 z-50">
+        <button
+          onClick={testNavigation}
+          className="w-full bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-4 rounded"
+        >
+          🚀 CLICK TO NAVIGATE TO TASK {task.taskId} 🚀
+        </button>
       </div>
 
-      {/* Middle Row - Quarter & Complexity (left), Requester & Division (right) */}
-      <div className="flex justify-between items-center mb-4 text-sm">
-        <div className="flex gap-4">
-          <div className="text-right">
-            <span className="text-gray-600">רבעון נדרש: </span>
-            <span className="font-medium">Q1/26</span>
-          </div>
-          <div className="text-right">
-            <span className="text-gray-600">מורכבות: </span>
-            <span className="font-medium">{getComplexityText(task.complexity)}</span>
-          </div>
-        </div>
-        <div className="flex gap-4">
-          <div className="text-right">
-            <span className="text-gray-600">אגף: </span>
-            <span className="font-medium">{task.divisionName || 'לוגיסטיקה'}</span>
-          </div>
-          <div className="text-right">
-            <span className="text-gray-600">דורש: </span>
-            <span className="font-medium">{task.requesterName || 'שמעון לביא'}</span>
-          </div>
-        </div>
-      </div>
-
-      {/* Bottom Row */}
-      <div className="flex justify-between items-start text-sm">
-        {/* Left Side - Stations Progress */}
-        <div className="text-right">
-          <div className="mb-1">
-            <span className="text-gray-600">תחנה נוכחית: </span>
-            <span className="font-medium">{completedStations}/{totalStations}</span>
-          </div>
-          {progressDisplay && (
-            <div className={`${progressDisplay.color} font-medium mb-1`}>
-              {progressDisplay.text}
+      {/* Original content - moved down */}
+      <div className="mt-16">
+        {/* Header Row - Title with Task ID, Description with Status */}
+        <div className="mb-4">
+          {/* Title and Task ID Row */}
+          <div className="flex justify-between items-start mb-2">
+            <div className="font-bold text-gray-800 text-base leading-tight">
+              {task.title}
             </div>
-          )}
-          {task.status !== 'Open' && (
-            <div className="text-gray-600 text-xs">
-              עדכון אחרון: {formatDate(lastCompletedDate)} ({daysAgo})
+            <div className="text-sm font-bold text-gray-800">
+              {task.taskId}
             </div>
-          )}
+          </div>
+          
+          {/* Description and Status Row */}
+          <div className="flex justify-between items-start">
+            <div className="text-gray-600 text-sm flex-1">
+              {task.description || 'התקשרות עם חברה נתונה בנושא ביצוע בעברית'}
+            </div>
+            <div 
+              className="px-2 py-1 rounded-md text-xs font-medium text-black ml-2"
+              style={{ backgroundColor: statusConfig.bgColor }}
+            >
+              {statusConfig.label}
+            </div>
+          </div>
         </div>
 
-        {/* Right Side - Domain, Team, Officer */}
-        <div className="text-right">
-          <div className="mb-1">
-            <span className="text-gray-600">תחום: </span>
-            <span className="font-medium">{task.domainName || 'רכש לוגיסטי'}</span>
+        {/* Middle Row - Quarter & Complexity (left), Requester & Division (right) */}
+        <div className="flex justify-between items-center mb-4 text-sm">
+          <div className="flex gap-4">
+            <div className="text-right">
+              <span className="text-gray-600">רבעון נדרש: </span>
+              <span className="font-medium">Q1/26</span>
+            </div>
+            <div className="text-right">
+              <span className="text-gray-600">מורכבות: </span>
+              <span className="font-medium">{getComplexityText(task.complexity)}</span>
+            </div>
           </div>
-          <div className="mb-1">
-            <span className="text-gray-600">צוות: </span>
-            <span className="font-medium">{task.teamName || 'תפעול ורכב'}</span>
+          <div className="flex gap-4">
+            <div className="text-right">
+              <span className="text-gray-600">אגף: </span>
+              <span className="font-medium">{task.divisionName || 'לוגיסטיקה'}</span>
+            </div>
+            <div className="text-right">
+              <span className="text-gray-600">דורש: </span>
+              <span className="font-medium">{task.requesterName || 'שמעון לביא'}</span>
+            </div>
           </div>
-          <div className="flex items-center justify-end gap-2">
-            <span className="text-gray-600">קניין: </span>
-            <span className="font-medium">{task.assignedOfficerName || 'רבקה דקל'}</span>
-            <div className="w-6 h-6 bg-blue-500 text-white rounded-full flex items-center justify-center text-xs font-bold">
-              {getInitials(task.assignedOfficerName || 'רבקה דקל')}
+        </div>
+
+        {/* Bottom Row */}
+        <div className="flex justify-between items-start text-sm">
+          {/* Left Side - Stations Progress */}
+          <div className="text-right">
+            <div className="mb-1">
+              <span className="text-gray-600">תחנה נוכחית: </span>
+              <span className="font-medium">{completedStations}/{totalStations}</span>
+            </div>
+            {progressDisplay && (
+              <div className={`${progressDisplay.color} font-medium mb-1`}>
+                {progressDisplay.text}
+              </div>
+            )}
+            {task.status !== 'Open' && (
+              <div className="text-gray-600 text-xs">
+                עדכון אחרון: {formatDate(lastCompletedDate)} ({daysAgo})
+              </div>
+            )}
+          </div>
+
+          {/* Right Side - Domain, Team, Officer */}
+          <div className="text-right">
+            <div className="mb-1">
+              <span className="text-gray-600">תחום: </span>
+              <span className="font-medium">{task.domainName || 'רכש לוגיסטי'}</span>
+            </div>
+            <div className="mb-1">
+              <span className="text-gray-600">צוות: </span>
+              <span className="font-medium">{task.teamName || 'תפעול ורכב'}</span>
+            </div>
+            <div className="flex items-center justify-end gap-2">
+              <span className="text-gray-600">קניין: </span>
+              <span className="font-medium">{task.assignedOfficerName || 'רבקה דקל'}</span>
+              <div className="w-6 h-6 bg-blue-500 text-white rounded-full flex items-center justify-center text-xs font-bold">
+                {getInitials(task.assignedOfficerName || 'רבקה דקל')}
+              </div>
             </div>
           </div>
         </div>
