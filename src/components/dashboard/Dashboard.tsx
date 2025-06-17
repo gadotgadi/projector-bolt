@@ -86,8 +86,8 @@ const Dashboard = () => {
   }, [programs, filters, user]);
 
   const handleProgramClick = (program: Program) => {
-    console.log('🔥🔥🔥 Dashboard: נלחץ על משימה:', program.taskId);
-    console.log('🔥🔥🔥 Dashboard: מנווט לנתיב:', `/station-assignment/${program.taskId}`);
+    console.log('🎯🎯🎯 Dashboard: נלחץ על משימה:', program.taskId);
+    console.log('🎯🎯🎯 Dashboard: מנווט לנתיב:', `/station-assignment/${program.taskId}`);
     
     try {
       // Force navigation with replace to ensure it works
@@ -121,6 +121,20 @@ const Dashboard = () => {
         programs={programs}
       />
 
+      {/* TEST BUTTON */}
+      <div className="bg-red-500 text-white p-4 rounded">
+        <button 
+          onClick={() => {
+            console.log('🎯🎯🎯 DASHBOARD TEST BUTTON CLICKED!');
+            alert('Dashboard test button works!');
+            handleProgramClick(filteredPrograms[0]);
+          }}
+          className="bg-yellow-500 text-black px-4 py-2 rounded font-bold"
+        >
+          🎯 TEST DASHBOARD NAVIGATION 🎯
+        </button>
+      </div>
+
       {/* Programs Grid - 3 columns for wider cards */}
       <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
         {filteredPrograms.map(program => {
@@ -130,7 +144,7 @@ const Dashboard = () => {
               key={program.taskId} 
               task={program}
               onClick={() => {
-                console.log('🔥🔥🔥 Dashboard: onClick callback נקרא עבור משימה:', program.taskId);
+                console.log('🎯🎯🎯 Dashboard: onClick callback נקרא עבור משימה:', program.taskId);
                 handleProgramClick(program);
               }}
             />
