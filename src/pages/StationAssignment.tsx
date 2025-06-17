@@ -26,6 +26,7 @@ const StationAssignment = () => {
   const { user } = useAuth();
   const [showPermissionDialog, setShowPermissionDialog] = useState(false);
 
+  console.log('🔥🔥🔥 STATION ASSIGNMENT COMPONENT LOADED!');
   console.log('🔥 StationAssignment: נטען עם taskId:', taskId);
   console.log('🔥 StationAssignment: משימות זמינות:', mockPrograms.map(p => p.taskId));
 
@@ -40,10 +41,14 @@ const StationAssignment = () => {
     return (
       <AppLayout currentRoute="/station-assignment">
         <div className="text-center py-12">
+          <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
+            <strong>🚨 DEBUG INFO:</strong>
+            <div>TaskId from URL: {taskId}</div>
+            <div>Available TaskIds: {mockPrograms.map(p => p.taskId).join(', ')}</div>
+            <div>Type of taskId: {typeof taskId}</div>
+            <div>Type of first program taskId: {typeof mockPrograms[0]?.taskId}</div>
+          </div>
           <p className="text-gray-500">משימה לא נמצאה (ID: {taskId})</p>
-          <p className="text-gray-400 text-sm mt-2">
-            משימות זמינות: {mockPrograms.map(p => p.taskId).join(', ')}
-          </p>
           <Button onClick={() => navigate('/')} className="mt-4">
             חזרה לשולחן העבודה
           </Button>
@@ -121,6 +126,11 @@ const StationAssignment = () => {
   return (
     <AppLayout currentRoute="/station-assignment" pageTitle={`עדכון משימה #${program.taskId}`}>
       <div className="min-h-screen bg-gray-50" style={{ transform: 'scale(0.75)', transformOrigin: 'top right' }}>
+        {/* SUCCESS MESSAGE */}
+        <div className="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded mb-4">
+          <strong>🎉 SUCCESS!</strong> StationAssignment component loaded successfully for task {program.taskId}!
+        </div>
+
         {/* Header */}
         <div className="bg-white border-b px-6 py-3">
           <div className="flex items-center justify-between">
