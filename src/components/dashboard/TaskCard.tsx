@@ -1,5 +1,5 @@
 import React from 'react';
-import { Program, STATUS_CONFIG } from '../../types';
+import { Program } from '../../types';
 
 interface TaskCardProps {
   task: Program;
@@ -7,41 +7,44 @@ interface TaskCardProps {
 }
 
 const TaskCard: React.FC<TaskCardProps> = ({ task, onClick }) => {
-  console.log('🚀🚀🚀 TASKCARD V16.0 LOADED! Task:', task.taskId, 'onClick exists:', !!onClick);
-  
-  const statusConfig = STATUS_CONFIG[task.status];
-  
-  const handleCardClick = () => {
-    console.log('🎯🎯🎯 CARD CLICKED! Task:', task.taskId);
-    alert(`🎯 CARD CLICKED: Going to Station Assignment for task ${task.taskId}`);
-    
-    // Use window.location.href for direct navigation
-    const stationUrl = `/station-assignment/${task.taskId}`;
-    console.log('🎯🎯🎯 Navigating to:', stationUrl);
-    window.location.href = stationUrl;
-  };
+  console.log('🚀🚀🚀 TASKCARD V17.0 LOADED! Task:', task.taskId);
   
   return (
     <div 
-      className="bg-white rounded-lg border-4 border-red-500 shadow-lg hover:shadow-xl transition-shadow cursor-pointer"
-      style={{ height: '240px', width: '100%' }}
+      style={{ 
+        height: '240px', 
+        width: '100%',
+        backgroundColor: '#ff0000',
+        border: '5px solid #ffff00',
+        borderRadius: '10px',
+        padding: '10px',
+        cursor: 'pointer',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center'
+      }}
+      onClick={() => {
+        console.log('🎯🎯🎯 DIV CLICKED! Task:', task.taskId);
+        alert(`🎯 DIV CLICKED: Task ${task.taskId}`);
+        window.location.href = `/station-assignment/${task.taskId}`;
+      }}
+      onMouseDown={() => console.log('🎯 MOUSE DOWN on task:', task.taskId)}
+      onMouseUp={() => console.log('🎯 MOUSE UP on task:', task.taskId)}
+      onMouseEnter={() => console.log('🎯 MOUSE ENTER on task:', task.taskId)}
+      onMouseLeave={() => console.log('🎯 MOUSE LEAVE on task:', task.taskId)}
     >
-      <div className="p-4 h-full flex flex-col bg-yellow-100">
-        {/* GIANT CLICK BUTTON */}
-        <button
-          onClick={handleCardClick}
-          className="w-full h-full bg-red-500 hover:bg-red-600 text-white font-bold text-xl rounded-lg border-4 border-yellow-400"
-          style={{ minHeight: '200px' }}
-        >
-          <div className="text-center">
-            <div className="text-3xl mb-2">🎯 CLICK ME! 🎯</div>
-            <div className="text-2xl mb-2">TASK {task.taskId}</div>
-            <div className="text-lg">{task.title}</div>
-            <div className="text-base mt-4 bg-yellow-400 text-black p-2 rounded">
-              CLICK THIS ENTIRE BUTTON!
-            </div>
-          </div>
-        </button>
+      <div style={{
+        backgroundColor: '#ffffff',
+        padding: '20px',
+        borderRadius: '10px',
+        textAlign: 'center',
+        fontSize: '20px',
+        fontWeight: 'bold',
+        color: '#000000'
+      }}>
+        🎯 CLICK ME! 🎯<br/>
+        TASK {task.taskId}<br/>
+        {task.title}
       </div>
     </div>
   );
