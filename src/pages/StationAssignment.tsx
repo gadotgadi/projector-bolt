@@ -3,28 +3,14 @@ import { useNavigate, useParams } from 'react-router-dom';
 import AppLayout from '../components/layout/AppLayout';
 import { Program } from '../types';
 import { Button } from '../components/ui/button';
-import { ArrowRight, Save, Lock } from 'lucide-react';
-import { useToast } from '../components/ui/use-toast';
-import ProgramForm from '../components/program/ProgramForm';
-import StationAssignmentForm from '../components/stations/StationAssignmentForm';
-import StatusBadge from '../components/common/StatusBadge';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '../components/ui/dialog';
+import { ArrowRight } from 'lucide-react';
 import { mockPrograms } from '../data/mockPrograms';
 import { useAuth } from '../components/auth/AuthProvider';
-
-// Declare global validation function
-declare global {
-  interface Window {
-    validateStationAssignment?: () => boolean;
-  }
-}
 
 const StationAssignment = () => {
   const navigate = useNavigate();
   const { taskId } = useParams();
-  const { toast } = useToast();
   const { user } = useAuth();
-  const [showPermissionDialog, setShowPermissionDialog] = useState(false);
 
   console.log('🔥🔥🔥 STATION ASSIGNMENT COMPONENT LOADED!');
   console.log('🔥 StationAssignment: נטען עם taskId:', taskId, 'type:', typeof taskId);
@@ -68,68 +54,11 @@ const StationAssignment = () => {
     navigate('/');
   };
 
-  const handleSave = () => {
-    toast({
-      title: "שינויים נשמרו",
-      description: "פרטי המשימה נשמרו בהצלחה",
-    });
-  };
-
-  const handleFreeze = () => {
-    // Validate station assignment if program is in OPEN status
-    if (program.status === 'Open') {
-      if (window.validateStationAssignment && !window.validateStationAssignment()) {
-        return; // Validation failed, error already shown by validation function
-      }
-      
-      // Update status to PLAN
-      const updatedProgram = {
-        ...program,
-        status: 'Plan' as const,
-        lastUpdate: new Date()
-      };
-      setProgram(updatedProgram);
-      
-      toast({
-        title: "המשימה קובעה",
-        description: "המשימה עברה לשלב תכנון",
-      });
-    } else {
-      toast({
-        title: "המשימה קובעה",
-        description: "לא ניתן לערוך את המשימה יותר",
-      });
-    }
-  };
-
-  const handleProgramUpdate = (updatedProgram: Program) => {
-    setProgram(updatedProgram);
-  };
-
-  // Check permissions - allowing full access for technical users and procurement managers
-  const canEdit = user?.roleCode === 1 || user?.roleCode === 0 || user?.roleCode === 9;
-  const canSave = canEdit || 
-    (user?.roleCode === 4 && program.status === 'Open') ||
-    ([2, 3].includes(user?.roleCode || 0) && 
-     ['Open', 'Plan', 'In Progress'].includes(program.status));
-  
-  const canView = canEdit || 
-    (user?.roleCode === 4) ||
-    ([2, 3].includes(user?.roleCode || 0) && 
-     ['Open', 'Plan', 'In Progress'].includes(program.status));
-
-  const canFreeze = canEdit && ['Open', 'Plan'].includes(program.status);
-
-  // Show permission dialog instead of blocking access
-  const handlePermissionDenied = () => {
-    setShowPermissionDialog(true);
-  };
-
   console.log('🔥 StationAssignment: מציג מסך טיפול במשימה:', program.taskId);
 
   return (
     <AppLayout currentRoute="/station-assignment" pageTitle={`עדכון משימה #${program.taskId}`}>
-      <div className="min-h-screen bg-gray-50" style={{ transform: 'scale(0.75)', transformOrigin: 'top right' }}>
+      <div className="min-h-screen bg-gray-50">
         {/* SUCCESS MESSAGE */}
         <div className="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded mb-4">
           <strong>🎉 SUCCESS!</strong> StationAssignment component loaded successfully for task {program.taskId}!
@@ -149,74 +78,38 @@ const StationAssignment = () => {
             </div>
             
             <div className="flex items-center gap-3">
-              <StatusBadge status={program.status} size="md" />
-              {canSave ? (
-                <Button onClick={handleSave} className="flex items-center gap-2 text-sm px-3 py-1.5">
-                  <Save className="w-3 h-3" />
-                  שמירה
-                </Button>
-              ) : (
-                <Button onClick={handlePermissionDenied} className="flex items-center gap-2 text-sm px-3 py-1.5">
-                  <Save className="w-3 h-3" />
-                  שמירה
-                </Button>
-              )}
-              {canFreeze ? (
-                <Button onClick={handleFreeze} variant="secondary" className="flex items-center gap-2 text-sm px-3 py-1.5">
-                  <Lock className="w-3 h-3" />
-                  קיבוע
-                </Button>
-              ) : (
-                <Button onClick={handlePermissionDenied} variant="secondary" className="flex items-center gap-2 text-sm px-3 py-1.5">
-                  <Lock className="w-3 h-3" />
-                  קיבוע
-                </Button>
-              )}
+              <span className="text-lg font-bold">משימה #{program.taskId}</span>
             </div>
           </div>
         </div>
 
         {/* Main Content */}
-        <div className="flex" style={{ height: 'calc(100vh - 60px)' }}>
-          {/* Left Side - Program Details */}
-          <div className="w-1/3 p-4 overflow-y-auto bg-white border-r">
-            <ProgramForm 
-              program={program}
-              canEdit={canEdit}
-              onProgramUpdate={handleProgramUpdate}
-              isEditing={false}
-              onSave={handleSave}
-              onCancel={() => {}}
-            />
-          </div>
+        <div className="p-6">
+          <div className="bg-white rounded-lg border p-6">
+            <h1 className="text-2xl font-bold mb-4 text-right">{program.title}</h1>
+            
+            <div className="grid grid-cols-2 gap-6 text-right">
+              <div>
+                <h3 className="font-semibold mb-2">פרטי המשימה</h3>
+                <p><strong>גורם דורש:</strong> {program.requesterName}</p>
+                <p><strong>אגף:</strong> {program.divisionName}</p>
+                <p><strong>סטטוס:</strong> {program.status}</p>
+                <p><strong>שנת עבודה:</strong> {program.workYear}</p>
+              </div>
+              
+              <div>
+                <h3 className="font-semibold mb-2">תיאור</h3>
+                <p>{program.description || 'אין תיאור'}</p>
+              </div>
+            </div>
 
-          {/* Right Side - Station Assignment */}
-          <div className="w-2/3 p-4 overflow-y-auto bg-gray-50">
-            <StationAssignmentForm 
-              program={program}
-              canEdit={canEdit}
-              onSave={handleSave}
-              onProgramUpdate={handleProgramUpdate}
-            />
+            <div className="mt-6 p-4 bg-blue-50 rounded">
+              <h3 className="font-semibold mb-2">מידע טכני</h3>
+              <p>מסך זה יכלול את כל הפונקציונליות לניהול תחנות המשימה</p>
+              <p>כרגע מוצג מידע בסיסי על המשימה לאימות שהניווט עובד</p>
+            </div>
           </div>
         </div>
-
-        {/* Permission Dialog */}
-        <Dialog open={showPermissionDialog} onOpenChange={setShowPermissionDialog}>
-          <DialogContent className="text-right">
-            <DialogHeader>
-              <DialogTitle>אין הרשאה</DialogTitle>
-              <DialogDescription>
-                אין לך הרשאה לבצע פעולה זו. פנה למנהל המערכת לקבלת הרשאות נוספות.
-              </DialogDescription>
-            </DialogHeader>
-            <div className="flex justify-end mt-4">
-              <Button onClick={() => setShowPermissionDialog(false)}>
-                סגור
-              </Button>
-            </div>
-          </DialogContent>
-        </Dialog>
       </div>
     </AppLayout>
   );
