@@ -70,33 +70,28 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, onClick }) => {
 
   const progressDisplay = getProgressDisplay();
 
+  // Simple click handler
+  const handleCardClick = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    console.log('🎯🎯🎯 CARD CLICKED! Task ID:', task.taskId);
+    
+    if (onClick) {
+      console.log('🎯🎯🎯 Calling onClick function for task:', task.taskId);
+      onClick();
+    } else {
+      console.log('❌ No onClick function provided!');
+    }
+  };
+
   return (
-    <div className="bg-white rounded-lg border border-gray-300 p-4 cursor-pointer hover:shadow-xl hover:border-blue-500 transition-all duration-200 transform hover:scale-[1.02] active:scale-[0.98] select-none"
-         style={{ height: '240px', width: '100%' }}
-         onMouseDown={(e) => {
-           console.log('🚀🚀🚀 MOUSE DOWN on task:', task.taskId);
-           e.preventDefault();
-         }}
-         onMouseUp={(e) => {
-           console.log('🚀🚀🚀 MOUSE UP on task:', task.taskId);
-           e.preventDefault();
-           if (onClick) {
-             console.log('🚀🚀🚀 Calling onClick for task:', task.taskId);
-             onClick();
-           }
-         }}
-         onTouchStart={(e) => {
-           console.log('🚀🚀🚀 TOUCH START on task:', task.taskId);
-         }}
-         onTouchEnd={(e) => {
-           console.log('🚀🚀🚀 TOUCH END on task:', task.taskId);
-           e.preventDefault();
-           if (onClick) {
-             console.log('🚀🚀🚀 Calling onClick from touch for task:', task.taskId);
-             onClick();
-           }
-         }}>
-      
+    <div 
+      className="bg-white rounded-lg border border-gray-300 p-4 cursor-pointer hover:shadow-xl hover:border-blue-500 transition-all duration-200 transform hover:scale-[1.02] active:scale-[0.98] select-none"
+      style={{ height: '240px', width: '100%' }}
+      onClick={handleCardClick}
+      onMouseEnter={() => console.log('🔥 Mouse entered card:', task.taskId)}
+      onMouseLeave={() => console.log('🔥 Mouse left card:', task.taskId)}
+    >
       {/* Header Row - Title with Task ID, Description with Status */}
       <div className="mb-4">
         {/* Title and Task ID Row */}
