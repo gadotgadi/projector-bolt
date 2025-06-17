@@ -179,6 +179,36 @@ const Dashboard = () => {
         </button>
       </div>
 
+      {/* DIRECT TASK CARD TEST */}
+      <div className="bg-yellow-300 p-4 rounded-lg border-4 border-red-500">
+        <h3 className="text-xl font-bold mb-4 text-black">🎯 DIRECT TASK CARD TEST</h3>
+        <div 
+          style={{
+            width: '300px',
+            height: '150px',
+            backgroundColor: '#ff6b6b',
+            border: '3px solid #000',
+            borderRadius: '10px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            cursor: 'pointer',
+            fontSize: '18px',
+            fontWeight: 'bold',
+            color: 'white'
+          }}
+          onClick={() => {
+            console.log('🎯🎯🎯 DIRECT TEST CARD CLICKED!');
+            alert('🎯 DIRECT TEST CARD WORKS!');
+            window.location.href = '/station-assignment/9999';
+          }}
+          onMouseEnter={() => console.log('🎯 DIRECT TEST: Mouse Enter')}
+          onMouseLeave={() => console.log('🎯 DIRECT TEST: Mouse Leave')}
+        >
+          🎯 CLICK THIS DIRECT TEST CARD 🎯
+        </div>
+      </div>
+
       {/* Programs Grid - 3 columns for wider cards */}
       <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
         {filteredPrograms.map(program => {
