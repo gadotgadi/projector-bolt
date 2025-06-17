@@ -100,9 +100,16 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, onClick }) => {
     console.log('🔥 MouseUp on task:', task.taskId);
   };
 
+  // Simple test button handler
+  const handleTestButtonClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    console.log('🚀🚀🚀 TEST BUTTON CLICKED for task:', task.taskId);
+    alert(`Test button clicked for task ${task.taskId}`);
+  };
+
   return (
     <div 
-      className="bg-white rounded-lg border border-gray-300 p-4 cursor-pointer hover:shadow-xl hover:border-blue-500 transition-all duration-200 transform hover:scale-[1.02] active:scale-[0.98] select-none"
+      className="bg-white rounded-lg border border-gray-300 p-4 cursor-pointer hover:shadow-xl hover:border-blue-500 transition-all duration-200 transform hover:scale-[1.02] active:scale-[0.98] select-none relative"
       style={{ 
         height: '240px', 
         width: '100%',
@@ -118,6 +125,15 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, onClick }) => {
       onPointerDown={() => console.log('🔥 Pointer down on task:', task.taskId)}
       onPointerUp={() => console.log('🔥 Pointer up on task:', task.taskId)}
     >
+      {/* TEST BUTTON - Remove this after debugging */}
+      <button
+        onClick={handleTestButtonClick}
+        className="absolute top-2 left-2 bg-red-500 text-white px-2 py-1 text-xs rounded z-10"
+        style={{ zIndex: 10 }}
+      >
+        TEST {task.taskId}
+      </button>
+
       {/* Header Row - Title with Task ID, Description with Status */}
       <div className="mb-4">
         {/* Title and Task ID Row */}
