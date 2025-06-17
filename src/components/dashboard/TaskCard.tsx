@@ -70,49 +70,48 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, onClick }) => {
 
   const progressDisplay = getProgressDisplay();
 
-  // Enhanced navigation function with detailed logging
-  const testNavigation = () => {
-    console.log('🚀🚀🚀 NAVIGATION TEST STARTED for task:', task.taskId);
+  // SUPER SIMPLE TEST FUNCTION
+  const handleButtonClick = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
     
-    // Test 1: Alert to confirm button works
-    alert(`Navigation test for task ${task.taskId} - Button clicked successfully!`);
+    console.log('🔥🔥🔥 BUTTON CLICKED! Task ID:', task.taskId);
     
-    // Test 2: Try onClick callback if provided
+    // Show alert first
+    alert(`BUTTON CLICKED FOR TASK ${task.taskId}!`);
+    
+    // Log onClick function
+    console.log('🔥 onClick function exists:', !!onClick);
+    console.log('🔥 onClick function:', onClick);
+    
+    // Try calling onClick
     if (onClick) {
-      console.log('🚀 Calling onClick callback...');
-      try {
-        onClick();
-        console.log('🚀 onClick callback completed successfully');
-      } catch (error) {
-        console.error('❌ onClick callback failed:', error);
-        alert('onClick callback failed: ' + error);
-      }
-    } else {
-      console.log('❌ No onClick callback provided');
-      alert('No onClick callback provided to TaskCard');
+      console.log('🔥 Calling onClick...');
+      onClick();
     }
     
-    // Test 3: Try direct window navigation
-    console.log('🚀 Attempting direct window navigation...');
+    // Try direct navigation
+    console.log('🔥 Trying direct navigation...');
     try {
-      const targetUrl = `/station-assignment/${task.taskId}`;
-      console.log('🚀 Target URL:', targetUrl);
-      
-      // Try window.location.href
-      window.location.href = targetUrl;
-      console.log('🚀 window.location.href set successfully');
+      window.location.href = `/station-assignment/${task.taskId}`;
     } catch (error) {
-      console.error('❌ Direct navigation failed:', error);
-      alert('Direct navigation failed: ' + error);
+      console.error('🔥 Navigation error:', error);
     }
   };
 
   return (
     <div className="bg-white rounded-lg border border-gray-300 p-4 relative" style={{ height: '240px', width: '100%' }}>
-      {/* ENHANCED TEST BUTTON */}
+      {/* SUPER SIMPLE TEST BUTTON */}
       <div className="absolute top-2 left-2 right-2 z-50">
         <button
-          onClick={testNavigation}
+          onClick={handleButtonClick}
+          onMouseDown={(e) => {
+            console.log('🔥 MOUSE DOWN on button');
+            e.preventDefault();
+          }}
+          onMouseUp={(e) => {
+            console.log('🔥 MOUSE UP on button');
+          }}
           style={{
             width: '100%',
             backgroundColor: '#10B981',
@@ -122,10 +121,11 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, onClick }) => {
             borderRadius: '6px',
             border: 'none',
             cursor: 'pointer',
-            fontSize: '14px'
+            fontSize: '14px',
+            zIndex: 9999
           }}
         >
-          🔧 NAVIGATE TO TASK {task.taskId} 🔧
+          🔧 CLICK ME - TASK {task.taskId} 🔧
         </button>
       </div>
 
