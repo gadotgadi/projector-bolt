@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Program, STATUS_CONFIG } from '../../types';
 
@@ -90,7 +89,7 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, onClick }) => {
         {/* Description and Status Row */}
         <div className="flex justify-between items-start">
           <div className="text-gray-600 text-sm flex-1">
-            התקשרות עם חברה נתונה בנושא ביצוע בעברית
+            {task.description || 'התקשרות עם חברה נתונה בנושא ביצוע בעברית'}
           </div>
           <div 
             className="px-2 py-1 rounded-md text-xs font-medium text-black ml-2"
@@ -116,11 +115,11 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, onClick }) => {
         <div className="flex gap-4">
           <div className="text-right">
             <span className="text-gray-600">אגף: </span>
-            <span className="font-medium">לוגיסטיקה</span>
+            <span className="font-medium">{task.divisionName || 'לוגיסטיקה'}</span>
           </div>
           <div className="text-right">
             <span className="text-gray-600">דורש: </span>
-            <span className="font-medium">שמעון לביא</span>
+            <span className="font-medium">{task.requesterName || 'שמעון לביא'}</span>
           </div>
         </div>
       </div>
@@ -149,17 +148,17 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, onClick }) => {
         <div className="text-right">
           <div className="mb-1">
             <span className="text-gray-600">תחום: </span>
-            <span className="font-medium">רכש לוגיסטי</span>
+            <span className="font-medium">{task.domainName || 'רכש לוגיסטי'}</span>
           </div>
           <div className="mb-1">
             <span className="text-gray-600">צוות: </span>
-            <span className="font-medium">תפעול ורכב</span>
+            <span className="font-medium">{task.teamName || 'תפעול ורכב'}</span>
           </div>
           <div className="flex items-center justify-end gap-2">
             <span className="text-gray-600">קניין: </span>
-            <span className="font-medium">רבקה דקל</span>
+            <span className="font-medium">{task.assignedOfficerName || 'רבקה דקל'}</span>
             <div className="w-6 h-6 bg-blue-500 text-white rounded-full flex items-center justify-center text-xs font-bold">
-              רד
+              {getInitials(task.assignedOfficerName || 'רבקה דקל')}
             </div>
           </div>
         </div>
