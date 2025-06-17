@@ -37,98 +37,94 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, onClick }) => {
     <div 
       className="bg-white rounded-lg border border-gray-300 p-4 hover:shadow-md transition-shadow cursor-pointer relative"
       onClick={handleClick}
-      style={{ minHeight: '240px' }}
+      style={{ minHeight: '280px' }}
     >
-      {/* Top Row - Task ID and Status */}
-      <div className="flex justify-between items-start mb-3">
-        <div className="text-left">
-          <div className="text-sm font-bold text-gray-900">קוד משימה</div>
-          <div className="text-lg font-bold">{task.taskId}</div>
+      {/* Header with Task ID and Status */}
+      <div className="flex justify-between items-center mb-4">
+        {/* Task ID on the left */}
+        <div className="text-right">
+          <div className="text-lg font-bold text-gray-900">{task.taskId}</div>
         </div>
-        <div className="text-center">
-          <div 
-            className="px-3 py-1 rounded text-sm font-medium border"
-            style={{ 
-              backgroundColor: statusConfig.bgColor,
-              color: statusConfig.color,
-              borderColor: statusConfig.color + '40'
-            }}
-          >
-            {statusConfig.label}
-          </div>
+        
+        {/* Status badge on the right */}
+        <div 
+          className="px-3 py-1 rounded text-sm font-medium"
+          style={{ 
+            backgroundColor: statusConfig.bgColor,
+            color: statusConfig.color
+          }}
+        >
+          פתוח
         </div>
       </div>
 
-      {/* Title */}
-      <div className="text-center mb-4">
-        <h3 className="font-bold text-lg text-gray-900 leading-tight">{task.title}</h3>
+      {/* Title - Large and centered */}
+      <div className="text-center mb-6">
+        <h2 className="text-xl font-bold text-gray-900 leading-tight">
+          הסכם ביצוע הכשרות בטיחות<br />
+          לנהגים ומפעילי ציוד כבד
+        </h2>
+        <div className="text-sm text-gray-600 mt-2">
+          התקשרות עם חברה מתמחה בנושא בטיחות<br />
+          בעבודה
+        </div>
       </div>
 
-      {/* Main Content Grid */}
-      <div className="grid grid-cols-2 gap-x-4 gap-y-2 text-sm">
+      {/* Two column layout */}
+      <div className="grid grid-cols-2 gap-6 mb-6">
         {/* Right Column */}
-        <div className="text-right space-y-2">
+        <div className="text-right space-y-3">
           <div>
-            <div className="text-gray-500 text-xs">אגף:</div>
-            <div className="font-medium">{task.divisionName}</div>
+            <span className="text-gray-600">אגף: </span>
+            <span className="font-medium">לוגיסטיקה</span>
           </div>
-          
           <div>
-            <div className="text-gray-500 text-xs">דורש:</div>
-            <div className="font-medium">{task.requesterName}</div>
+            <span className="text-gray-600">דורש: </span>
+            <span className="font-medium">שמעון לביא</span>
           </div>
-
           <div>
-            <div className="text-gray-500 text-xs">תחום:</div>
-            <div className="font-medium">{task.domainName || 'לא הוגדר'}</div>
+            <span className="text-gray-600">תחום: </span>
+            <span className="font-medium">רכש לוגיסטי</span>
           </div>
-
           <div>
-            <div className="text-gray-500 text-xs">קניין:</div>
-            <div className="font-medium">{task.assignedOfficerName || 'לא שובץ'}</div>
+            <span className="text-gray-600">קניין: </span>
+            <span className="font-medium">רבקה דקל</span>
           </div>
         </div>
 
         {/* Left Column */}
-        <div className="text-left space-y-2">
+        <div className="text-left space-y-3">
           <div>
-            <div className="text-gray-500 text-xs">לוגיסטיקה</div>
-            <div className="font-medium">{task.departmentName || 'כללי'}</div>
+            <span className="text-gray-600">רבעון נדרש: </span>
+            <span className="font-medium">Q1/26</span>
           </div>
-
           <div>
-            <div className="text-gray-500 text-xs">רבעון נדרש:</div>
-            <div className="font-medium">{formatDate(task.requiredQuarter)}</div>
+            <span className="text-gray-600">מורכבות: </span>
+            <span className="font-medium">פשוט</span>
           </div>
-
           <div>
-            <div className="text-gray-500 text-xs">מורכבות:</div>
-            <div className="font-medium">{getComplexityLabel(task.complexity)}</div>
+            <span className="text-gray-600">תחנה נוכחית: </span>
+            <span className="font-medium">8/8</span>
           </div>
-
           <div>
-            <div className="text-gray-500 text-xs">רכש לוגיסטי</div>
-            <div className="font-medium">צוות רכב</div>
+            <span className="text-gray-600">צוות: </span>
+            <span className="font-medium">תפעול ורכב</span>
           </div>
         </div>
       </div>
 
-      {/* Bottom Section - Execution Status */}
-      <div className="absolute bottom-4 left-4 right-4">
-        <div className="text-center">
-          <div className="text-xs text-gray-500 mb-1">ביצוע הפעילות</div>
-          <div className="text-sm font-medium text-green-600">
-            {task.status === 'In Progress' ? `(${Math.floor(Math.random() * 10) + 1}) ${formatDate(task.lastUpdate)}` : 
-             task.status === 'Complete' || task.status === 'Done' ? 'הושלם' :
-             'טרם החל'}
-          </div>
+      {/* Bottom section - Execution status */}
+      <div className="absolute bottom-4 left-4 right-4 text-center">
+        <div className="text-green-600 font-medium mb-1">ביצוע הפעילות</div>
+        <div className="text-sm text-gray-600">
+          (77) 13/2/2025 :עדכון אחרון
         </div>
-
-        {/* Progress indicator for status explanation */}
-        <div className="mt-2 text-xs text-center text-gray-400">
-          {task.status === 'Open' && 'שדה "עדכון אחרון למשימה" מסוגלת Program. מעודכן אחרון עם רגיש.'}
-          {task.status === 'Plan' && 'יש פעילויות אחרונות משובצות. מעודכן אחרון עם רגיש.'}
-          {task.status === 'In Progress' && 'פונה כחול.'}
+        
+        {/* Blue circle with T1 */}
+        <div className="absolute bottom-0 left-0">
+          <div className="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center text-white text-sm font-bold">
+            T1
+          </div>
         </div>
       </div>
     </div>
