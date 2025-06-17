@@ -10,22 +10,24 @@ interface TaskCardProps {
 const TaskCard: React.FC<TaskCardProps> = ({ task, onClick }) => {
   const navigate = useNavigate();
   
-  console.log('🚀🚀🚀 TASKCARD V10.0 LOADED! Task:', task.taskId, 'onClick exists:', !!onClick);
+  console.log('🚀🚀🚀 TASKCARD V11.0 LOADED! Task:', task.taskId, 'onClick exists:', !!onClick);
   
   const statusConfig = STATUS_CONFIG[task.status];
   
   const navigateToTask = () => {
     console.log('🎯🎯🎯 NAVIGATION TRIGGERED for task:', task.taskId);
-    const targetUrl = `/station-assignment/${task.taskId}`;
-    console.log('🎯🎯🎯 Target URL:', targetUrl);
+    
+    // Try the test station first
+    const testUrl = `/test-station/${task.taskId}`;
+    console.log('🎯🎯🎯 Test URL:', testUrl);
     
     // Show alert first to confirm click is working
-    alert(`🎯 CLICK DETECTED! Navigating to task ${task.taskId}`);
+    alert(`🧪 TESTING! Going to test station for task ${task.taskId}`);
     
-    // Use React Router instead of window.location.href
+    // Use React Router to navigate to test station
     try {
-      navigate(targetUrl);
-      console.log('🎯🎯🎯 React Router navigation executed');
+      navigate(testUrl);
+      console.log('🎯🎯🎯 React Router navigation to test station executed');
     } catch (error) {
       console.error('🎯🎯🎯 Navigation failed:', error);
     }
@@ -78,7 +80,7 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, onClick }) => {
 
         {/* Click indicator */}
         <div className="mt-2 text-center">
-          <span className="text-xs text-blue-600 font-medium">לחץ לפתיחה</span>
+          <span className="text-xs text-blue-600 font-medium">🧪 לחץ לבדיקה</span>
         </div>
       </div>
     </div>

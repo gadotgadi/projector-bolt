@@ -6,6 +6,7 @@ import ProtectedRoute from './components/auth/ProtectedRoute';
 import Index from './pages/Index';
 import NewTask from './pages/NewTask';
 import StationAssignment from './pages/StationAssignment';
+import TestStation from './pages/TestStation';
 import NotFound from './pages/NotFound';
 import { Toaster } from "@/components/ui/toaster"
 import EngagementTypes from './pages/EngagementTypes';
@@ -55,6 +56,12 @@ const AppContent: React.FC = () => {
       <Route path="/station-assignment/:taskId" element={
         <ProtectedRoute route="/station-assignment">
           <StationAssignment />
+        </ProtectedRoute>
+      } />
+      
+      <Route path="/test-station/:taskId" element={
+        <ProtectedRoute route="/">
+          <TestStation />
         </ProtectedRoute>
       } />
       
