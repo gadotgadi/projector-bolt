@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import AppLayout from '../../components/layout/AppLayout';
 import { Button } from '@/components/ui/button';
 import { ArrowRight, Plus } from 'lucide-react';
@@ -11,7 +11,6 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Edit, Trash2 } from 'lucide-react';
-import { apiRequest } from '../../utils/api';
 
 interface DepartmentRecord {
   id: number;
@@ -25,55 +24,40 @@ interface Division {
   name: string;
 }
 
+// Mock data
+const mockDivisions: Division[] = [
+  { id: 1, name: 'לוגיסטיקה' },
+  { id: 2, name: 'טכנולוגיה' },
+  { id: 3, name: 'מחקר ופיתוח' },
+  { id: 4, name: 'משאבי אנוש' },
+  { id: 5, name: 'מכירות' },
+  { id: 6, name: 'תפעול' }
+];
+
+const mockDepartmentsData: DepartmentRecord[] = [
+  { id: 1, name: 'רכש וחוזים', divisionId: 1, divisionName: 'לוגיסטיקה' },
+  { id: 2, name: 'תפעול ותחזוקה', divisionId: 1, divisionName: 'לוגיסטיקה' },
+  { id: 3, name: 'מערכות מידע', divisionId: 2, divisionName: 'טכנולוגיה' },
+  { id: 4, name: 'פיתוח תוכנה', divisionId: 2, divisionName: 'טכנולוגיה' },
+  { id: 5, name: 'מחקר', divisionId: 3, divisionName: 'מחקר ופיתוח' },
+  { id: 6, name: 'פיתוח', divisionId: 3, divisionName: 'מחקר ופיתוח' },
+  { id: 7, name: 'גיוס', divisionId: 4, divisionName: 'משאבי אנוש' },
+  { id: 8, name: 'שכר', divisionId: 4, divisionName: 'משאבי אנוש' }
+];
+
 const DepartmentsManagement: React.FC = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   
-  const [records, setRecords] = useState<DepartmentRecord[]>([]);
-  const [divisions, setDivisions] = useState<Division[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [records, setRecords] = useState<DepartmentRecord[]>(mockDepartmentsData);
+  const [divisions] = useState<Division[]>(mockDivisions);
+  const [loading, setLoading] = useState(false);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingRecord, setEditingRecord] = useState<DepartmentRecord | null>(null);
   const [formData, setFormData] = useState({
     name: '',
     divisionId: undefined as number | undefined
   });
-
-  useEffect(() => {
-    loadData();
-  }, []);
-
-  const loadData = async () => {
-    try {
-      setLoading(true);
-      
-      // Load departments
-      const departmentsResponse = await apiRequest.get('/system/departments');
-      if (departmentsResponse.ok) {
-        const departmentsData = await departmentsResponse.json();
-        console.log('Loaded departments:', departmentsData);
-        setRecords(departmentsData);
-      }
-
-      // Load divisions for the dropdown
-      const divisionsResponse = await apiRequest.get('/system/divisions');
-      if (divisionsResponse.ok) {
-        const divisionsData = await divisionsResponse.json();
-        console.log('Loaded divisions:', divisionsData);
-        setDivisions(divisionsData);
-      }
-
-    } catch (error) {
-      console.error('Error loading data:', error);
-      toast({
-        title: "שגיאה",
-        description: "שגיאה בטעינת הנתונים מהשרת",
-        variant: "destructive"
-      });
-    } finally {
-      setLoading(false);
-    }
-  };
 
   const handleAdd = () => {
     setEditingRecord(null);
@@ -101,53 +85,47 @@ const DepartmentsManagement: React.FC = () => {
     }
 
     try {
-      let response;
+      // Simulate API call
+      await new Promise(resolve => setTimeout(resolve, 500));
+
+      // Add division name for display
+      const division = divisions.find(d => d.id === formData.divisionId);
+      
       if (editingRecord) {
         // Update existing
-        response = await apiRequest.put(`/system/departments/${editingRecord.id}`, formData);
-      } else {
-        // Create new
-        response = await apiRequest.post('/system/departments', formData);
-      }
-
-      if (response.ok) {
-        const savedRecord = await response.json();
-        console.log('Saved department:', savedRecord);
-        
-        // Add division name for display
-        const division = divisions.find(d => d.id === savedRecord.division_id);
-        const transformedRecord = {
-          id: savedRecord.id,
-          name: savedRecord.name,
-          divisionId: savedRecord.division_id,
+        const updatedRecord = {
+          ...editingRecord,
+          name: formData.name,
+          divisionId: formData.divisionId,
           divisionName: division?.name
         };
-
-        if (editingRecord) {
-          setRecords(prev => prev.map(record => 
-            record.id === editingRecord.id ? transformedRecord : record
-          ));
-          toast({
-            title: "הצלחה",
-            description: "הרשומה עודכנה בהצלחה"
-          });
-        } else {
-          setRecords(prev => [...prev, transformedRecord]);
-          toast({
-            title: "הצלחה",
-            description: "הרשומה נוספה בהצלחה"
-          });
-        }
-
-        setIsDialogOpen(false);
-      } else {
-        const errorData = await response.json();
+        
+        setRecords(prev => prev.map(record => 
+          record.id === editingRecord.id ? updatedRecord : record
+        ));
+        
         toast({
-          title: "שגיאה",
-          description: errorData.error || "שגיאה בשמירת הנתונים",
-          variant: "destructive"
+          title: "הצלחה",
+          description: "הרשומה עודכנה בהצלחה"
+        });
+      } else {
+        // Create new
+        const newRecord = {
+          id: Math.max(...records.map(r => r.id)) + 1,
+          name: formData.name,
+          divisionId: formData.divisionId,
+          divisionName: division?.name
+        };
+        
+        setRecords(prev => [...prev, newRecord]);
+        
+        toast({
+          title: "הצלחה",
+          description: "הרשומה נוספה בהצלחה"
         });
       }
+
+      setIsDialogOpen(false);
     } catch (error) {
       console.error('Error saving department:', error);
       toast({
@@ -161,22 +139,14 @@ const DepartmentsManagement: React.FC = () => {
   const handleDelete = async (id: number) => {
     if (window.confirm('האם אתה בטוח שברצונך למחוק רשומה זו?')) {
       try {
-        const response = await apiRequest.delete(`/system/departments/${id}`);
+        // Simulate API call
+        await new Promise(resolve => setTimeout(resolve, 300));
         
-        if (response.ok) {
-          setRecords(prev => prev.filter(record => record.id !== id));
-          toast({
-            title: "הצלחה",
-            description: "הרשומה נמחקה בהצלחה"
-          });
-        } else {
-          const errorData = await response.json();
-          toast({
-            title: "שגיאה",
-            description: errorData.error || "שגיאה במחיקת הרשומה",
-            variant: "destructive"
-          });
-        }
+        setRecords(prev => prev.filter(record => record.id !== id));
+        toast({
+          title: "הצלחה",
+          description: "הרשומה נמחקה בהצלחה"
+        });
       } catch (error) {
         console.error('Error deleting department:', error);
         toast({
@@ -291,7 +261,7 @@ const DepartmentsManagement: React.FC = () => {
                 </Dialog>
                 <div>
                   <CardTitle className="text-xl">Department</CardTitle>
-                  <p className="text-gray-600 mt-1">ניהול רשימת המחלקות והגופים המקצועיים</p>
+                  <p className="text-gray-600 mt-1">ניהול רשימת המחלקות והגופים המקצועיים (מצב הדגמה)</p>
                 </div>
               </div>
             </CardHeader>

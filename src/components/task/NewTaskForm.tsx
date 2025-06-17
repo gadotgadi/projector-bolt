@@ -5,61 +5,59 @@ import { Input } from '../ui/input';
 import { Textarea } from '../ui/textarea';
 import { Label } from '../ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
-import { apiRequest } from '../../utils/api';
 import { useToast } from '../ui/use-toast';
 import { useAuth } from '../auth/AuthProvider';
+import { useNavigate } from 'react-router-dom';
 
 interface NewTaskFormProps {
   onSave: (task: any) => void;
   onCancel: () => void;
 }
 
-interface AcceptanceOption {
-  id: number;
-  yearId: number;
-  uploadCode: 'Plan' | 'Late' | 'Block' | 'Finish';
-  uploadCodeDescription: string;
-  broadMeaning?: string;
-}
+// Mock data for form dropdowns
+const mockDivisions = [
+  { id: 1, name: 'לוגיסטיקה' },
+  { id: 2, name: 'טכנולוגיה' },
+  { id: 3, name: 'מחקר ופיתוח' },
+  { id: 4, name: 'משאבי אנוש' },
+  { id: 5, name: 'מכירות' },
+  { id: 6, name: 'תפעול' }
+];
 
-interface Division {
-  id: number;
-  name: string;
-}
+const mockDepartments = [
+  { id: 1, name: 'רכש וחוזים', divisionId: 1 },
+  { id: 2, name: 'תפעול ותחזוקה', divisionId: 1 },
+  { id: 3, name: 'מערכות מידע', divisionId: 2 },
+  { id: 4, name: 'פיתוח תוכנה', divisionId: 2 },
+  { id: 5, name: 'מחקר', divisionId: 3 },
+  { id: 6, name: 'פיתוח', divisionId: 3 },
+  { id: 7, name: 'גיוס', divisionId: 4 },
+  { id: 8, name: 'שכר', divisionId: 4 }
+];
 
-interface Department {
-  id: number;
-  name: string;
-  divisionId: number;
-}
+const mockDomains = [
+  { id: 1, description: 'רכש לוגיסטי' },
+  { id: 2, description: 'רכש טכנולוגי' },
+  { id: 3, description: 'שירותים מקצועיים' },
+  { id: 4, description: 'תחזוקה ותפעול' },
+  { id: 5, description: 'ציוד משרדי' },
+  { id: 6, description: 'תוכנה ומערכות' }
+];
 
-interface Domain {
-  id: number;
-  description: string;
-}
-
-interface Worker {
-  id: number;
-  employeeId: string;
-  fullName: string;
-  roleCode: number;
-  divisionId?: number;
-  departmentId?: number;
-}
+const mockRequesters = [
+  { id: 5, fullName: 'רחל אברהם', divisionId: 4, departmentId: 7 },
+  { id: 6, fullName: 'יוסי לוי', divisionId: 3, departmentId: 5 },
+  { id: 7, fullName: 'מירי דוד', divisionId: 2, departmentId: 3 },
+  { id: 8, fullName: 'דני רוזן', divisionId: 1, departmentId: 1 }
+];
 
 const NewTaskForm: React.FC<NewTaskFormProps> = ({ onSave, onCancel }) => {
   const { toast } = useToast();
   const { user } = useAuth();
+  const navigate = useNavigate();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [taskId, setTaskId] = useState<number | null>(null);
   const [isFormLocked, setIsFormLocked] = useState(false);
-  
-  // Data from server
-  const [acceptanceOption, setAcceptanceOption] = useState<AcceptanceOption | null>(null);
-  const [divisions, setDivisions] = useState<Division[]>([]);
-  const [departments, setDepartments] = useState<Department[]>([]);
-  const [domains, setDomains] = useState<Domain[]>([]);
-  const [requesters, setRequesters] = useState<Worker[]>([]);
   
   // Current year from header
   const currentYear = new Date().getFullYear();
@@ -85,19 +83,14 @@ const NewTaskForm: React.FC<NewTaskFormProps> = ({ onSave, onCancel }) => {
     complexity: undefined as number | undefined
   });
 
-  // Load initial data
-  useEffect(() => {
-    loadInitialData();
-  }, []);
-
   // Auto-fill division and department when requester changes
   useEffect(() => {
     if (formData.requesterId) {
-      const requester = requesters.find(r => r.id === formData.requesterId);
+      const requester = mockRequesters.find(r => r.id === formData.requesterId);
       if (requester) {
         // Auto-fill division
         if (requester.divisionId) {
-          const division = divisions.find(d => d.id === requester.divisionId);
+          const division = mockDivisions.find(d => d.id === requester.divisionId);
           if (division) {
             setFormData(prev => ({
               ...prev,
@@ -109,7 +102,7 @@ const NewTaskForm: React.FC<NewTaskFormProps> = ({ onSave, onCancel }) => {
         
         // Auto-fill department
         if (requester.departmentId) {
-          const department = departments.find(d => d.id === requester.departmentId);
+          const department = mockDepartments.find(d => d.id === requester.departmentId);
           if (department) {
             setFormData(prev => ({
               ...prev,
@@ -120,24 +113,7 @@ const NewTaskForm: React.FC<NewTaskFormProps> = ({ onSave, onCancel }) => {
         }
       }
     }
-  }, [formData.requesterId, requesters, divisions, departments]);
-
-  // Auto-set planning source based on acceptance option and user role
-  useEffect(() => {
-    if (acceptanceOption && user?.roleCode === 4) {
-      let planningSource = 'annual_planning';
-      if (acceptanceOption.uploadCode === 'Plan') {
-        planningSource = 'annual_planning';
-      } else if (acceptanceOption.uploadCode === 'Late') {
-        planningSource = 'unplanned';
-      }
-      
-      setFormData(prev => ({
-        ...prev,
-        planningSource: planningSource as any
-      }));
-    }
-  }, [acceptanceOption, user?.roleCode]);
+  }, [formData.requesterId]);
 
   function generateCurrentQuarter(): string {
     const now = new Date();
@@ -158,55 +134,6 @@ const NewTaskForm: React.FC<NewTaskFormProps> = ({ onSave, onCancel }) => {
     return options;
   }
 
-  const loadInitialData = async () => {
-    try {
-      // Load acceptance option for current year
-      const acceptanceRes = await apiRequest.get('/planning/acceptance-options');
-      if (acceptanceRes.ok) {
-        const acceptanceData = await acceptanceRes.json();
-        const currentYearOption = acceptanceData.find((opt: AcceptanceOption) => opt.yearId === currentYear);
-        setAcceptanceOption(currentYearOption || null);
-      }
-
-      // Load divisions
-      const divisionsRes = await apiRequest.get('/system/divisions');
-      if (divisionsRes.ok) {
-        const divisionsData = await divisionsRes.json();
-        setDivisions(divisionsData);
-      }
-
-      // Load departments
-      const departmentsRes = await apiRequest.get('/system/departments');
-      if (departmentsRes.ok) {
-        const departmentsData = await departmentsRes.json();
-        setDepartments(departmentsData);
-      }
-
-      // Load domains
-      const domainsRes = await apiRequest.get('/system/domains');
-      if (domainsRes.ok) {
-        const domainsData = await domainsRes.json();
-        setDomains(domainsData);
-      }
-
-      // Load requesters (workers with role code 4)
-      const workersRes = await apiRequest.get('/workers');
-      if (workersRes.ok) {
-        const workersData = await workersRes.json();
-        const requestersData = workersData.filter((worker: Worker) => worker.roleCode === 4);
-        setRequesters(requestersData);
-      }
-
-    } catch (error) {
-      console.error('Error loading initial data:', error);
-      toast({
-        title: "שגיאה",
-        description: "שגיאה בטעינת נתוני המערכת",
-        variant: "destructive"
-      });
-    }
-  };
-
   const handleChange = (field: string, value: any) => {
     if (isFormLocked) return;
     
@@ -222,7 +149,7 @@ const NewTaskForm: React.FC<NewTaskFormProps> = ({ onSave, onCancel }) => {
   const handleRequesterChange = (requesterId: string) => {
     if (isFormLocked) return;
     
-    const requester = requesters.find(r => r.id.toString() === requesterId);
+    const requester = mockRequesters.find(r => r.id.toString() === requesterId);
     if (requester) {
       setFormData(prev => ({
         ...prev,
@@ -235,7 +162,7 @@ const NewTaskForm: React.FC<NewTaskFormProps> = ({ onSave, onCancel }) => {
   const handleDivisionChange = (divisionId: string) => {
     if (isFormLocked) return;
     
-    const division = divisions.find(d => d.id.toString() === divisionId);
+    const division = mockDivisions.find(d => d.id.toString() === divisionId);
     if (division) {
       setFormData(prev => ({
         ...prev,
@@ -251,7 +178,7 @@ const NewTaskForm: React.FC<NewTaskFormProps> = ({ onSave, onCancel }) => {
   const handleDepartmentChange = (departmentId: string) => {
     if (isFormLocked) return;
     
-    const department = departments.find(d => d.id.toString() === departmentId);
+    const department = mockDepartments.find(d => d.id.toString() === departmentId);
     if (department) {
       setFormData(prev => ({
         ...prev,
@@ -264,7 +191,7 @@ const NewTaskForm: React.FC<NewTaskFormProps> = ({ onSave, onCancel }) => {
   const handleDomainChange = (domainId: string) => {
     if (isFormLocked) return;
     
-    const domain = domains.find(d => d.id.toString() === domainId);
+    const domain = mockDomains.find(d => d.id.toString() === domainId);
     if (domain) {
       setFormData(prev => ({
         ...prev,
@@ -333,6 +260,12 @@ const NewTaskForm: React.FC<NewTaskFormProps> = ({ onSave, onCancel }) => {
     setIsSubmitting(true);
 
     try {
+      // Simulate API call delay
+      await new Promise(resolve => setTimeout(resolve, 1000));
+
+      // Generate new task ID (mock)
+      const newTaskId = 2000 + Math.floor(Math.random() * 1000);
+
       // Convert quarter format to date
       const [quarter, year] = formData.requiredQuarter.split('/');
       const quarterNum = parseInt(quarter.replace('Q', ''));
@@ -341,8 +274,9 @@ const NewTaskForm: React.FC<NewTaskFormProps> = ({ onSave, onCancel }) => {
       const requiredQuarterDate = new Date(fullYear, month, 1);
 
       const taskData = {
+        taskId: newTaskId,
         workYear: formData.workYear,
-        requiredQuarter: requiredQuarterDate.toISOString().split('T')[0],
+        requiredQuarter: requiredQuarterDate,
         title: formData.title,
         description: formData.description,
         requesterName: formData.requesterName,
@@ -354,42 +288,35 @@ const NewTaskForm: React.FC<NewTaskFormProps> = ({ onSave, onCancel }) => {
         supplierList: formData.supplierList,
         justification: formData.justification,
         planningSource: formData.planningSource,
-        complexity: formData.complexity
+        complexity: formData.complexity,
+        status: 'Open',
+        lastUpdate: new Date(),
+        createdAt: new Date()
       };
 
-      console.log('Submitting task data:', taskData);
+      console.log('Mock task created:', taskData);
+      
+      setTaskId(newTaskId);
+      setIsFormLocked(true);
+      
+      toast({
+        title: "הצלחה",
+        description: `דרישה ${newTaskId} נוספה בהצלחה`,
+      });
 
-      const response = await apiRequest.post('/programs', taskData);
+      // Call the onSave callback with the saved task
+      onSave(taskData);
 
-      if (response.ok) {
-        const savedTask = await response.json();
-        console.log('Task saved successfully:', savedTask);
-        
-        setTaskId(savedTask.taskId);
-        setIsFormLocked(true);
-        
-        toast({
-          title: "הצלחה",
-          description: `דרישה ${savedTask.taskId} נוספה בהצלחה`,
-        });
+      // Navigate back to dashboard after 2 seconds
+      setTimeout(() => {
+        navigate('/');
+      }, 2000);
 
-        // Call the onSave callback with the saved task
-        onSave(savedTask);
-      } else {
-        const errorData = await response.json();
-        console.error('API error:', errorData);
-        
-        toast({
-          title: "שגיאה",
-          description: errorData.error || "שגיאה בשמירת המשימה",
-          variant: "destructive"
-        });
-      }
     } catch (error) {
       console.error('Error saving task:', error);
       toast({
         title: "שגיאה",
-        description: "שגיאה בחיבור לשרת",
+        description: "שגיאה בשמירת המשימה",
         variant: "destructive"
       });
     } finally {
@@ -397,47 +324,35 @@ const NewTaskForm: React.FC<NewTaskFormProps> = ({ onSave, onCancel }) => {
     }
   };
 
-  // Check if user can create new tasks based on acceptance option
+  // Check if user can create new tasks (mock - always allow for demo)
   const canCreateTask = () => {
-    if (!acceptanceOption) return true; // Allow if no restriction found
-    
-    if (user?.roleCode === 1) {
-      // Procurement manager can always create tasks unless status is 'Finish'
-      return acceptanceOption.uploadCode !== 'Finish';
-    }
-    
-    if (user?.roleCode === 4) {
-      // Requester can create tasks only if status is 'Plan' or 'Late'
-      return ['Plan', 'Late'].includes(acceptanceOption.uploadCode);
-    }
-    
-    return false;
+    return true; // Always allow in mock mode
   };
 
   // Get available divisions for manual selection
   const getAvailableDivisions = () => {
     if (user?.roleCode === 4) {
       // For requesters, check if they have a pre-assigned division
-      const requester = requesters.find(r => r.id === user.id);
+      const requester = mockRequesters.find(r => r.id === user.id);
       if (requester?.divisionId) {
         return []; // Division is locked, no manual selection
       }
     }
-    return divisions;
+    return mockDivisions;
   };
 
   // Get available departments for manual selection
   const getAvailableDepartments = () => {
     if (user?.roleCode === 4) {
       // For requesters, check if they have a pre-assigned department
-      const requester = requesters.find(r => r.id === user.id);
+      const requester = mockRequesters.find(r => r.id === user.id);
       if (requester?.departmentId) {
         return []; // Department is locked, no manual selection
       }
     }
     
     // Filter departments by selected division
-    return departments.filter(dept => 
+    return mockDepartments.filter(dept => 
       !formData.divisionId || dept.divisionId === formData.divisionId
     );
   };
@@ -445,7 +360,7 @@ const NewTaskForm: React.FC<NewTaskFormProps> = ({ onSave, onCancel }) => {
   // Check if division field is locked
   const isDivisionLocked = () => {
     if (user?.roleCode === 4) {
-      const requester = requesters.find(r => r.id === user.id);
+      const requester = mockRequesters.find(r => r.id === user.id);
       return !!requester?.divisionId;
     }
     return false;
@@ -454,7 +369,7 @@ const NewTaskForm: React.FC<NewTaskFormProps> = ({ onSave, onCancel }) => {
   // Check if department field is locked
   const isDepartmentLocked = () => {
     if (user?.roleCode === 4) {
-      const requester = requesters.find(r => r.id === user.id);
+      const requester = mockRequesters.find(r => r.id === user.id);
       return !!requester?.departmentId;
     }
     return false;
@@ -476,12 +391,7 @@ const NewTaskForm: React.FC<NewTaskFormProps> = ({ onSave, onCancel }) => {
         <div className="bg-white p-8 rounded-lg shadow-md max-w-md text-center">
           <h2 className="text-xl font-bold text-gray-900 mb-4">אין הרשאה להעלות דרישות</h2>
           <p className="text-gray-600 mb-6">
-            {acceptanceOption?.uploadCode === 'Finish' 
-              ? 'השנה הסתיימה ואין אפשרות להעלות דרישות חדשות'
-              : acceptanceOption?.uploadCode === 'Block'
-              ? 'המערכת חסומה להעלאת דרישות חדשות'
-              : 'אין הרשאה להעלות דרישות במצב הנוכחי'
-            }
+            אין הרשאה להעלות דרישות במצב הנוכחי
           </p>
           <Button onClick={onCancel} variant="outline">
             חזרה לתפריט הראשי
@@ -592,7 +502,7 @@ const NewTaskForm: React.FC<NewTaskFormProps> = ({ onSave, onCancel }) => {
                       <SelectValue placeholder="בחר גורם דורש" />
                     </SelectTrigger>
                     <SelectContent>
-                      {requesters.map(requester => (
+                      {mockRequesters.map(requester => (
                         <SelectItem key={requester.id} value={requester.id.toString()}>
                           {requester.fullName}
                         </SelectItem>
@@ -800,7 +710,7 @@ const NewTaskForm: React.FC<NewTaskFormProps> = ({ onSave, onCancel }) => {
                     <SelectValue placeholder="בחר תחום רכש" />
                   </SelectTrigger>
                   <SelectContent>
-                    {domains.map(domain => (
+                    {mockDomains.map(domain => (
                       <SelectItem key={domain.id} value={domain.id.toString()}>
                         {domain.description}
                       </SelectItem>
@@ -839,13 +749,9 @@ const NewTaskForm: React.FC<NewTaskFormProps> = ({ onSave, onCancel }) => {
               <div className="text-green-700 font-medium">
                 ✓ דרישה {taskId} נוצרה בהצלחה. המסך נעול - ניתן לנווט למסך אחר באמצעות התפריט הראשי.
               </div>
-            ) : acceptanceOption ? (
-              <div className="text-blue-700">
-                מצב המערכת: {acceptanceOption.uploadCodeDescription} - {acceptanceOption.broadMeaning}
-              </div>
             ) : (
-              <div className="text-gray-500">
-                הודעות מערכת יוצגו כאן
+              <div className="text-blue-700">
+                מצב המערכת: פתוח לקליטת דרישות חדשות (מצב הדגמה)
               </div>
             )}
           </div>

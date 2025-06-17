@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import AppLayout from '../../components/layout/AppLayout';
 import { Button } from '@/components/ui/button';
 import { ArrowRight, Plus } from 'lucide-react';
@@ -8,7 +8,7 @@ import { Dialog, DialogTrigger } from '@/components/ui/dialog';
 import { useToast } from '@/hooks/use-toast';
 import WorkerFormDialog from '../../components/workers/WorkerFormDialog';
 import WorkersTable from '../../components/workers/WorkersTable';
-import { apiRequest } from '../../utils/api';
+import { mockUsers } from '../../data/mockUsers';
 
 interface WorkerRecord {
   id: number;
@@ -49,110 +49,72 @@ interface ProcurementTeam {
   name: string;
 }
 
+// Mock data
+const mockOrganizationalRoles: OrganizationalRole[] = [
+  { id: 1, roleCode: 0, description: 'מנהלן מערכת', permissions: 'מלא' },
+  { id: 2, roleCode: 1, description: 'מנהל רכש', permissions: 'ניהול רכש' },
+  { id: 3, roleCode: 2, description: 'ראש צוות', permissions: 'ניהול צוות' },
+  { id: 4, roleCode: 3, description: 'קניין', permissions: 'ביצוע רכש' },
+  { id: 5, roleCode: 4, description: 'גורם דורש', permissions: 'הגשת דרישות' },
+  { id: 6, roleCode: 5, description: 'מנהל יחידה', permissions: 'ניהול יחידה' },
+  { id: 7, roleCode: 6, description: 'חברי הנהלה וגורם מטה ארגוני', permissions: 'צפייה' },
+  { id: 8, roleCode: 9, description: 'גורם טכני', permissions: 'תחזוקה טכנית' }
+];
+
+const mockDivisions: Division[] = [
+  { id: 1, name: 'לוגיסטיקה' },
+  { id: 2, name: 'טכנולוגיה' },
+  { id: 3, name: 'מחקר ופיתוח' },
+  { id: 4, name: 'משאבי אנוש' }
+];
+
+const mockDepartments: Department[] = [
+  { id: 1, name: 'רכש וחוזים', divisionId: 1 },
+  { id: 2, name: 'תפעול ותחזוקה', divisionId: 1 },
+  { id: 3, name: 'מערכות מידע', divisionId: 2 },
+  { id: 4, name: 'פיתוח תוכנה', divisionId: 2 }
+];
+
+const mockProcurementTeams: ProcurementTeam[] = [
+  { id: 1, name: 'יעודי' },
+  { id: 2, name: 'טכנולוגי' },
+  { id: 3, name: 'לוגיסטי' },
+  { id: 4, name: 'מחשוב' },
+  { id: 5, name: 'הנדסי' },
+  { id: 6, name: 'ביטחוני' }
+];
+
+// Convert mock users to worker records
+const mockWorkersData: WorkerRecord[] = mockUsers.map(user => ({
+  id: user.id,
+  employeeId: user.employeeId,
+  roleCode: user.roleCode,
+  fullName: user.fullName,
+  roleDescription: user.roleDescription,
+  divisionId: undefined,
+  departmentId: undefined,
+  procurementTeam: user.procurementTeam || '',
+  password: '******', // Never show actual password
+  availableWorkDays: '200',
+  email: user.email,
+  divisionName: undefined,
+  departmentName: undefined
+}));
+
 const WorkersManagement: React.FC = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   
-  const [records, setRecords] = useState<WorkerRecord[]>([]);
-  const [divisions, setDivisions] = useState<Division[]>([]);
-  const [departments, setDepartments] = useState<Department[]>([]);
-  const [procurementTeams, setProcurementTeams] = useState<ProcurementTeam[]>([]);
-  const [organizationalRoles, setOrganizationalRoles] = useState<OrganizationalRole[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [records, setRecords] = useState<WorkerRecord[]>(mockWorkersData);
+  const [divisions] = useState<Division[]>(mockDivisions);
+  const [departments] = useState<Department[]>(mockDepartments);
+  const [procurementTeams] = useState<ProcurementTeam[]>(mockProcurementTeams);
+  const [organizationalRoles] = useState<OrganizationalRole[]>(mockOrganizationalRoles);
+  const [loading, setLoading] = useState(false);
 
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [editingRecord, setEditingRecord] = useState<WorkerRecord | null>(null);
   const [formData, setFormData] = useState<Partial<WorkerRecord>>({});
-
-  // Load data from API
-  useEffect(() => {
-    loadData();
-  }, []);
-
-  const loadData = async () => {
-    try {
-      setLoading(true);
-      
-      console.log('Loading workers management data...');
-      
-      // Load organizational roles FIRST - this is critical
-      console.log('Loading organizational roles...');
-      const rolesRes = await apiRequest.get('/workers/organizational-roles');
-      if (rolesRes.ok) {
-        const rolesData = await rolesRes.json();
-        console.log('✅ Loaded organizational roles:', rolesData);
-        setOrganizationalRoles(rolesData);
-      } else {
-        console.error('❌ Failed to load organizational roles:', rolesRes.status);
-        const errorText = await rolesRes.text();
-        console.error('Error response:', errorText);
-        
-        // Show error to user
-        toast({
-          title: "שגיאה",
-          description: "שגיאה בטעינת רשימת התפקידים",
-          variant: "destructive"
-        });
-        
-        // Continue loading other data even if roles fail
-        setOrganizationalRoles([]);
-      }
-
-      // Load workers
-      const workersRes = await apiRequest.get('/workers');
-      if (workersRes.ok) {
-        const workersData = await workersRes.json();
-        console.log('✅ Loaded workers:', workersData);
-        setRecords(workersData);
-      } else {
-        console.error('❌ Failed to load workers:', workersRes.status);
-        throw new Error('Failed to load workers');
-      }
-
-      // Load divisions
-      const divisionsRes = await apiRequest.get('/workers/divisions');
-      if (divisionsRes.ok) {
-        const divisionsData = await divisionsRes.json();
-        console.log('✅ Loaded divisions:', divisionsData);
-        setDivisions(divisionsData);
-      } else {
-        console.error('❌ Failed to load divisions');
-        setDivisions([]);
-      }
-
-      // Load departments
-      const departmentsRes = await apiRequest.get('/workers/departments');
-      if (departmentsRes.ok) {
-        const departmentsData = await departmentsRes.json();
-        console.log('✅ Loaded departments:', departmentsData);
-        setDepartments(departmentsData);
-      } else {
-        console.error('❌ Failed to load departments');
-        setDepartments([]);
-      }
-
-      // Load procurement teams
-      const teamsRes = await apiRequest.get('/workers/procurement-teams');
-      if (teamsRes.ok) {
-        const teamsData = await teamsRes.json();
-        console.log('✅ Loaded procurement teams:', teamsData);
-        setProcurementTeams(teamsData);
-      } else {
-        console.error('❌ Failed to load procurement teams');
-        setProcurementTeams([]);
-      }
-
-    } catch (error) {
-      console.error('❌ Error loading data:', error);
-      toast({
-        title: "שגיאה",
-        description: "שגיאה בטעינת הנתונים מהשרת",
-        variant: "destructive"
-      });
-    } finally {
-      setLoading(false);
-    }
-  };
 
   const initializeForm = (record?: WorkerRecord) => {
     if (record) {
@@ -160,7 +122,7 @@ const WorkersManagement: React.FC = () => {
     } else {
       setFormData({
         employeeId: '',
-        roleCode: undefined, // Don't set default role
+        roleCode: undefined,
         fullName: '',
         roleDescription: '',
         password: '',
@@ -245,6 +207,9 @@ const WorkersManagement: React.FC = () => {
     if (!validateForm()) return;
 
     try {
+      // Simulate API call
+      await new Promise(resolve => setTimeout(resolve, 500));
+
       const processedData = { ...formData };
       
       // Clear irrelevant fields based on role
@@ -258,54 +223,48 @@ const WorkersManagement: React.FC = () => {
         processedData.availableWorkDays = '';
       }
 
-      console.log('Processed data for API:', processedData);
+      console.log('Processed data for mock save:', processedData);
 
-      let response;
       if (editingRecord) {
         // Update existing worker
-        response = await apiRequest.put(`/workers/${editingRecord.id}`, processedData);
+        const updatedWorker = {
+          ...editingRecord,
+          ...processedData,
+          password: formData.password === '******' ? editingRecord.password : formData.password
+        } as WorkerRecord;
+        
+        setRecords(prev => prev.map(record => 
+          record.id === editingRecord.id ? updatedWorker : record
+        ));
+        
+        toast({
+          title: "הצלחה",
+          description: "הרשומה עודכנה בהצלחה"
+        });
       } else {
         // Create new worker
-        response = await apiRequest.post('/workers', processedData);
-      }
-
-      if (response.ok) {
-        const savedWorker = await response.json();
-        console.log('Worker saved successfully:', savedWorker);
+        const newWorker = {
+          id: Math.max(...records.map(r => r.id)) + 1,
+          ...processedData,
+          password: '******' // Don't store actual password in mock
+        } as WorkerRecord;
         
-        if (editingRecord) {
-          setRecords(prev => prev.map(record => 
-            record.id === editingRecord.id ? savedWorker : record
-          ));
-          toast({
-            title: "הצלחה",
-            description: "הרשומה עודכנה בהצלחה"
-          });
-        } else {
-          setRecords(prev => [...prev, savedWorker]);
-          toast({
-            title: "הצלחה",
-            description: "הרשומה נוספה בהצלחה"
-          });
-          
-          // Redirect to home page after adding user
-          setTimeout(() => {
-            navigate('/');
-          }, 1500);
-        }
-
-        setIsAddDialogOpen(false);
-        setEditingRecord(null);
-        setFormData({});
-      } else {
-        const errorData = await response.json();
-        console.error('API error:', errorData);
+        setRecords(prev => [...prev, newWorker]);
+        
         toast({
-          title: "שגיאה",
-          description: errorData.error || "שגיאה בשמירת הנתונים",
-          variant: "destructive"
+          title: "הצלחה",
+          description: "הרשומה נוספה בהצלחה"
         });
+        
+        // Redirect to home page after adding user
+        setTimeout(() => {
+          navigate('/');
+        }, 1500);
       }
+
+      setIsAddDialogOpen(false);
+      setEditingRecord(null);
+      setFormData({});
     } catch (error) {
       console.error('Error saving worker:', error);
       toast({
@@ -319,22 +278,14 @@ const WorkersManagement: React.FC = () => {
   const handleDelete = async (id: number) => {
     if (window.confirm('האם אתה בטוח שברצונך למחוק רשומה זו?')) {
       try {
-        const response = await apiRequest.delete(`/workers/${id}`);
+        // Simulate API call
+        await new Promise(resolve => setTimeout(resolve, 300));
         
-        if (response.ok) {
-          setRecords(prev => prev.filter(record => record.id !== id));
-          toast({
-            title: "הצלחה",
-            description: "הרשומה נמחקה בהצלחה"
-          });
-        } else {
-          const errorData = await response.json();
-          toast({
-            title: "שגיאה",
-            description: errorData.error || "שגיאה במחיקת הרשומה",
-            variant: "destructive"
-          });
-        }
+        setRecords(prev => prev.filter(record => record.id !== id));
+        toast({
+          title: "הצלחה",
+          description: "הרשומה נמחקה בהצלחה"
+        });
       } catch (error) {
         console.error('Error deleting worker:', error);
         toast({
@@ -407,12 +358,7 @@ const WorkersManagement: React.FC = () => {
                 </Dialog>
                 <div>
                   <CardTitle className="text-xl">Workers</CardTitle>
-                  <p className="text-gray-600 mt-1">ניהול רשימת העובדים ומשתמשי המערכת</p>
-                  {organizationalRoles.length === 0 && (
-                    <p className="text-red-500 text-sm mt-1">
-                      שגיאה: לא נטענו תפקידים ארגוניים
-                    </p>
-                  )}
+                  <p className="text-gray-600 mt-1">ניהול רשימת העובדים ומשתמשי המערכת (מצב הדגמה)</p>
                 </div>
               </div>
             </CardHeader>

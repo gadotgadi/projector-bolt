@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import AppLayout from '../../components/layout/AppLayout';
 import { Button } from '@/components/ui/button';
 import { ArrowRight, Plus } from 'lucide-react';
@@ -10,52 +10,33 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Edit, Trash2 } from 'lucide-react';
-import { apiRequest } from '../../utils/api';
 
 interface DomainRecord {
   id: number;
   description: string;
 }
 
+// Mock data for domains
+const mockDomainsData: DomainRecord[] = [
+  { id: 1, description: 'רכש לוגיסטי' },
+  { id: 2, description: 'רכש טכנולוגי' },
+  { id: 3, description: 'שירותים מקצועיים' },
+  { id: 4, description: 'תחזוקה ותפעול' },
+  { id: 5, description: 'ציוד משרדי' },
+  { id: 6, description: 'תוכנה ומערכות' }
+];
+
 const DomainsManagement: React.FC = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   
-  const [records, setRecords] = useState<DomainRecord[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [records, setRecords] = useState<DomainRecord[]>(mockDomainsData);
+  const [loading, setLoading] = useState(false);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingRecord, setEditingRecord] = useState<DomainRecord | null>(null);
   const [formData, setFormData] = useState({
     description: ''
   });
-
-  useEffect(() => {
-    loadData();
-  }, []);
-
-  const loadData = async () => {
-    try {
-      setLoading(true);
-      const response = await apiRequest.get('/system/domains');
-      
-      if (response.ok) {
-        const data = await response.json();
-        console.log('Loaded domains:', data);
-        setRecords(data);
-      } else {
-        throw new Error('Failed to load domains');
-      }
-    } catch (error) {
-      console.error('Error loading domains:', error);
-      toast({
-        title: "שגיאה",
-        description: "שגיאה בטעינת הנתונים מהשרת",
-        variant: "destructive"
-      });
-    } finally {
-      setLoading(false);
-    }
-  };
 
   const handleAdd = () => {
     setEditingRecord(null);
@@ -80,44 +61,40 @@ const DomainsManagement: React.FC = () => {
     }
 
     try {
-      let response;
+      // Simulate API call
+      await new Promise(resolve => setTimeout(resolve, 500));
+
       if (editingRecord) {
         // Update existing
-        response = await apiRequest.put(`/system/domains/${editingRecord.id}`, formData);
+        const updatedRecord = {
+          ...editingRecord,
+          description: formData.description
+        };
+        
+        setRecords(prev => prev.map(record => 
+          record.id === editingRecord.id ? updatedRecord : record
+        ));
+        
+        toast({
+          title: "הצלחה",
+          description: "הרשומה עודכנה בהצלחה"
+        });
       } else {
         // Create new
-        response = await apiRequest.post('/system/domains', formData);
-      }
-
-      if (response.ok) {
-        const savedRecord = await response.json();
-        console.log('Saved domain:', savedRecord);
-
-        if (editingRecord) {
-          setRecords(prev => prev.map(record => 
-            record.id === editingRecord.id ? savedRecord : record
-          ));
-          toast({
-            title: "הצלחה",
-            description: "הרשומה עודכנה בהצלחה"
-          });
-        } else {
-          setRecords(prev => [...prev, savedRecord]);
-          toast({
-            title: "הצלחה",
-            description: "הרשומה נוספה בהצלחה"
-          });
-        }
-
-        setIsDialogOpen(false);
-      } else {
-        const errorData = await response.json();
+        const newRecord = {
+          id: Math.max(...records.map(r => r.id)) + 1,
+          description: formData.description
+        };
+        
+        setRecords(prev => [...prev, newRecord]);
+        
         toast({
-          title: "שגיאה",
-          description: errorData.error || "שגיאה בשמירת הנתונים",
-          variant: "destructive"
+          title: "הצלחה",
+          description: "הרשומה נוספה בהצלחה"
         });
       }
+
+      setIsDialogOpen(false);
     } catch (error) {
       console.error('Error saving domain:', error);
       toast({
@@ -131,22 +108,14 @@ const DomainsManagement: React.FC = () => {
   const handleDelete = async (id: number) => {
     if (window.confirm('האם אתה בטוח שברצונך למחוק רשומה זו?')) {
       try {
-        const response = await apiRequest.delete(`/system/domains/${id}`);
+        // Simulate API call
+        await new Promise(resolve => setTimeout(resolve, 300));
         
-        if (response.ok) {
-          setRecords(prev => prev.filter(record => record.id !== id));
-          toast({
-            title: "הצלחה",
-            description: "הרשומה נמחקה בהצלחה"
-          });
-        } else {
-          const errorData = await response.json();
-          toast({
-            title: "שגיאה",
-            description: errorData.error || "שגיאה במחיקת הרשומה",
-            variant: "destructive"
-          });
-        }
+        setRecords(prev => prev.filter(record => record.id !== id));
+        toast({
+          title: "הצלחה",
+          description: "הרשומה נמחקה בהצלחה"
+        });
       } catch (error) {
         console.error('Error deleting domain:', error);
         toast({
@@ -236,7 +205,7 @@ const DomainsManagement: React.FC = () => {
                 </Dialog>
                 <div>
                   <CardTitle className="text-xl">Domain</CardTitle>
-                  <p className="text-gray-600 mt-1">ניהול תחומי הרכש האפשריים לסיווג המשימות</p>
+                  <p className="text-gray-600 mt-1">ניהול תחומי הרכש האפשריים לסיווג המשימות (מצב הדגמה)</p>
                 </div>
               </div>
             </CardHeader>

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import AppLayout from '../../components/layout/AppLayout';
 import { Button } from '@/components/ui/button';
 import { ArrowRight, Plus } from 'lucide-react';
@@ -11,7 +11,6 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Edit, Trash2 } from 'lucide-react';
-import { apiRequest } from '../../utils/api';
 
 interface DivisionRecord {
   id: number;
@@ -19,54 +18,30 @@ interface DivisionRecord {
   isInternal: boolean;
 }
 
+// Mock data for divisions
+const mockDivisionsData: DivisionRecord[] = [
+  { id: 1, name: 'לוגיסטיקה', isInternal: true },
+  { id: 2, name: 'טכנולוגיה', isInternal: true },
+  { id: 3, name: 'מחקר ופיתוח', isInternal: true },
+  { id: 4, name: 'משאבי אנוש', isInternal: true },
+  { id: 5, name: 'מכירות', isInternal: true },
+  { id: 6, name: 'תפעול', isInternal: true },
+  { id: 7, name: 'לקוח חיצוני א', isInternal: false },
+  { id: 8, name: 'לקוח חיצוני ב', isInternal: false }
+];
+
 const DivisionsManagement: React.FC = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   
-  const [records, setRecords] = useState<DivisionRecord[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [records, setRecords] = useState<DivisionRecord[]>(mockDivisionsData);
+  const [loading, setLoading] = useState(false);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingRecord, setEditingRecord] = useState<DivisionRecord | null>(null);
   const [formData, setFormData] = useState({
     name: '',
     isInternal: true
   });
-
-  useEffect(() => {
-    loadData();
-  }, []);
-
-  const loadData = async () => {
-    try {
-      setLoading(true);
-      const response = await apiRequest.get('/system/divisions');
-      
-      if (response.ok) {
-        const data = await response.json();
-        console.log('Loaded divisions:', data);
-        
-        // Transform data to match frontend format
-        const transformedData = data.map((division: any) => ({
-          id: division.id,
-          name: division.name,
-          isInternal: Boolean(division.is_internal)
-        }));
-        
-        setRecords(transformedData);
-      } else {
-        throw new Error('Failed to load divisions');
-      }
-    } catch (error) {
-      console.error('Error loading divisions:', error);
-      toast({
-        title: "שגיאה",
-        description: "שגיאה בטעינת הנתונים מהשרת",
-        variant: "destructive"
-      });
-    } finally {
-      setLoading(false);
-    }
-  };
 
   const handleAdd = () => {
     setEditingRecord(null);
@@ -91,51 +66,42 @@ const DivisionsManagement: React.FC = () => {
     }
 
     try {
-      let response;
+      // Simulate API call
+      await new Promise(resolve => setTimeout(resolve, 500));
+
       if (editingRecord) {
         // Update existing
-        response = await apiRequest.put(`/system/divisions/${editingRecord.id}`, formData);
+        const updatedRecord = {
+          ...editingRecord,
+          name: formData.name,
+          isInternal: formData.isInternal
+        };
+        
+        setRecords(prev => prev.map(record => 
+          record.id === editingRecord.id ? updatedRecord : record
+        ));
+        
+        toast({
+          title: "הצלחה",
+          description: "הרשומה עודכנה בהצלחה"
+        });
       } else {
         // Create new
-        response = await apiRequest.post('/system/divisions', formData);
-      }
-
-      if (response.ok) {
-        const savedRecord = await response.json();
-        console.log('Saved division:', savedRecord);
-        
-        // Transform response to match frontend format
-        const transformedRecord = {
-          id: savedRecord.id,
-          name: savedRecord.name,
-          isInternal: Boolean(savedRecord.is_internal)
+        const newRecord = {
+          id: Math.max(...records.map(r => r.id)) + 1,
+          name: formData.name,
+          isInternal: formData.isInternal
         };
-
-        if (editingRecord) {
-          setRecords(prev => prev.map(record => 
-            record.id === editingRecord.id ? transformedRecord : record
-          ));
-          toast({
-            title: "הצלחה",
-            description: "הרשומה עודכנה בהצלחה"
-          });
-        } else {
-          setRecords(prev => [...prev, transformedRecord]);
-          toast({
-            title: "הצלחה",
-            description: "הרשומה נוספה בהצלחה"
-          });
-        }
-
-        setIsDialogOpen(false);
-      } else {
-        const errorData = await response.json();
+        
+        setRecords(prev => [...prev, newRecord]);
+        
         toast({
-          title: "שגיאה",
-          description: errorData.error || "שגיאה בשמירת הנתונים",
-          variant: "destructive"
+          title: "הצלחה",
+          description: "הרשומה נוספה בהצלחה"
         });
       }
+
+      setIsDialogOpen(false);
     } catch (error) {
       console.error('Error saving division:', error);
       toast({
@@ -149,22 +115,14 @@ const DivisionsManagement: React.FC = () => {
   const handleDelete = async (id: number) => {
     if (window.confirm('האם אתה בטוח שברצונך למחוק רשומה זו?')) {
       try {
-        const response = await apiRequest.delete(`/system/divisions/${id}`);
+        // Simulate API call
+        await new Promise(resolve => setTimeout(resolve, 300));
         
-        if (response.ok) {
-          setRecords(prev => prev.filter(record => record.id !== id));
-          toast({
-            title: "הצלחה",
-            description: "הרשומה נמחקה בהצלחה"
-          });
-        } else {
-          const errorData = await response.json();
-          toast({
-            title: "שגיאה",
-            description: errorData.error || "שגיאה במחיקת הרשומה",
-            variant: "destructive"
-          });
-        }
+        setRecords(prev => prev.filter(record => record.id !== id));
+        toast({
+          title: "הצלחה",
+          description: "הרשומה נמחקה בהצלחה"
+        });
       } catch (error) {
         console.error('Error deleting division:', error);
         toast({
@@ -275,7 +233,7 @@ const DivisionsManagement: React.FC = () => {
                 </Dialog>
                 <div>
                   <CardTitle className="text-xl">Division</CardTitle>
-                  <p className="text-gray-600 mt-1">ניהול רשימת הלקוחות והאגפים הפנימיים</p>
+                  <p className="text-gray-600 mt-1">ניהול רשימת הלקוחות והאגפים הפנימיים (מצב הדגמה)</p>
                 </div>
               </div>
             </CardHeader>

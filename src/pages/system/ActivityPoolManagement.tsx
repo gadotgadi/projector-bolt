@@ -10,7 +10,6 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Edit, Trash2 } from 'lucide-react';
-import { apiRequest } from '../../utils/api';
 
 interface ActivityPoolRecord {
   id: number;
@@ -18,54 +17,33 @@ interface ActivityPoolRecord {
   toolsAndResources?: string;
 }
 
+// Mock data for activity pool
+const mockActivityPoolData: ActivityPoolRecord[] = [
+  { id: 1, name: 'בדיקת הצעות מחיר', toolsAndResources: 'מערכת השוואת מחירים' },
+  { id: 2, name: 'הכנת מפרט טכני', toolsAndResources: 'תבניות מפרט' },
+  { id: 3, name: 'פרסום מכרז', toolsAndResources: 'מערכת פרסום' },
+  { id: 4, name: 'הערכת הצעות', toolsAndResources: 'מטריצת הערכה' },
+  { id: 5, name: 'בחירת זוכה', toolsAndResources: 'ועדת הערכה' },
+  { id: 6, name: 'חתימה על הסכם', toolsAndResources: 'מערכת חתימות' },
+  { id: 7, name: 'בקרת איכות', toolsAndResources: 'רשימת בדיקות' },
+  { id: 8, name: 'אישור תשלום', toolsAndResources: 'מערכת כספים' },
+  { id: 9, name: 'מעקב ביצוע', toolsAndResources: 'מערכת מעקב' },
+  { id: 10, name: 'סגירת פרויקט', toolsAndResources: 'דוח סיכום' },
+  { id: 11, name: 'דו"ח סיכום', toolsAndResources: 'תבנית דוח' }
+];
+
 const ActivityPoolManagement: React.FC = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   
-  const [records, setRecords] = useState<ActivityPoolRecord[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [records, setRecords] = useState<ActivityPoolRecord[]>(mockActivityPoolData);
+  const [loading, setLoading] = useState(false);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingRecord, setEditingRecord] = useState<ActivityPoolRecord | null>(null);
   const [formData, setFormData] = useState({
     name: '',
     toolsAndResources: ''
   });
-
-  useEffect(() => {
-    loadData();
-  }, []);
-
-  const loadData = async () => {
-    try {
-      setLoading(true);
-      const response = await apiRequest.get('/system/activity-pool');
-      
-      if (response.ok) {
-        const data = await response.json();
-        console.log('Loaded activities:', data);
-        
-        // Transform data to match frontend format
-        const transformedData = data.map((activity: any) => ({
-          id: activity.id,
-          name: activity.name,
-          toolsAndResources: activity.tools_and_resources
-        }));
-        
-        setRecords(transformedData);
-      } else {
-        throw new Error('Failed to load activities');
-      }
-    } catch (error) {
-      console.error('Error loading activities:', error);
-      toast({
-        title: "שגיאה",
-        description: "שגיאה בטעינת הנתונים מהשרת",
-        variant: "destructive"
-      });
-    } finally {
-      setLoading(false);
-    }
-  };
 
   const handleAdd = () => {
     setEditingRecord(null);
@@ -93,51 +71,42 @@ const ActivityPoolManagement: React.FC = () => {
     }
 
     try {
-      let response;
+      // Simulate API call
+      await new Promise(resolve => setTimeout(resolve, 500));
+
       if (editingRecord) {
         // Update existing
-        response = await apiRequest.put(`/system/activity-pool/${editingRecord.id}`, formData);
+        const updatedRecord = {
+          ...editingRecord,
+          name: formData.name,
+          toolsAndResources: formData.toolsAndResources
+        };
+        
+        setRecords(prev => prev.map(record => 
+          record.id === editingRecord.id ? updatedRecord : record
+        ));
+        
+        toast({
+          title: "הצלחה",
+          description: "הרשומה עודכנה בהצלחה"
+        });
       } else {
         // Create new
-        response = await apiRequest.post('/system/activity-pool', formData);
-      }
-
-      if (response.ok) {
-        const savedRecord = await response.json();
-        console.log('Saved activity:', savedRecord);
-        
-        // Transform response to match frontend format
-        const transformedRecord = {
-          id: savedRecord.id,
-          name: savedRecord.name,
-          toolsAndResources: savedRecord.tools_and_resources
+        const newRecord = {
+          id: Math.max(...records.map(r => r.id)) + 1,
+          name: formData.name,
+          toolsAndResources: formData.toolsAndResources
         };
-
-        if (editingRecord) {
-          setRecords(prev => prev.map(record => 
-            record.id === editingRecord.id ? transformedRecord : record
-          ));
-          toast({
-            title: "הצלחה",
-            description: "הרשומה עודכנה בהצלחה"
-          });
-        } else {
-          setRecords(prev => [...prev, transformedRecord]);
-          toast({
-            title: "הצלחה",
-            description: "הרשומה נוספה בהצלחה"
-          });
-        }
-
-        setIsDialogOpen(false);
-      } else {
-        const errorData = await response.json();
+        
+        setRecords(prev => [...prev, newRecord]);
+        
         toast({
-          title: "שגיאה",
-          description: errorData.error || "שגיאה בשמירת הנתונים",
-          variant: "destructive"
+          title: "הצלחה",
+          description: "הרשומה נוספה בהצלחה"
         });
       }
+
+      setIsDialogOpen(false);
     } catch (error) {
       console.error('Error saving activity:', error);
       toast({
@@ -151,22 +120,14 @@ const ActivityPoolManagement: React.FC = () => {
   const handleDelete = async (id: number) => {
     if (window.confirm('האם אתה בטוח שברצונך למחוק רשומה זו?')) {
       try {
-        const response = await apiRequest.delete(`/system/activity-pool/${id}`);
+        // Simulate API call
+        await new Promise(resolve => setTimeout(resolve, 300));
         
-        if (response.ok) {
-          setRecords(prev => prev.filter(record => record.id !== id));
-          toast({
-            title: "הצלחה",
-            description: "הרשומה נמחקה בהצלחה"
-          });
-        } else {
-          const errorData = await response.json();
-          toast({
-            title: "שגיאה",
-            description: errorData.error || "שגיאה במחיקת הרשומה",
-            variant: "destructive"
-          });
-        }
+        setRecords(prev => prev.filter(record => record.id !== id));
+        toast({
+          title: "הצלחה",
+          description: "הרשומה נמחקה בהצלחה"
+        });
       } catch (error) {
         console.error('Error deleting activity:', error);
         toast({
@@ -269,7 +230,7 @@ const ActivityPoolManagement: React.FC = () => {
                 </Dialog>
                 <div>
                   <CardTitle className="text-xl">Activity Pool</CardTitle>
-                  <p className="text-gray-600 mt-1">ניהול פעילויות הרכש במערכת</p>
+                  <p className="text-gray-600 mt-1">ניהול פעילויות הרכש במערכת (מצב הדגמה)</p>
                 </div>
               </div>
             </CardHeader>
