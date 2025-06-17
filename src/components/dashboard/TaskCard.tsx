@@ -68,10 +68,17 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, onClick }) => {
 
   const progressDisplay = getProgressDisplay();
 
+  const handleClick = () => {
+    console.log('TaskCard clicked for task:', task.taskId);
+    if (onClick) {
+      onClick();
+    }
+  };
+
   return (
     <div 
       className="bg-white rounded-lg border border-gray-300 p-4 cursor-pointer hover:shadow-md transition-all duration-200 hover:border-blue-400"
-      onClick={onClick}
+      onClick={handleClick}
       style={{ height: '240px', width: '100%' }}
     >
       {/* Header Row - Title with Task ID, Description with Status */}

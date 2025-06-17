@@ -85,7 +85,8 @@ const Dashboard = () => {
   }, [programs, filters, user]);
 
   const handleProgramClick = (program: Program) => {
-    console.log('נלחץ על משימה:', program.taskId);
+    console.log('Dashboard: נלחץ על משימה:', program.taskId);
+    console.log('Dashboard: מנווט לנתיב:', `/station-assignment/${program.taskId}`);
     navigate(`/station-assignment/${program.taskId}`);
   };
 
