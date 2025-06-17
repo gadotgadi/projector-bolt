@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useRef, useEffect } from 'react';
 import { Program, STATUS_CONFIG } from '../../types';
 
 interface TaskCardProps {
@@ -7,9 +7,48 @@ interface TaskCardProps {
 }
 
 const TaskCard: React.FC<TaskCardProps> = ({ task, onClick }) => {
+  const cardRef = useRef<HTMLDivElement>(null);
+  
   console.log('🔥 TaskCard רנדר עבור משימה:', task.taskId, 'עם onClick:', !!onClick);
   
   const statusConfig = STATUS_CONFIG[task.status];
+  
+  // Add direct event listeners for debugging
+  useEffect(() => {
+    const cardElement = cardRef.current;
+    if (!cardElement) return;
+
+    const handleDirectClick = (e: Event) => {
+      console.log('🎯🎯🎯 DIRECT CLICK EVENT! Task:', task.taskId);
+      console.log('🎯🎯🎯 Event target:', e.target);
+      console.log('🎯🎯🎯 Current target:', e.currentTarget);
+      
+      if (onClick) {
+        console.log('🎯🎯🎯 Calling onClick from direct listener');
+        onClick();
+      }
+    };
+
+    const handleDirectMouseDown = (e: Event) => {
+      console.log('🔥 DIRECT MouseDown on task:', task.taskId);
+    };
+
+    const handleDirectMouseUp = (e: Event) => {
+      console.log('🔥 DIRECT MouseUp on task:', task.taskId);
+    };
+
+    // Add event listeners
+    cardElement.addEventListener('click', handleDirectClick, true);
+    cardElement.addEventListener('mousedown', handleDirectMouseDown, true);
+    cardElement.addEventListener('mouseup', handleDirectMouseUp, true);
+
+    // Cleanup
+    return () => {
+      cardElement.removeEventListener('click', handleDirectClick, true);
+      cardElement.removeEventListener('mousedown', handleDirectMouseDown, true);
+      cardElement.removeEventListener('mouseup', handleDirectMouseUp, true);
+    };
+  }, [task.taskId, onClick]);
   
   const formatDate = (date?: Date) => {
     if (!date) return '--';
@@ -71,7 +110,7 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, onClick }) => {
   const progressDisplay = getProgressDisplay();
 
   const handleClick = (e: React.MouseEvent) => {
-    console.log('🎯🎯🎯 CLICK EVENT FIRED! Task:', task.taskId);
+    console.log('🎯🎯🎯 REACT CLICK EVENT! Task:', task.taskId);
     console.log('🎯🎯🎯 Event details:', e.type, e.target);
     console.log('🎯🎯🎯 onClick function exists:', !!onClick);
     
@@ -109,13 +148,13 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, onClick }) => {
 
   return (
     <div 
-      className="bg-white rounded-lg border border-gray-300 p-4 cursor-pointer hover:shadow-xl hover:border-blue-500 transition-all duration-200 transform hover:scale-[1.02] active:scale-[0.98] select-none relative"
+      ref={cardRef}
+      className="bg-white rounded-lg border border-gray-300 p-4 cursor-pointer hover:shadow-xl hover:border-blue-500 transition-all duration-200 transform hover:scale-[1.02] active:scale-[0.98] select-none"
       style={{ 
         height: '240px', 
         width: '100%',
         position: 'relative',
-        zIndex: 1,
-        pointerEvents: 'auto'
+        zIndex: 1
       }}
       onClick={handleClick}
       onMouseDown={handleMouseDown}
@@ -136,7 +175,7 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, onClick }) => {
       </button>
 
       {/* Header Row - Title with Task ID, Description with Status */}
-      <div className="mb-4" style={{ pointerEvents: 'none' }}>
+      <div className="mb-4">
         {/* Title and Task ID Row */}
         <div className="flex justify-between items-start mb-2">
           <div className="font-bold text-gray-800 text-base leading-tight">
@@ -162,7 +201,7 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, onClick }) => {
       </div>
 
       {/* Middle Row - Quarter & Complexity (left), Requester & Division (right) */}
-      <div className="flex justify-between items-center mb-4 text-sm" style={{ pointerEvents: 'none' }}>
+      <div className="flex justify-between items-center mb-4 text-sm">
         <div className="flex gap-4">
           <div className="text-right">
             <span className="text-gray-600">רבעון נדרש: </span>
@@ -186,7 +225,7 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, onClick }) => {
       </div>
 
       {/* Bottom Row */}
-      <div className="flex justify-between items-start text-sm" style={{ pointerEvents: 'none' }}>
+      <div className="flex justify-between items-start text-sm">
         {/* Left Side - Stations Progress */}
         <div className="text-right">
           <div className="mb-1">
