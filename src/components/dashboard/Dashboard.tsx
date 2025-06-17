@@ -38,7 +38,7 @@ const Dashboard = () => {
       // Simulate loading delay
       await new Promise(resolve => setTimeout(resolve, 500));
       
-      console.log('Loading programs from mock data:', mockPrograms);
+      console.log('🔥 Dashboard: טוען משימות מנתוני הדגמה:', mockPrograms);
       
       // Convert date strings to Date objects if needed
       const programsWithDates = mockPrograms.map((program: any) => ({
@@ -56,9 +56,10 @@ const Dashboard = () => {
         })) || []
       }));
       
+      console.log('🔥 Dashboard: משימות לאחר עיבוד:', programsWithDates);
       setPrograms(programsWithDates);
     } catch (error) {
-      console.error('Error loading programs:', error);
+      console.error('❌ Dashboard: שגיאה בטעינת משימות:', error);
     } finally {
       setLoading(false);
     }
@@ -85,9 +86,16 @@ const Dashboard = () => {
   }, [programs, filters, user]);
 
   const handleProgramClick = (program: Program) => {
-    console.log('Dashboard: נלחץ על משימה:', program.taskId);
-    console.log('Dashboard: מנווט לנתיב:', `/station-assignment/${program.taskId}`);
-    navigate(`/station-assignment/${program.taskId}`);
+    console.log('🔥 Dashboard: נלחץ על משימה:', program.taskId);
+    console.log('🔥 Dashboard: מנווט לנתיב:', `/station-assignment/${program.taskId}`);
+    console.log('🔥 Dashboard: navigate function:', navigate);
+    
+    try {
+      navigate(`/station-assignment/${program.taskId}`);
+      console.log('🔥 Dashboard: ניווט הושלם בהצלחה');
+    } catch (error) {
+      console.error('❌ Dashboard: שגיאה בניווט:', error);
+    }
   };
 
   if (loading) {
@@ -101,6 +109,8 @@ const Dashboard = () => {
     );
   }
 
+  console.log('🔥 Dashboard: מציג', filteredPrograms.length, 'משימות');
+
   return (
     <div className="space-y-6">
       {/* Filters */}
@@ -112,13 +122,19 @@ const Dashboard = () => {
 
       {/* Programs Grid - 3 columns for wider cards */}
       <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
-        {filteredPrograms.map(program => (
-          <TaskCard 
-            key={program.taskId} 
-            task={program}
-            onClick={() => handleProgramClick(program)}
-          />
-        ))}
+        {filteredPrograms.map(program => {
+          console.log('🔥 Dashboard: יוצר TaskCard עבור משימה:', program.taskId);
+          return (
+            <TaskCard 
+              key={program.taskId} 
+              task={program}
+              onClick={() => {
+                console.log('🔥 Dashboard: onClick callback נקרא עבור משימה:', program.taskId);
+                handleProgramClick(program);
+              }}
+            />
+          );
+        })}
       </div>
 
       {filteredPrograms.length === 0 && (

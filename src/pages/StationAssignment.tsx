@@ -26,14 +26,24 @@ const StationAssignment = () => {
   const { user } = useAuth();
   const [showPermissionDialog, setShowPermissionDialog] = useState(false);
 
+  console.log('🔥 StationAssignment: נטען עם taskId:', taskId);
+  console.log('🔥 StationAssignment: משימות זמינות:', mockPrograms.map(p => p.taskId));
+
   // Find program from mock data
   const initialProgram = mockPrograms.find(p => p.taskId === Number(taskId));
   
+  console.log('🔥 StationAssignment: משימה נמצאה:', !!initialProgram);
+  console.log('🔥 StationAssignment: פרטי משימה:', initialProgram);
+  
   if (!initialProgram) {
+    console.log('❌ StationAssignment: משימה לא נמצאה עבור taskId:', taskId);
     return (
       <AppLayout currentRoute="/station-assignment">
         <div className="text-center py-12">
-          <p className="text-gray-500">משימה לא נמצאה</p>
+          <p className="text-gray-500">משימה לא נמצאה (ID: {taskId})</p>
+          <Button onClick={() => navigate('/')} className="mt-4">
+            חזרה לשולחן העבודה
+          </Button>
         </div>
       </AppLayout>
     );
@@ -42,6 +52,7 @@ const StationAssignment = () => {
   const [program, setProgram] = useState<Program>(initialProgram);
 
   const handleBack = () => {
+    console.log('🔥 StationAssignment: חזרה לשולחן העבודה');
     navigate('/');
   };
 
@@ -101,6 +112,8 @@ const StationAssignment = () => {
   const handlePermissionDenied = () => {
     setShowPermissionDialog(true);
   };
+
+  console.log('🔥 StationAssignment: מציג מסך טיפול במשימה:', program.taskId);
 
   return (
     <AppLayout currentRoute="/station-assignment" pageTitle={`עדכון משימה #${program.taskId}`}>

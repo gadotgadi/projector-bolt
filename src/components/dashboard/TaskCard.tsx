@@ -68,16 +68,22 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, onClick }) => {
 
   const progressDisplay = getProgressDisplay();
 
-  const handleClick = () => {
-    console.log('TaskCard clicked for task:', task.taskId);
+  const handleClick = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    console.log('🔥 TaskCard: לחיצה על משימה', task.taskId);
+    console.log('🔥 TaskCard: onClick function exists:', !!onClick);
     if (onClick) {
+      console.log('🔥 TaskCard: קורא לפונקציית onClick');
       onClick();
+    } else {
+      console.log('❌ TaskCard: אין פונקציית onClick!');
     }
   };
 
   return (
     <div 
-      className="bg-white rounded-lg border border-gray-300 p-4 cursor-pointer hover:shadow-md transition-all duration-200 hover:border-blue-400"
+      className="bg-white rounded-lg border border-gray-300 p-4 cursor-pointer hover:shadow-lg hover:border-blue-500 transition-all duration-200 transform hover:scale-[1.02]"
       onClick={handleClick}
       style={{ height: '240px', width: '100%' }}
     >
