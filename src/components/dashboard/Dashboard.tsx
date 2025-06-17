@@ -38,8 +38,6 @@ const Dashboard = () => {
       // Simulate loading delay
       await new Promise(resolve => setTimeout(resolve, 500));
       
-      console.log('🔥 Dashboard: טוען משימות מנתוני הדגמה:', mockPrograms);
-      
       // Convert date strings to Date objects if needed
       const programsWithDates = mockPrograms.map((program: any) => ({
         ...program,
@@ -56,10 +54,9 @@ const Dashboard = () => {
         })) || []
       }));
       
-      console.log('🔥 Dashboard: משימות לאחר עיבוד:', programsWithDates);
       setPrograms(programsWithDates);
     } catch (error) {
-      console.error('❌ Dashboard: שגיאה בטעינת משימות:', error);
+      console.error('Error loading programs:', error);
     } finally {
       setLoading(false);
     }
@@ -86,28 +83,7 @@ const Dashboard = () => {
   }, [programs, filters, user]);
 
   const handleProgramClick = (program: Program) => {
-    console.log('🎯🎯🎯 Dashboard: נלחץ על משימה:', program.taskId);
-    console.log('🎯🎯🎯 Dashboard: מנווט לנתיב:', `/station-assignment/${program.taskId}`);
-    
-    try {
-      // Force navigation with replace to ensure it works
-      window.location.href = `/station-assignment/${program.taskId}`;
-    } catch (error) {
-      console.error('❌ Dashboard: שגיאה בניווט:', error);
-      // Fallback to regular navigation
-      navigate(`/station-assignment/${program.taskId}`);
-    }
-  };
-
-  // Test function for direct navigation
-  const testDirectNavigation = () => {
-    console.log('🧪 TESTING DIRECT NAVIGATION');
-    alert('🧪 Direct navigation test - going to task 1001');
-    try {
-      window.location.href = '/station-assignment/1001';
-    } catch (error) {
-      console.error('🧪 Direct navigation failed:', error);
-    }
+    navigate(`/station-assignment/${program.taskId}`);
   };
 
   if (loading) {
@@ -121,10 +97,8 @@ const Dashboard = () => {
     );
   }
 
-  console.log('🔥 Dashboard: מציג', filteredPrograms.length, 'משימות');
-
   return (
-    <div className="space-y-6" style={{ position: 'relative', zIndex: 1 }}>
+    <div className="space-y-6">
       {/* Filters */}
       <DashboardFilters 
         filters={filters}
@@ -132,170 +106,15 @@ const Dashboard = () => {
         programs={programs}
       />
 
-      {/* MEGA TEST SECTION - FIXED WITH PROPER Z-INDEX AND POSITIONING */}
-      <div 
-        className="bg-purple-500 text-white p-6 rounded-lg border-4 border-yellow-400"
-        style={{ 
-          position: 'relative', 
-          zIndex: 1000,
-          pointerEvents: 'auto'
-        }}
-      >
-        <h2 className="text-2xl font-bold mb-4">🧪 NAVIGATION TEST ZONE 🧪</h2>
-        
-        {/* Test Button 1 - Simple Alert */}
-        <button 
-          onClick={(e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            console.log('🧪 TEST 1: Simple alert');
-            alert('🧪 TEST 1: Simple click works!');
-          }}
-          onMouseDown={(e) => {
-            console.log('🧪 TEST 1: Mouse down');
-          }}
-          className="bg-red-500 hover:bg-red-600 text-white font-bold py-3 px-6 rounded mr-4 mb-4"
-          style={{ 
-            position: 'relative', 
-            zIndex: 1001,
-            pointerEvents: 'auto',
-            cursor: 'pointer'
-          }}
-        >
-          TEST 1: Simple Alert
-        </button>
-
-        {/* Test Button 2 - Console Log */}
-        <button 
-          onClick={(e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            console.log('🧪 TEST 2: Console log test');
-            console.log('🧪 Current location:', window.location.href);
-          }}
-          className="bg-blue-500 hover:bg-blue-600 text-white font-bold py-3 px-6 rounded mr-4 mb-4"
-          style={{ 
-            position: 'relative', 
-            zIndex: 1001,
-            pointerEvents: 'auto',
-            cursor: 'pointer'
-          }}
-        >
-          TEST 2: Console Log
-        </button>
-
-        {/* Test Button 3 - Direct Navigation */}
-        <button 
-          onClick={(e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            testDirectNavigation();
-          }}
-          className="bg-green-500 hover:bg-green-600 text-white font-bold py-3 px-6 rounded mr-4 mb-4"
-          style={{ 
-            position: 'relative', 
-            zIndex: 1001,
-            pointerEvents: 'auto',
-            cursor: 'pointer'
-          }}
-        >
-          TEST 3: Direct Navigation
-        </button>
-
-        {/* Test Button 4 - React Router Navigate */}
-        <button 
-          onClick={(e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            console.log('🧪 TEST 4: React Router navigate');
-            alert('🧪 TEST 4: Using React Router');
-            navigate('/station-assignment/1001');
-          }}
-          className="bg-orange-500 hover:bg-orange-600 text-white font-bold py-3 px-6 rounded mr-4 mb-4"
-          style={{ 
-            position: 'relative', 
-            zIndex: 1001,
-            pointerEvents: 'auto',
-            cursor: 'pointer'
-          }}
-        >
-          TEST 4: React Router
-        </button>
-      </div>
-
-      {/* DIRECT TASK CARD TEST - FIXED */}
-      <div 
-        className="bg-yellow-300 p-4 rounded-lg border-4 border-red-500"
-        style={{ 
-          position: 'relative', 
-          zIndex: 999,
-          pointerEvents: 'auto'
-        }}
-      >
-        <h3 className="text-xl font-bold mb-4 text-black">🎯 DIRECT TASK CARD TEST</h3>
-        <div 
-          style={{
-            width: '300px',
-            height: '150px',
-            backgroundColor: '#ff6b6b',
-            border: '3px solid #000',
-            borderRadius: '10px',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            cursor: 'pointer',
-            fontSize: '18px',
-            fontWeight: 'bold',
-            color: 'white',
-            position: 'relative',
-            zIndex: 1000,
-            pointerEvents: 'auto'
-          }}
-          onClick={(e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            console.log('🎯🎯🎯 DIRECT TEST CARD CLICKED!');
-            alert('🎯 DIRECT TEST CARD WORKS!');
-            window.location.href = '/test-station/9999';
-          }}
-          onMouseDown={() => console.log('🎯 DIRECT TEST: Mouse Down')}
-          onMouseEnter={() => console.log('🎯 DIRECT TEST: Mouse Enter')}
-          onMouseLeave={() => console.log('🎯 DIRECT TEST: Mouse Leave')}
-        >
-          🎯 CLICK THIS DIRECT TEST CARD 🎯
-        </div>
-      </div>
-
       {/* Programs Grid - 3 columns for wider cards */}
-      <div 
-        className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6"
-        style={{ 
-          position: 'relative', 
-          zIndex: 1,
-          pointerEvents: 'auto'
-        }}
-      >
-        {filteredPrograms.map(program => {
-          console.log('🔥 Dashboard: יוצר TaskCard עבור משימה:', program.taskId);
-          return (
-            <div
-              key={program.taskId}
-              style={{ 
-                position: 'relative', 
-                zIndex: 2,
-                pointerEvents: 'auto'
-              }}
-            >
-              <TaskCard 
-                task={program}
-                onClick={() => {
-                  console.log('🎯🎯🎯 Dashboard: onClick callback נקרא עבור משימה:', program.taskId);
-                  handleProgramClick(program);
-                }}
-              />
-            </div>
-          );
-        })}
+      <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
+        {filteredPrograms.map(program => (
+          <TaskCard 
+            key={program.taskId} 
+            task={program}
+            onClick={() => handleProgramClick(program)}
+          />
+        ))}
       </div>
 
       {filteredPrograms.length === 0 && (
