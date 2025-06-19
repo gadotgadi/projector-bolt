@@ -663,7 +663,7 @@ const NewTaskForm: React.FC<NewTaskFormProps> = ({ onSave, onCancel }) => {
           <div className="grid grid-cols-2 gap-6 mt-6">
             <div>
               <Label htmlFor="supplierList" className="block text-sm font-medium text-gray-700 mb-2">
-                ספקים
+                ספקים פוטנציאליים
               </Label>
               <Textarea
                 id="supplierList"
@@ -679,7 +679,7 @@ const NewTaskForm: React.FC<NewTaskFormProps> = ({ onSave, onCancel }) => {
 
             <div>
               <Label htmlFor="justification" className="block text-sm font-medium text-gray-700 mb-2">
-                נימוק
+                הערות
               </Label>
               <Textarea
                 id="justification"
