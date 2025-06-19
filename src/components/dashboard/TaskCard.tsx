@@ -12,6 +12,13 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, onClick }) => {
     return new Date(date).toLocaleDateString('he-IL');
   };
 
+  const formatQuarter = (date: Date | null | undefined) => {
+    if (!date) return 'לא הוגדר';
+    const quarter = Math.ceil((date.getMonth() + 1) / 3);
+    const year = date.getFullYear().toString().slice(-2);
+    return `Q${quarter}/${year}`;
+  };
+
   const getComplexityLabel = (complexity?: number) => {
     switch (complexity) {
       case 1: return 'פשוט';
@@ -139,7 +146,7 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, onClick }) => {
           {/* Above gray line */}
           <div>
             <span className="text-gray-600">רבעון נדרש: </span>
-            <span className="font-medium">{formatDate(task.requiredQuarter)}</span>
+            <span className="font-medium">{formatQuarter(task.requiredQuarter)}</span>
           </div>
           <div>
             <span className="text-gray-600">מורכבות: </span>
