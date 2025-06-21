@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Program, ProgramTask, currentUser } from '../../types';
+import { Program, ProgramTask } from '../../types';
 import { ChevronDown, Calendar, MessageSquare } from 'lucide-react';
 import { mockActivityPool } from '../../data/mockData';
 import { mockEngagementTypes, getProcessesForEngagementType } from '../../data/engagementTypesData';
@@ -289,15 +289,14 @@ const StationAssignmentForm: React.FC<StationAssignmentFormProps> = ({
   const canEditCompletionDate = (stationId: number) => {
     if (!canEdit || !['Plan', 'In Progress'].includes(program.status)) return false;
     
-    const lastCompleted = getLastCompletedStation();
-    const nextToComplete = getNextStationToComplete();
-    
     // For Plan status, only first station can be completed
     if (program.status === 'Plan') {
       return stationId === 1 && stations.find(s => s.stationId === 1)?.activityId;
     }
     
     // For In Progress status, can edit last completed station (to fix mistakes) or next station to complete
+    const lastCompleted = getLastCompletedStation();
+    const nextToComplete = getNextStationToComplete();
     return stationId === lastCompleted || stationId === nextToComplete;
   };
 
@@ -420,10 +419,11 @@ const StationAssignmentForm: React.FC<StationAssignmentFormProps> = ({
           <div className="space-y-3">
             {/* Engagement Type */}
             <div className="flex items-center gap-3">
-              <label className="text-sm font-medium text-gray-700 w-32 text-right flex-shrink-0">סוג התקשרות</label>
+              <Label htmlFor="engagement-type-select" className="text-sm font-medium text-gray-700 w-32 text-right flex-shrink-0">סוג התקשרות</Label>
               {fieldsEditable && program.status === 'Open' ? (
                 <div className="relative flex-1">
                   <select
+                    id="engagement-type-select"
                     value={selectedEngagementTypeId || ''}
                     onChange={(e) => handleEngagementTypeChange(Number(e.target.value))}
                     className="w-full text-sm border border-gray-300 rounded px-3 py-2 bg-white appearance-none pr-8"
@@ -446,9 +446,10 @@ const StationAssignmentForm: React.FC<StationAssignmentFormProps> = ({
             
             {/* Start Date */}
             <div className="flex items-center gap-3">
-              <label className="text-sm font-medium text-gray-700 w-32 text-right flex-shrink-0">מועד התנעה נדרש</label>
+              <Label htmlFor="start-date-input" className="text-sm font-medium text-gray-700 w-32 text-right flex-shrink-0">מועד התנעה נדרש</Label>
               {fieldsEditable ? (
                 <input
+                  id="start-date-input"
                   type="date"
                   value={program.startDate ? program.startDate.toISOString().split('T')[0] : ''}
                   className="flex-1 text-sm border border-gray-300 rounded px-3 py-2 bg-white"
@@ -491,6 +492,7 @@ const StationAssignmentForm: React.FC<StationAssignmentFormProps> = ({
                           value={stationData?.activityId || ''}
                           onChange={(e) => handleActivityChange(stationNumber, Number(e.target.value))}
                           className="w-full text-sm border border-gray-300 rounded px-3 py-2 bg-white appearance-none pr-8 min-h-[2.5rem]"
+                          aria-label={`פעילות לתחנה ${stationNumber}`}
                         >
                           <option value="">בחר פעילות</option>
                           {availableActivities.map(activity => (
@@ -517,6 +519,7 @@ const StationAssignmentForm: React.FC<StationAssignmentFormProps> = ({
                         onChange={(e) => handleCompletionDateChange(stationNumber, e.target.value)}
                         max={getTodayDateString()}
                         className="text-xs border border-gray-300 rounded px-2 py-1 bg-white"
+                        aria-label={`תאריך השלמה לתחנה ${stationNumber}`}
                       />
                     ) : (
                       <span className="text-sm">
@@ -536,6 +539,7 @@ const StationAssignmentForm: React.FC<StationAssignmentFormProps> = ({
                     <MessageSquare 
                       className="w-4 h-4 text-gray-600 cursor-pointer hover:text-blue-600" 
                       onClick={() => handleStationNotesClick(stationNumber)}
+                      aria-label={`הערות לתחנה ${stationNumber}`}
                     />
                   </div>
                 </div>
@@ -578,9 +582,9 @@ const StationAssignmentForm: React.FC<StationAssignmentFormProps> = ({
           </DialogHeader>
           <div className="grid gap-4 py-4">
             <div className="grid gap-2">
-              <Label htmlFor="reference" className="text-right">סימוכין</Label>
+              <Label htmlFor="station-reference" className="text-right">סימוכין</Label>
               <Input
-                id="reference"
+                id="station-reference"
                 value={stationReference}
                 onChange={(e) => setStationReference(e.target.value)}
                 className="text-right"
@@ -588,9 +592,9 @@ const StationAssignmentForm: React.FC<StationAssignmentFormProps> = ({
               />
             </div>
             <div className="grid gap-2">
-              <Label htmlFor="notes" className="text-right">הערת ביצוע תחנה</Label>
+              <Label htmlFor="station-notes" className="text-right">הערת ביצוע תחנה</Label>
               <Textarea
-                id="notes"
+                id="station-notes"
                 value={stationNotes}
                 onChange={(e) => setStationNotes(e.target.value)}
                 className="text-right min-h-[100px]"

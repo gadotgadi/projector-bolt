@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import AppLayout from '../components/layout/AppLayout';
 import { Program, STATUS_CONFIG } from '../types';
@@ -25,12 +25,35 @@ const StationAssignment = () => {
   const { toast } = useToast();
   const { user } = useAuth();
   const [showPermissionDialog, setShowPermissionDialog] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
 
   console.log('StationAssignment component loaded with taskId:', taskId);
 
   // Find program from mock data
   const initialProgram = mockPrograms.find(p => p.taskId === Number(taskId));
   
+  useEffect(() => {
+    // Simulate loading time to ensure proper initialization
+    const timer = setTimeout(() => {
+      setIsLoading(false);
+    }, 100);
+
+    return () => clearTimeout(timer);
+  }, []);
+
+  if (isLoading) {
+    return (
+      <AppLayout currentRoute="/station-assignment">
+        <div className="flex items-center justify-center h-64">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
+            <p className="mt-2 text-gray-600">טוען משימה...</p>
+          </div>
+        </div>
+      </AppLayout>
+    );
+  }
+
   if (!initialProgram) {
     console.log('Program not found for taskId:', taskId);
     return (

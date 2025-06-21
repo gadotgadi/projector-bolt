@@ -35,10 +35,7 @@ const ProgramForm: React.FC<ProgramFormProps> = ({ program, canEdit, onProgramUp
     switch (field) {
       case 'planningSource':
       case 'domainName':
-      case 'complexity':
-      case 'assignedOfficerName':
       case 'teamName':
-      case 'startDate':
       case 'planningNotes':
         // Only procurement manager can edit these
         return userRole === 1;
@@ -134,9 +131,9 @@ const ProgramForm: React.FC<ProgramFormProps> = ({ program, canEdit, onProgramUp
       <div className="space-y-3">
         {/* Title */}
         <div className="grid grid-cols-1 gap-2">
-          <Label htmlFor="title" className="text-sm font-medium text-right">כותרת המשימה *</Label>
+          <Label htmlFor="program-title" className="text-sm font-medium text-right">כותרת המשימה *</Label>
           <Input
-            id="title"
+            id="program-title"
             value={formData.title}
             onChange={(e) => handleChange('title', e.target.value)}
             disabled={!canEdit}
@@ -148,9 +145,9 @@ const ProgramForm: React.FC<ProgramFormProps> = ({ program, canEdit, onProgramUp
 
         {/* Description */}
         <div className="grid grid-cols-1 gap-2">
-          <Label htmlFor="description" className="text-sm font-medium text-right">פירוט המשימה</Label>
+          <Label htmlFor="program-description" className="text-sm font-medium text-right">פירוט המשימה</Label>
           <Textarea
-            id="description"
+            id="program-description"
             value={formData.description || ''}
             onChange={(e) => handleChange('description', e.target.value)}
             disabled={!canEdit}
@@ -162,9 +159,9 @@ const ProgramForm: React.FC<ProgramFormProps> = ({ program, canEdit, onProgramUp
         {/* Work Year and Quarter in same row */}
         <div className="grid grid-cols-2 gap-3">
           <div className="grid grid-cols-1 gap-2">
-            <Label htmlFor="workYear" className="text-sm font-medium text-right">שנת עבודה *</Label>
+            <Label htmlFor="program-workYear" className="text-sm font-medium text-right">שנת עבודה *</Label>
             <Input
-              id="workYear"
+              id="program-workYear"
               type="number"
               value={formData.workYear}
               onChange={(e) => handleChange('workYear', Number(e.target.value))}
@@ -174,9 +171,9 @@ const ProgramForm: React.FC<ProgramFormProps> = ({ program, canEdit, onProgramUp
             />
           </div>
           <div className="grid grid-cols-1 gap-2">
-            <Label htmlFor="requiredQuarter" className="text-sm font-medium text-right">רבעון נדרש *</Label>
+            <Label htmlFor="program-requiredQuarter" className="text-sm font-medium text-right">רבעון נדרש *</Label>
             <Input
-              id="requiredQuarter"
+              id="program-requiredQuarter"
               type="date"
               value={formData.requiredQuarter ? formData.requiredQuarter.toISOString().split('T')[0] : ''}
               onChange={(e) => handleChange('requiredQuarter', e.target.value ? new Date(e.target.value) : new Date())}
@@ -190,9 +187,9 @@ const ProgramForm: React.FC<ProgramFormProps> = ({ program, canEdit, onProgramUp
         {/* Requester and Division in same row */}
         <div className="grid grid-cols-2 gap-3">
           <div className="grid grid-cols-1 gap-2">
-            <Label htmlFor="requesterName" className="text-sm font-medium text-right">גורם דורש *</Label>
+            <Label htmlFor="program-requesterName" className="text-sm font-medium text-right">גורם דורש *</Label>
             <Input
-              id="requesterName"
+              id="program-requesterName"
               value={formData.requesterName}
               onChange={(e) => handleChange('requesterName', e.target.value)}
               disabled={!canEdit}
@@ -201,9 +198,9 @@ const ProgramForm: React.FC<ProgramFormProps> = ({ program, canEdit, onProgramUp
             />
           </div>
           <div className="grid grid-cols-1 gap-2">
-            <Label htmlFor="divisionName" className="text-sm font-medium text-right">אגף *</Label>
+            <Label htmlFor="program-divisionName" className="text-sm font-medium text-right">אגף *</Label>
             <Input
-              id="divisionName"
+              id="program-divisionName"
               value={formData.divisionName}
               onChange={(e) => handleChange('divisionName', e.target.value)}
               disabled={!canEdit}
@@ -216,9 +213,9 @@ const ProgramForm: React.FC<ProgramFormProps> = ({ program, canEdit, onProgramUp
         {/* Department and Domain in same row */}
         <div className="grid grid-cols-2 gap-3">
           <div className="grid grid-cols-1 gap-2">
-            <Label htmlFor="departmentName" className="text-sm font-medium text-right">מחלקה</Label>
+            <Label htmlFor="program-departmentName" className="text-sm font-medium text-right">מחלקה</Label>
             <Input
-              id="departmentName"
+              id="program-departmentName"
               value={formData.departmentName || ''}
               onChange={(e) => handleChange('departmentName', e.target.value)}
               disabled={!canEdit}
@@ -226,9 +223,9 @@ const ProgramForm: React.FC<ProgramFormProps> = ({ program, canEdit, onProgramUp
             />
           </div>
           <div className="grid grid-cols-1 gap-2">
-            <Label htmlFor="domainName" className="text-sm font-medium text-right">תחום רכש</Label>
+            <Label htmlFor="program-domainName" className="text-sm font-medium text-right">תחום רכש</Label>
             <Input
-              id="domainName"
+              id="program-domainName"
               value={formData.domainName || ''}
               onChange={(e) => handleChange('domainName', e.target.value)}
               disabled={!canEditField('domainName')}
@@ -240,9 +237,9 @@ const ProgramForm: React.FC<ProgramFormProps> = ({ program, canEdit, onProgramUp
         {/* Amount and Currency in same row */}
         <div className="grid grid-cols-2 gap-3">
           <div className="grid grid-cols-1 gap-2">
-            <Label htmlFor="estimatedAmount" className="text-sm font-medium text-right">אומדן התקשרות</Label>
+            <Label htmlFor="program-estimatedAmount" className="text-sm font-medium text-right">אומדן התקשרות</Label>
             <Input
-              id="estimatedAmount"
+              id="program-estimatedAmount"
               type="number"
               value={formData.estimatedAmount || ''}
               onChange={(e) => handleChange('estimatedAmount', e.target.value ? Number(e.target.value) : undefined)}
@@ -251,59 +248,70 @@ const ProgramForm: React.FC<ProgramFormProps> = ({ program, canEdit, onProgramUp
             />
           </div>
           <div className="grid grid-cols-1 gap-2">
-            <Label htmlFor="currency" className="text-sm font-medium text-right">מטבע</Label>
-            <select
+            <Label htmlFor="program-currency" className="text-sm font-medium text-right">מטבע</Label>
+            <Select
               value={formData.currency || ''}
-              onChange={(e) => handleChange('currency', e.target.value || undefined)}
+              onValueChange={(value) => handleChange('currency', value || undefined)}
               disabled={!canEdit}
-              className="flex h-8 w-full rounded-md border border-input bg-background px-3 py-1 text-sm"
             >
-              <option value="">בחר מטבע</option>
-              {Object.entries(CURRENCY_CONFIG).map(([key, label]) => (
-                <option key={key} value={key}>{label}</option>
-              ))}
-            </select>
+              <SelectTrigger id="program-currency" className="h-8 text-sm">
+                <SelectValue placeholder="בחר מטבע" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="">בחר מטבע</SelectItem>
+                {Object.entries(CURRENCY_CONFIG).map(([key, label]) => (
+                  <SelectItem key={key} value={key}>{label}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
         </div>
 
         {/* Planning Source and Complexity in same row */}
         <div className="grid grid-cols-2 gap-3">
           <div className="grid grid-cols-1 gap-2">
-            <Label htmlFor="planningSource" className="text-sm font-medium text-right">מקור תכנון *</Label>
-            <select
+            <Label htmlFor="program-planningSource" className="text-sm font-medium text-right">מקור תכנון *</Label>
+            <Select
               value={formData.planningSource}
-              onChange={(e) => handleChange('planningSource', e.target.value)}
+              onValueChange={(value) => handleChange('planningSource', value)}
               disabled={!canEditField('planningSource')}
-              className="flex h-8 w-full rounded-md border border-input bg-background px-3 py-1 text-sm"
-              required
             >
-              {Object.entries(PLANNING_SOURCE_CONFIG).map(([key, label]) => (
-                <option key={key} value={key}>{label}</option>
-              ))}
-            </select>
+              <SelectTrigger id="program-planningSource" className="h-8 text-sm">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {Object.entries(PLANNING_SOURCE_CONFIG).map(([key, label]) => (
+                  <SelectItem key={key} value={key}>{label}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
           <div className="grid grid-cols-1 gap-2">
-            <Label htmlFor="complexity" className="text-sm font-medium text-right">רמת מורכבות</Label>
-            <select
-              value={formData.complexity || ''}
-              onChange={(e) => handleChange('complexity', e.target.value ? Number(e.target.value) : undefined)}
+            <Label htmlFor="program-complexity" className="text-sm font-medium text-right">רמת מורכבות</Label>
+            <Select
+              value={formData.complexity?.toString() || ''}
+              onValueChange={(value) => handleChange('complexity', value ? Number(value) : undefined)}
               disabled={!canEditField('complexity')}
-              className="flex h-8 w-full rounded-md border border-input bg-background px-3 py-1 text-sm"
             >
-              <option value="">בחר רמת מורכבות</option>
-              <option value={1}>פשוט</option>
-              <option value={2}>בינוני</option>
-              <option value={3}>מורכב</option>
-            </select>
+              <SelectTrigger id="program-complexity" className="h-8 text-sm">
+                <SelectValue placeholder="בחר רמת מורכבות" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="">בחר רמת מורכבות</SelectItem>
+                <SelectItem value="1">פשוט</SelectItem>
+                <SelectItem value="2">בינוני</SelectItem>
+                <SelectItem value="3">מורכב</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
         </div>
 
         {/* Officer and Team Assignment */}
         <div className="grid grid-cols-2 gap-3">
           <div className="grid grid-cols-1 gap-2">
-            <Label htmlFor="assignedOfficerName" className="text-sm font-medium text-right">קניין</Label>
+            <Label htmlFor="program-assignedOfficerName" className="text-sm font-medium text-right">קניין</Label>
             <Input
-              id="assignedOfficerName"
+              id="program-assignedOfficerName"
               value={formData.assignedOfficerName || ''}
               onChange={(e) => handleChange('assignedOfficerName', e.target.value)}
               disabled={!canEditField('assignedOfficerName')}
@@ -311,9 +319,9 @@ const ProgramForm: React.FC<ProgramFormProps> = ({ program, canEdit, onProgramUp
             />
           </div>
           <div className="grid grid-cols-1 gap-2">
-            <Label htmlFor="teamName" className="text-sm font-medium text-right">צוות</Label>
+            <Label htmlFor="program-teamName" className="text-sm font-medium text-right">צוות</Label>
             <Input
-              id="teamName"
+              id="program-teamName"
               value={formData.teamName || ''}
               onChange={(e) => handleChange('teamName', e.target.value)}
               disabled={!canEditField('teamName')}
@@ -324,9 +332,9 @@ const ProgramForm: React.FC<ProgramFormProps> = ({ program, canEdit, onProgramUp
 
         {/* Start Date */}
         <div className="grid grid-cols-1 gap-2">
-          <Label htmlFor="startDate" className="text-sm font-medium text-right">מועד נדרש להתנעה</Label>
+          <Label htmlFor="program-startDate" className="text-sm font-medium text-right">מועד נדרש להתנעה</Label>
           <Input
-            id="startDate"
+            id="program-startDate"
             type="date"
             value={formData.startDate ? formData.startDate.toISOString().split('T')[0] : ''}
             onChange={(e) => handleChange('startDate', e.target.value ? new Date(e.target.value) : undefined)}
@@ -338,27 +346,31 @@ const ProgramForm: React.FC<ProgramFormProps> = ({ program, canEdit, onProgramUp
         {/* Status (only for authorized users) */}
         {canEditStatus() && (
           <div className="grid grid-cols-1 gap-2">
-            <Label htmlFor="status" className="text-sm font-medium text-right">סטטוס</Label>
-            <select
+            <Label htmlFor="program-status" className="text-sm font-medium text-right">סטטוס</Label>
+            <Select
               value={formData.status}
-              onChange={(e) => handleChange('status', e.target.value as TaskStatus)}
+              onValueChange={(value) => handleChange('status', value as TaskStatus)}
               disabled={!canEdit}
-              className="flex h-8 w-full rounded-md border border-input bg-background px-3 py-1 text-sm"
             >
-              {getAvailableStatuses().map(status => (
-                <option key={status} value={status}>
-                  {STATUS_CONFIG[status].label}
-                </option>
-              ))}
-            </select>
+              <SelectTrigger id="program-status" className="h-8 text-sm">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {getAvailableStatuses().map(status => (
+                  <SelectItem key={status} value={status}>
+                    {STATUS_CONFIG[status].label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
         )}
 
         {/* Notes */}
         <div className="grid grid-cols-1 gap-2">
-          <Label htmlFor="planningNotes" className="text-sm font-medium text-right">הערות לתכנון</Label>
+          <Label htmlFor="program-planningNotes" className="text-sm font-medium text-right">הערות לתכנון</Label>
           <Textarea
-            id="planningNotes"
+            id="program-planningNotes"
             value={formData.planningNotes || ''}
             onChange={(e) => handleChange('planningNotes', e.target.value)}
             disabled={!canEditField('planningNotes')}
@@ -368,9 +380,9 @@ const ProgramForm: React.FC<ProgramFormProps> = ({ program, canEdit, onProgramUp
         </div>
 
         <div className="grid grid-cols-1 gap-2">
-          <Label htmlFor="officerNotes" className="text-sm font-medium text-right">הערות טיפול קניין</Label>
+          <Label htmlFor="program-officerNotes" className="text-sm font-medium text-right">הערות טיפול קניין</Label>
           <Textarea
-            id="officerNotes"
+            id="program-officerNotes"
             value={formData.officerNotes || ''}
             onChange={(e) => handleChange('officerNotes', e.target.value)}
             disabled={!canEditField('officerNotes')}
@@ -381,12 +393,13 @@ const ProgramForm: React.FC<ProgramFormProps> = ({ program, canEdit, onProgramUp
 
         {/* Last Update - Read Only */}
         <div className="grid grid-cols-1 gap-2">
-          <Label htmlFor="lastUpdate" className="text-sm font-medium text-right">עדכון אחרון למשימה</Label>
+          <Label htmlFor="program-lastUpdate" className="text-sm font-medium text-right">עדכון אחרון למשימה</Label>
           <Input
-            id="lastUpdate"
+            id="program-lastUpdate"
             value={formData.lastUpdate ? formData.lastUpdate.toLocaleDateString('he-IL') : ''}
             disabled
             className="text-right text-sm h-8 bg-gray-100"
+            readOnly
           />
         </div>
       </div>
