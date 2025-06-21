@@ -140,7 +140,14 @@ const Dashboard = () => {
   }, [roleBasedFilteredPrograms, filters]);
 
   const handleProgramClick = (program: Program) => {
-    navigate(`/station-assignment/${program.taskId}`);
+    // Determine which screen to open based on user role and task status
+    if (user?.roleCode === 4 && program.status === 'Open') {
+      // גורם דורש with Open status -> New Task screen
+      navigate(`/new-task?edit=${program.taskId}`);
+    } else {
+      // All other cases -> Task Management screen
+      navigate(`/station-assignment/${program.taskId}`);
+    }
   };
 
   // Get available filter options based on role

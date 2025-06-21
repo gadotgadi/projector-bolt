@@ -1,9 +1,10 @@
-
 import React, { useState } from 'react';
-import { Program, TaskStatus, STATUS_CONFIG, PLANNING_SOURCE_CONFIG, CURRENCY_CONFIG, currentUser } from '../../types';
+import { Program, TaskStatus, STATUS_CONFIG, PLANNING_SOURCE_CONFIG, CURRENCY_CONFIG } from '../../types';
 import { Input } from '../ui/input';
 import { Textarea } from '../ui/textarea';
 import { Label } from '../ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
+import { useAuth } from '../auth/AuthProvider';
 
 interface ProgramFormProps {
   program: Program;
@@ -16,6 +17,7 @@ interface ProgramFormProps {
 
 const ProgramForm: React.FC<ProgramFormProps> = ({ program, canEdit, onProgramUpdate }) => {
   const [formData, setFormData] = useState(program);
+  const { user } = useAuth();
 
   const handleChange = (field: keyof Program, value: any) => {
     const updatedProgram = { ...formData, [field]: value, lastUpdate: new Date() };
@@ -23,8 +25,108 @@ const ProgramForm: React.FC<ProgramFormProps> = ({ program, canEdit, onProgramUp
     onProgramUpdate(updatedProgram);
   };
 
-  const canEditStatus = currentUser.role === 'procurement_manager' || currentUser.role === 'team_leader';
-  const availableStatuses: TaskStatus[] = ['Open', 'Plan', 'In Progress', 'Complete', 'Done', 'Freeze', 'Cancel'];
+  // Check field-specific permissions
+  const canEditField = (field: string) => {
+    if (!canEdit) return false;
+
+    const userRole = user?.roleCode;
+    const status = program.status;
+
+    switch (field) {
+      case 'planningSource':
+      case 'domainName':
+      case 'complexity':
+      case 'assignedOfficerName':
+      case 'teamName':
+      case 'startDate':
+      case 'planningNotes':
+        // Only procurement manager can edit these
+        return userRole === 1;
+
+      case 'complexity':
+        // Special rules for complexity
+        if (userRole !== 1) return false;
+        if (status === 'Open') return true; // Can save empty in Open status
+        if (status === 'Plan') return true; // Can change but not leave empty
+        return false; // Cannot edit in other statuses
+
+      case 'assignedOfficerName':
+        // Assignment permissions
+        const assignPermissions = 'Manager only'; // This should come from system settings
+        if (assignPermissions === 'Manager only') {
+          return userRole === 1;
+        } else if (assignPermissions === 'Team leader') {
+          return userRole === 1 || userRole === 2;
+        }
+        return false;
+
+      case 'startDate':
+        // Start date rules
+        if (userRole !== 1) return false;
+        if (status === 'Open') return true; // Can save empty in Open status
+        if (status === 'Plan') return true; // Can change but not leave empty
+        return false; // Cannot edit in other statuses
+
+      case 'officerNotes':
+        // Officer notes can be edited by procurement manager, officer, and team leader
+        return userRole === 1 || userRole === 2 || userRole === 3;
+
+      case 'status':
+        // Status changes are handled separately based on complex rules
+        return false; // Handled by separate status change logic
+
+      default:
+        return false;
+    }
+  };
+
+  const canEditStatus = () => {
+    const userRole = user?.roleCode;
+    const status = program.status;
+
+    // Only procurement manager can manually change status in most cases
+    if (userRole === 1) {
+      return true; // Procurement manager can change status based on rules in documentation
+    }
+
+    // Team leader can change Complete to Done if has permission
+    if (userRole === 2 && status === 'Complete') {
+      const closePermissions = 'Team Leader'; // This should come from system settings
+      return closePermissions === 'Team Leader';
+    }
+
+    return false;
+  };
+
+  const getAvailableStatuses = () => {
+    const userRole = user?.roleCode;
+    const currentStatus = program.status;
+
+    if (userRole === 1) { // Procurement manager
+      switch (currentStatus) {
+        case 'Complete':
+          return ['Complete', 'Done', 'Freeze', 'Cancel'];
+        case 'In Progress':
+          return ['In Progress', 'Freeze', 'Cancel'];
+        case 'Plan':
+          return ['Plan', 'Freeze', 'Cancel'];
+        case 'Open':
+          return ['Open', 'Freeze', 'Cancel'];
+        case 'Freeze':
+          // Complex rules for unfreezing based on task state
+          return ['Freeze', 'Cancel', 'Open', 'Plan', 'In Progress', 'Done', 'Complete'];
+        default:
+          return [currentStatus];
+      }
+    } else if (userRole === 2 && currentStatus === 'Complete') { // Team leader
+      const closePermissions = 'Team Leader'; // This should come from system settings
+      if (closePermissions === 'Team Leader') {
+        return ['Complete', 'Done'];
+      }
+    }
+
+    return [currentStatus]; // No changes allowed
+  };
 
   return (
     <div className="space-y-3">
@@ -129,7 +231,7 @@ const ProgramForm: React.FC<ProgramFormProps> = ({ program, canEdit, onProgramUp
               id="domainName"
               value={formData.domainName || ''}
               onChange={(e) => handleChange('domainName', e.target.value)}
-              disabled={!canEdit}
+              disabled={!canEditField('domainName')}
               className="text-right text-sm h-8"
             />
           </div>
@@ -171,7 +273,7 @@ const ProgramForm: React.FC<ProgramFormProps> = ({ program, canEdit, onProgramUp
             <select
               value={formData.planningSource}
               onChange={(e) => handleChange('planningSource', e.target.value)}
-              disabled={!canEdit}
+              disabled={!canEditField('planningSource')}
               className="flex h-8 w-full rounded-md border border-input bg-background px-3 py-1 text-sm"
               required
             >
@@ -185,7 +287,7 @@ const ProgramForm: React.FC<ProgramFormProps> = ({ program, canEdit, onProgramUp
             <select
               value={formData.complexity || ''}
               onChange={(e) => handleChange('complexity', e.target.value ? Number(e.target.value) : undefined)}
-              disabled={!canEdit}
+              disabled={!canEditField('complexity')}
               className="flex h-8 w-full rounded-md border border-input bg-background px-3 py-1 text-sm"
             >
               <option value="">בחר רמת מורכבות</option>
@@ -196,8 +298,45 @@ const ProgramForm: React.FC<ProgramFormProps> = ({ program, canEdit, onProgramUp
           </div>
         </div>
 
+        {/* Officer and Team Assignment */}
+        <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 gap-2">
+            <Label htmlFor="assignedOfficerName" className="text-sm font-medium text-right">קניין</Label>
+            <Input
+              id="assignedOfficerName"
+              value={formData.assignedOfficerName || ''}
+              onChange={(e) => handleChange('assignedOfficerName', e.target.value)}
+              disabled={!canEditField('assignedOfficerName')}
+              className="text-right text-sm h-8"
+            />
+          </div>
+          <div className="grid grid-cols-1 gap-2">
+            <Label htmlFor="teamName" className="text-sm font-medium text-right">צוות</Label>
+            <Input
+              id="teamName"
+              value={formData.teamName || ''}
+              onChange={(e) => handleChange('teamName', e.target.value)}
+              disabled={!canEditField('teamName')}
+              className="text-right text-sm h-8"
+            />
+          </div>
+        </div>
+
+        {/* Start Date */}
+        <div className="grid grid-cols-1 gap-2">
+          <Label htmlFor="startDate" className="text-sm font-medium text-right">מועד נדרש להתנעה</Label>
+          <Input
+            id="startDate"
+            type="date"
+            value={formData.startDate ? formData.startDate.toISOString().split('T')[0] : ''}
+            onChange={(e) => handleChange('startDate', e.target.value ? new Date(e.target.value) : undefined)}
+            disabled={!canEditField('startDate')}
+            className="text-sm h-8"
+          />
+        </div>
+
         {/* Status (only for authorized users) */}
-        {canEditStatus && (
+        {canEditStatus() && (
           <div className="grid grid-cols-1 gap-2">
             <Label htmlFor="status" className="text-sm font-medium text-right">סטטוס</Label>
             <select
@@ -206,7 +345,7 @@ const ProgramForm: React.FC<ProgramFormProps> = ({ program, canEdit, onProgramUp
               disabled={!canEdit}
               className="flex h-8 w-full rounded-md border border-input bg-background px-3 py-1 text-sm"
             >
-              {availableStatuses.map(status => (
+              {getAvailableStatuses().map(status => (
                 <option key={status} value={status}>
                   {STATUS_CONFIG[status].label}
                 </option>
@@ -222,7 +361,7 @@ const ProgramForm: React.FC<ProgramFormProps> = ({ program, canEdit, onProgramUp
             id="planningNotes"
             value={formData.planningNotes || ''}
             onChange={(e) => handleChange('planningNotes', e.target.value)}
-            disabled={!canEdit}
+            disabled={!canEditField('planningNotes')}
             className="text-right text-sm min-h-[3rem]"
             rows={2}
           />
@@ -234,9 +373,20 @@ const ProgramForm: React.FC<ProgramFormProps> = ({ program, canEdit, onProgramUp
             id="officerNotes"
             value={formData.officerNotes || ''}
             onChange={(e) => handleChange('officerNotes', e.target.value)}
-            disabled={!canEdit}
+            disabled={!canEditField('officerNotes')}
             className="text-right text-sm min-h-[3rem]"
             rows={2}
+          />
+        </div>
+
+        {/* Last Update - Read Only */}
+        <div className="grid grid-cols-1 gap-2">
+          <Label htmlFor="lastUpdate" className="text-sm font-medium text-right">עדכון אחרון למשימה</Label>
+          <Input
+            id="lastUpdate"
+            value={formData.lastUpdate ? formData.lastUpdate.toLocaleDateString('he-IL') : ''}
+            disabled
+            className="text-right text-sm h-8 bg-gray-100"
           />
         </div>
       </div>

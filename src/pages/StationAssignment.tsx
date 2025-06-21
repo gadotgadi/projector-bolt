@@ -86,19 +86,87 @@ const StationAssignment = () => {
     setProgram(updatedProgram);
   };
 
-  // Check permissions - allowing full access for technical users and procurement managers
-  const canEdit = user?.roleCode === 1 || user?.roleCode === 0 || user?.roleCode === 9;
-  const canSave = canEdit || 
-    (user?.roleCode === 4 && program.status === 'Open') ||
-    ([2, 3].includes(user?.roleCode || 0) && 
-     ['Open', 'Plan', 'In Progress'].includes(program.status));
-  
-  const canView = canEdit || 
-    (user?.roleCode === 4) ||
-    ([2, 3].includes(user?.roleCode || 0) && 
-     ['Open', 'Plan', 'In Progress'].includes(program.status));
+  // Check permissions based on user role and task status
+  const getPermissions = () => {
+    const roleCode = user?.roleCode;
+    const status = program.status;
 
-  const canFreeze = canEdit && ['Open', 'Plan'].includes(program.status);
+    // גורם דורש
+    if (roleCode === 4) {
+      return {
+        canEdit: false,
+        canSave: false,
+        canFreeze: false,
+        isReadOnly: true
+      };
+    }
+
+    // מנהל רכש
+    if (roleCode === 1) {
+      return {
+        canEdit: true,
+        canSave: true,
+        canFreeze: status === 'Open',
+        isReadOnly: false
+      };
+    }
+
+    // ראש צוות
+    if (roleCode === 2) {
+      if (status === 'Plan' || status === 'In Progress') {
+        return {
+          canEdit: true,
+          canSave: true,
+          canFreeze: false,
+          isReadOnly: false
+        };
+      }
+      if (status === 'Complete') {
+        // Check close permissions from system settings
+        const closePermissions = 'Team Leader'; // This should come from system settings
+        return {
+          canEdit: closePermissions === 'Team Leader',
+          canSave: closePermissions === 'Team Leader',
+          canFreeze: false,
+          isReadOnly: closePermissions !== 'Team Leader'
+        };
+      }
+      return {
+        canEdit: false,
+        canSave: false,
+        canFreeze: false,
+        isReadOnly: true
+      };
+    }
+
+    // קניין
+    if (roleCode === 3) {
+      if (status === 'Plan' || status === 'In Progress') {
+        return {
+          canEdit: true,
+          canSave: true,
+          canFreeze: false,
+          isReadOnly: false
+        };
+      }
+      return {
+        canEdit: false,
+        canSave: false,
+        canFreeze: false,
+        isReadOnly: true
+      };
+    }
+
+    // Default - read only
+    return {
+      canEdit: false,
+      canSave: false,
+      canFreeze: false,
+      isReadOnly: true
+    };
+  };
+
+  const permissions = getPermissions();
 
   // Show permission dialog instead of blocking access
   const handlePermissionDenied = () => {
@@ -120,27 +188,31 @@ const StationAssignment = () => {
             
             <div className="flex items-center gap-3">
               <StatusBadge status={program.status} size="md" />
-              {canSave ? (
+              {permissions.canSave ? (
                 <Button onClick={handleSave} className="flex items-center gap-2 text-sm px-3 py-1.5">
                   <Save className="w-3 h-3" />
                   שמירה
                 </Button>
               ) : (
-                <Button onClick={handlePermissionDenied} className="flex items-center gap-2 text-sm px-3 py-1.5">
-                  <Save className="w-3 h-3" />
-                  שמירה
-                </Button>
+                permissions.canEdit && (
+                  <Button onClick={handlePermissionDenied} className="flex items-center gap-2 text-sm px-3 py-1.5" disabled>
+                    <Save className="w-3 h-3" />
+                    שמירה
+                  </Button>
+                )
               )}
-              {canFreeze ? (
+              {permissions.canFreeze ? (
                 <Button onClick={handleFreeze} variant="secondary" className="flex items-center gap-2 text-sm px-3 py-1.5">
                   <Lock className="w-3 h-3" />
                   קיבוע
                 </Button>
               ) : (
-                <Button onClick={handlePermissionDenied} variant="secondary" className="flex items-center gap-2 text-sm px-3 py-1.5">
-                  <Lock className="w-3 h-3" />
-                  קיבוע
-                </Button>
+                permissions.canEdit && program.status === 'Open' && (
+                  <Button onClick={handlePermissionDenied} variant="secondary" className="flex items-center gap-2 text-sm px-3 py-1.5" disabled>
+                    <Lock className="w-3 h-3" />
+                    קיבוע
+                  </Button>
+                )
               )}
             </div>
           </div>
@@ -152,7 +224,7 @@ const StationAssignment = () => {
           <div className="w-1/3 p-4 overflow-y-auto bg-white border-r">
             <ProgramForm 
               program={program}
-              canEdit={canEdit}
+              canEdit={permissions.canEdit}
               onProgramUpdate={handleProgramUpdate}
               isEditing={false}
               onSave={handleSave}
@@ -164,7 +236,7 @@ const StationAssignment = () => {
           <div className="w-2/3 p-4 overflow-y-auto bg-gray-50">
             <StationAssignmentForm 
               program={program}
-              canEdit={canEdit}
+              canEdit={permissions.canEdit}
               onSave={handleSave}
               onProgramUpdate={handleProgramUpdate}
             />
