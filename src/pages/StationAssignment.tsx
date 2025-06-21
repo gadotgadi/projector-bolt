@@ -26,10 +26,13 @@ const StationAssignment = () => {
   const { user } = useAuth();
   const [showPermissionDialog, setShowPermissionDialog] = useState(false);
 
+  console.log('StationAssignment component loaded with taskId:', taskId);
+
   // Find program from mock data
   const initialProgram = mockPrograms.find(p => p.taskId === Number(taskId));
   
   if (!initialProgram) {
+    console.log('Program not found for taskId:', taskId);
     return (
       <AppLayout currentRoute="/station-assignment">
         <div className="text-center py-12">
@@ -42,7 +45,20 @@ const StationAssignment = () => {
     );
   }
 
-  const [program, setProgram] = useState<Program>(initialProgram);
+  console.log('Program found:', initialProgram.title, 'Status:', initialProgram.status);
+
+  const [program, setProgram] = useState<Program>({
+    ...initialProgram,
+    requiredQuarter: initialProgram.requiredQuarter ? new Date(initialProgram.requiredQuarter) : null,
+    startDate: initialProgram.startDate ? new Date(initialProgram.startDate) : null,
+    lastUpdate: initialProgram.lastUpdate ? new Date(initialProgram.lastUpdate) : new Date(),
+    createdAt: initialProgram.createdAt ? new Date(initialProgram.createdAt) : new Date(),
+    stations: initialProgram.stations?.map((station: any) => ({
+      ...station,
+      completionDate: station.completionDate ? new Date(station.completionDate) : null,
+      lastUpdate: station.lastUpdate ? new Date(station.lastUpdate) : new Date()
+    })) || []
+  });
 
   const handleBack = () => {
     navigate('/');
@@ -90,6 +106,8 @@ const StationAssignment = () => {
   const getPermissions = () => {
     const roleCode = user?.roleCode;
     const status = program.status;
+
+    console.log('Checking permissions for role:', roleCode, 'status:', status);
 
     // גורם דורש
     if (roleCode === 4) {
@@ -167,6 +185,7 @@ const StationAssignment = () => {
   };
 
   const permissions = getPermissions();
+  console.log('Calculated permissions:', permissions);
 
   // Show permission dialog instead of blocking access
   const handlePermissionDenied = () => {
@@ -188,31 +207,17 @@ const StationAssignment = () => {
             
             <div className="flex items-center gap-3">
               <StatusBadge status={program.status} size="md" />
-              {permissions.canSave ? (
+              {permissions.canSave && (
                 <Button onClick={handleSave} className="flex items-center gap-2 text-sm px-3 py-1.5">
                   <Save className="w-3 h-3" />
                   שמירה
                 </Button>
-              ) : (
-                permissions.canEdit && (
-                  <Button onClick={handlePermissionDenied} className="flex items-center gap-2 text-sm px-3 py-1.5" disabled>
-                    <Save className="w-3 h-3" />
-                    שמירה
-                  </Button>
-                )
               )}
-              {permissions.canFreeze ? (
+              {permissions.canFreeze && (
                 <Button onClick={handleFreeze} variant="secondary" className="flex items-center gap-2 text-sm px-3 py-1.5">
                   <Lock className="w-3 h-3" />
                   קיבוע
                 </Button>
-              ) : (
-                permissions.canEdit && program.status === 'Open' && (
-                  <Button onClick={handlePermissionDenied} variant="secondary" className="flex items-center gap-2 text-sm px-3 py-1.5" disabled>
-                    <Lock className="w-3 h-3" />
-                    קיבוע
-                  </Button>
-                )
               )}
             </div>
           </div>
