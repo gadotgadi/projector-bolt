@@ -1,9 +1,10 @@
-import React, { useState } from 'react';
-import { Program, ProgramTask, currentUser } from '../../types';
+import React, { useState, useEffect } from 'react';
+import { Program, ProgramTask, TaskStatus } from '../../types';
 import { ChevronDown, Calendar, MessageSquare } from 'lucide-react';
 import { mockActivityPool } from '../../data/mockData';
 import { mockEngagementTypes, getProcessesForEngagementType } from '../../data/engagementTypesData';
 import { useToast } from '../ui/use-toast';
+import { useAuth } from '../auth/AuthProvider';
 import {
   Dialog,
   DialogContent,
@@ -38,9 +39,42 @@ const StationAssignmentForm: React.FC<StationAssignmentFormProps> = ({
   const [stationReference, setStationReference] = useState('');
   const [stationNotes, setStationNotes] = useState('');
   const { toast } = useToast();
+  const { user } = useAuth();
+
+  // Get user permissions based on role and status
+  const getUserPermissions = () => {
+    const roleCode = user?.roleCode;
+    const status = program.status;
+    
+    return {
+      canEditEngagementType: roleCode === 1 && status === 'Open', // מנהל רכש בסטטוס Open
+      canEditActivities: roleCode === 1 && status === 'Open', // מנהל רכש בסטטוס Open
+      canEditCompletionDates: ['Plan', 'In Progress'].includes(status) && [1, 2, 3].includes(roleCode || 0),
+      canEditStationNotes: [1, 2, 3].includes(roleCode || 0)
+    };
+  };
+
+  const permissions = getUserPermissions();
+
+  // Get station status and colors
+  const getStationStatus = (stationId: number) => {
+    const stationData = getStationData(stationId);
+    const completedStations = getCompletedStations();
+    const nextToComplete = getNextStationToComplete();
+    
+    if (completedStations.includes(stationId)) {
+      return { status: 'completed', bgColor: 'bg-green-200', textColor: 'text-black' };
+    } else if (stationId === nextToComplete) {
+      return { status: 'current', bgColor: 'bg-yellow-100', textColor: 'text-black' };
+    } else if (stationData?.activityId) {
+      return { status: 'assigned', bgColor: 'bg-blue-100', textColor: 'text-black' };
+    } else {
+      return { status: 'unassigned', bgColor: 'bg-gray-300', textColor: 'text-black' };
+    }
+  };
 
   const handleEngagementTypeChange = (engagementTypeId: number) => {
-    if (!canEdit || !['Open', 'Plan'].includes(program.status)) return;
+    if (!permissions.canEditEngagementType) return;
     
     setSelectedEngagementTypeId(engagementTypeId);
     
@@ -75,7 +109,7 @@ const StationAssignmentForm: React.FC<StationAssignmentFormProps> = ({
   };
 
   const handleActivityChange = (stationId: number, activityId: number) => {
-    if (!canEdit || !['Open', 'Plan'].includes(program.status)) return;
+    if (!permissions.canEditActivities) return;
     
     const existingAssignment = stations.find(s => s.activityId === activityId && s.stationId !== stationId);
     if (existingAssignment) {
@@ -132,11 +166,13 @@ const StationAssignmentForm: React.FC<StationAssignmentFormProps> = ({
   };
 
   const handleCompletionDateChange = (stationId: number, dateValue: string) => {
+    if (!permissions.canEditCompletionDates) return;
+
     // Validate that the date is not in the future
     if (dateValue) {
       const selectedDate = new Date(dateValue);
       const today = new Date();
-      today.setHours(23, 59, 59, 999); // Set to end of today
+      today.setHours(23, 59, 59, 999);
       
       if (selectedDate > today) {
         toast({
@@ -145,6 +181,32 @@ const StationAssignmentForm: React.FC<StationAssignmentFormProps> = ({
           variant: "destructive"
         });
         return;
+      }
+
+      // Validate sequence - can't complete a station before the previous one
+      const previousStations = stations
+        .filter(s => s.stationId < stationId && s.activityId)
+        .sort((a, b) => a.stationId - b.stationId);
+      
+      if (previousStations.length > 0) {
+        const lastPreviousStation = previousStations[previousStations.length - 1];
+        if (!lastPreviousStation.completionDate) {
+          toast({
+            title: "שגיאה",
+            description: "לא ניתן לדווח השלמת פעילות לפני השלמת התחנה הקודמת",
+            variant: "destructive"
+          });
+          return;
+        }
+        
+        if (selectedDate < lastPreviousStation.completionDate) {
+          toast({
+            title: "שגיאה",
+            description: "תאריך השלמה לא יכול להיות מוקדם מהתחנה הקודמת",
+            variant: "destructive"
+          });
+          return;
+        }
       }
     }
 
@@ -155,8 +217,8 @@ const StationAssignmentForm: React.FC<StationAssignmentFormProps> = ({
       updatedStations[existingStationIndex] = {
         ...updatedStations[existingStationIndex],
         completionDate: dateValue ? new Date(dateValue) : undefined,
-        reportingUserId: dateValue ? Number(currentUser.id) : undefined,
-        reportingUserName: dateValue ? currentUser.name : undefined,
+        reportingUserId: dateValue ? Number(user?.id) : undefined,
+        reportingUserName: dateValue ? user?.fullName : undefined,
         lastUpdate: new Date()
       };
       
@@ -179,24 +241,35 @@ const StationAssignmentForm: React.FC<StationAssignmentFormProps> = ({
   };
 
   const updateProgramStatus = (programToUpdate: Program): Program => {
-    const completedStations = stations.filter(s => s.completionDate).length;
-    const assignedStations = stations.filter(s => s.activityId).length;
+    const assignedStations = stations.filter(s => s.activityId);
+    const completedStations = stations.filter(s => s.completionDate);
     
     let newStatus = programToUpdate.status;
     
-    // If we have completed stations and status is still Plan, move to In Progress
-    if (completedStations > 0 && programToUpdate.status === 'Plan') {
+    // Status transitions based on completion
+    if (programToUpdate.status === 'Plan' && completedStations.length > 0) {
       newStatus = 'In Progress';
-    }
-    
-    // If all assigned stations are completed, move to Complete
-    if (assignedStations > 0 && completedStations === assignedStations && programToUpdate.status === 'In Progress') {
-      newStatus = 'Complete';
+    } else if (programToUpdate.status === 'In Progress' && 
+               assignedStations.length > 0 && 
+               completedStations.length === assignedStations.length) {
+      // Check permissions for automatic closure
+      // This would need to check the Permissions table in a real implementation
+      const closePermissions = 'Automatic'; // Mock value
+      
+      if (closePermissions === 'Automatic') {
+        newStatus = 'Done';
+      } else if (closePermissions === 'Team leader' && [1, 2].includes(user?.roleCode || 0)) {
+        newStatus = 'Done';
+      } else if (closePermissions === 'Manager only' && user?.roleCode === 1) {
+        newStatus = 'Done';
+      } else {
+        newStatus = 'Complete';
+      }
     }
     
     return {
       ...programToUpdate,
-      status: newStatus
+      status: newStatus as TaskStatus
     };
   };
 
@@ -229,25 +302,8 @@ const StationAssignmentForm: React.FC<StationAssignmentFormProps> = ({
     return null;
   };
 
-  const getStationStatus = (stationId: number) => {
-    const stationData = getStationData(stationId);
-    const completedStations = getCompletedStations();
-    const lastCompleted = getLastCompletedStation();
-    const nextToComplete = getNextStationToComplete();
-    
-    if (completedStations.includes(stationId)) {
-      return { status: 'completed', bgColor: 'bg-green-200', textColor: 'text-black' };
-    } else if (stationId === nextToComplete) {
-      return { status: 'current', bgColor: 'bg-yellow-100', textColor: 'text-black' };
-    } else if (stationData?.activityId) {
-      return { status: 'assigned', bgColor: 'bg-blue-100', textColor: 'text-black' };
-    } else {
-      return { status: 'unassigned', bgColor: 'bg-gray-300', textColor: 'text-black' };
-    }
-  };
-
   const canEditCompletionDate = (stationId: number) => {
-    if (!canEdit || !['Plan', 'In Progress'].includes(program.status)) return false;
+    if (!permissions.canEditCompletionDates) return false;
     
     const lastCompleted = getLastCompletedStation();
     const nextToComplete = getNextStationToComplete();
@@ -261,15 +317,11 @@ const StationAssignmentForm: React.FC<StationAssignmentFormProps> = ({
   };
 
   const canEditActivity = (stationId: number) => {
-    if (!canEdit || !['Open', 'Plan'].includes(program.status)) return false;
+    if (!permissions.canEditActivities) return false;
     
-    if (program.status === 'Open') {
-      const assignedStations = stations.filter(s => s.activityId).map(s => s.stationId).sort((a, b) => a - b);
-      const lastAssignedStation = assignedStations.length > 0 ? Math.max(...assignedStations) : 0;
-      return stationId <= lastAssignedStation + 1;
-    }
-    
-    return true;
+    const assignedStations = stations.filter(s => s.activityId).map(s => s.stationId).sort((a, b) => a - b);
+    const lastAssignedStation = assignedStations.length > 0 ? Math.max(...assignedStations) : 0;
+    return stationId <= lastAssignedStation + 1;
   };
 
   const getAvailableActivities = (stationId: number) => {
@@ -306,6 +358,8 @@ const StationAssignmentForm: React.FC<StationAssignmentFormProps> = ({
   }, [stations]);
 
   const handleStationNotesClick = (stationId: number) => {
+    if (!permissions.canEditStationNotes) return;
+    
     const stationData = getStationData(stationId);
     setSelectedStationId(stationId);
     setStationReference(stationData?.reference || '');
@@ -369,18 +423,16 @@ const StationAssignmentForm: React.FC<StationAssignmentFormProps> = ({
     return today.toISOString().split('T')[0];
   };
 
-  const fieldsEditable = canEdit && ['Open', 'Plan'].includes(program.status);
-
   return (
     <>
       <div className="space-y-4">
-        {/* Top fields section - each field in separate row with labels on the right */}
+        {/* Top fields section */}
         <div className="bg-white rounded-lg border p-4">
           <div className="space-y-3">
             {/* Engagement Type */}
             <div className="flex items-center gap-3">
               <label className="text-sm font-medium text-gray-700 w-32 text-right flex-shrink-0">סוג התקשרות</label>
-              {fieldsEditable ? (
+              {permissions.canEditEngagementType ? (
                 <div className="relative flex-1">
                   <select
                     value={selectedEngagementTypeId || ''}
@@ -406,18 +458,9 @@ const StationAssignmentForm: React.FC<StationAssignmentFormProps> = ({
             {/* Start Date */}
             <div className="flex items-center gap-3">
               <label className="text-sm font-medium text-gray-700 w-32 text-right flex-shrink-0">מועד התנעה נדרש</label>
-              {fieldsEditable ? (
-                <input
-                  type="date"
-                  value={program.startDate ? program.startDate.toISOString().split('T')[0] : ''}
-                  className="flex-1 text-sm border border-gray-300 rounded px-3 py-2 bg-white"
-                  readOnly={!fieldsEditable}
-                />
-              ) : (
-                <div className="text-sm text-gray-900 flex-1">
-                  {program.startDate ? program.startDate.toLocaleDateString('he-IL') : 'לא הוגדר'}
-                </div>
-              )}
+              <div className="text-sm text-gray-900 flex-1">
+                {program.startDate ? program.startDate.toLocaleDateString('he-IL') : 'לא הוגדר'}
+              </div>
             </div>
           </div>
         </div>
@@ -437,7 +480,7 @@ const StationAssignmentForm: React.FC<StationAssignmentFormProps> = ({
                   key={stationNumber} 
                   className={`grid grid-cols-12 gap-2 p-2 rounded ${stationStatus.bgColor} ${stationStatus.textColor}`}
                 >
-                  {/* Station number - no box, just number */}
+                  {/* Station number */}
                   <div className="col-span-1 text-center font-bold text-sm flex items-center justify-center min-h-[2.5rem]">
                     {stationNumber}
                   </div>
@@ -490,10 +533,10 @@ const StationAssignmentForm: React.FC<StationAssignmentFormProps> = ({
                   {/* Reporting user */}
                   <div className="col-span-2 flex items-center gap-1 justify-center">
                     <span className="text-sm">
-                      {stationData?.completionDate ? (stationData.reportingUserName || currentUser.name) : ''}
+                      {stationData?.completionDate ? (stationData.reportingUserName || user?.fullName) : ''}
                     </span>
                     <MessageSquare 
-                      className="w-4 h-4 text-gray-600 cursor-pointer hover:text-blue-600" 
+                      className={`w-4 h-4 ${permissions.canEditStationNotes ? 'text-gray-600 cursor-pointer hover:text-blue-600' : 'text-gray-400'}`}
                       onClick={() => handleStationNotesClick(stationNumber)}
                     />
                   </div>
@@ -544,6 +587,7 @@ const StationAssignmentForm: React.FC<StationAssignmentFormProps> = ({
                 onChange={(e) => setStationReference(e.target.value)}
                 className="text-right"
                 placeholder="הזן סימוכין"
+                disabled={!permissions.canEditStationNotes}
               />
             </div>
             <div className="grid gap-2">
@@ -554,6 +598,7 @@ const StationAssignmentForm: React.FC<StationAssignmentFormProps> = ({
                 onChange={(e) => setStationNotes(e.target.value)}
                 className="text-right min-h-[100px]"
                 placeholder="הזן הערות ביצוע"
+                disabled={!permissions.canEditStationNotes}
               />
             </div>
           </div>
@@ -561,9 +606,11 @@ const StationAssignmentForm: React.FC<StationAssignmentFormProps> = ({
             <Button variant="outline" onClick={handleCancelStationNotes}>
               ביטול
             </Button>
-            <Button onClick={handleSaveStationNotes}>
-              שמור
-            </Button>
+            {permissions.canEditStationNotes && (
+              <Button onClick={handleSaveStationNotes}>
+                שמור
+              </Button>
+            )}
           </DialogFooter>
         </DialogContent>
       </Dialog>

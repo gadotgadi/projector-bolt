@@ -54,6 +54,29 @@ const StationAssignment = () => {
   };
 
   const handleSave = () => {
+    // Validate based on status and user permissions
+    if (program.status !== 'Open') {
+      // For non-Open status, validate station assignment
+      if (window.validateStationAssignment && !window.validateStationAssignment()) {
+        return; // Validation failed
+      }
+    }
+
+    // Check required fields for status transitions
+    if (program.status === 'Open') {
+      const requiredFields = ['assignedOfficerName', 'teamName', 'complexity', 'startDate'];
+      const missingFields = requiredFields.filter(field => !program[field as keyof Program]);
+      
+      if (missingFields.length > 0) {
+        toast({
+          title: "שדות חובה חסרים",
+          description: "יש למלא את כל השדות הנדרשים לפני השמירה",
+          variant: "destructive"
+        });
+        return;
+      }
+    }
+
     toast({
       title: "שינויים נשמרו",
       description: "פרטי המשימה נשמרו בהצלחה",
@@ -65,6 +88,19 @@ const StationAssignment = () => {
     if (program.status === 'Open') {
       if (window.validateStationAssignment && !window.validateStationAssignment()) {
         return; // Validation failed, error already shown by validation function
+      }
+      
+      // Check required fields
+      const requiredFields = ['assignedOfficerName', 'teamName', 'complexity', 'startDate'];
+      const missingFields = requiredFields.filter(field => !program[field as keyof Program]);
+      
+      if (missingFields.length > 0) {
+        toast({
+          title: "שדות חובה חסרים",
+          description: "יש למלא את כל השדות הנדרשים לפני הקיבוע",
+          variant: "destructive"
+        });
+        return;
       }
       
       // Update status to PLAN
@@ -91,24 +127,71 @@ const StationAssignment = () => {
     setProgram(updatedProgram);
   };
 
-  // Check permissions - allowing full access for technical users and procurement managers
-  const canEdit = user?.roleCode === 1 || user?.roleCode === 0 || user?.roleCode === 9;
-  const canSave = canEdit || 
-    (user?.roleCode === 4 && program.status === 'Open') ||
-    ([2, 3].includes(user?.roleCode || 0) && 
-     ['Open', 'Plan', 'In Progress'].includes(program.status));
-  
-  const canView = canEdit || 
-    (user?.roleCode === 4) ||
-    ([2, 3].includes(user?.roleCode || 0) && 
-     ['Open', 'Plan', 'In Progress'].includes(program.status));
+  // Get user permissions based on role and status
+  const getUserPermissions = () => {
+    const roleCode = user?.roleCode;
+    const status = program.status;
+    
+    return {
+      canEdit: getEditPermission(roleCode, status),
+      canSave: getSavePermission(roleCode, status),
+      canFreeze: getFreezePermission(roleCode, status)
+    };
+  };
 
-  const canFreeze = canEdit && ['Open', 'Plan'].includes(program.status);
+  const getEditPermission = (roleCode?: number, status?: string) => {
+    // גורם דורש can only edit in Open status (but this redirects to new task form)
+    if (roleCode === 4) {
+      return status === 'Open';
+    }
+    
+    // מנהל רכש can edit in most statuses
+    if (roleCode === 1) {
+      return ['Open', 'Plan', 'In Progress', 'Complete', 'Freeze'].includes(status || '');
+    }
+    
+    // ראש צוות can edit in Plan, In Progress, and Complete (with permissions)
+    if (roleCode === 2) {
+      if (['Plan', 'In Progress'].includes(status || '')) return true;
+      if (status === 'Complete') {
+        // Check close permissions
+        const closePermissions = 'Team leader'; // Mock value
+        return closePermissions === 'Team leader';
+      }
+      return false;
+    }
+    
+    // קניין can edit in Plan and In Progress
+    if (roleCode === 3) {
+      return ['Plan', 'In Progress'].includes(status || '');
+    }
+    
+    return false;
+  };
+
+  const getSavePermission = (roleCode?: number, status?: string) => {
+    // Same as edit permission for most cases
+    return getEditPermission(roleCode, status);
+  };
+
+  const getFreezePermission = (roleCode?: number, status?: string) => {
+    // Only מנהל רכש can freeze, and only in Open status
+    return roleCode === 1 && status === 'Open';
+  };
+
+  const permissions = getUserPermissions();
 
   // Show permission dialog instead of blocking access
   const handlePermissionDenied = () => {
     setShowPermissionDialog(true);
   };
+
+  // Check if user should be redirected to new task form
+  if (user?.roleCode === 4 && program.status === 'Open') {
+    // Redirect to new task form for גורם דורש in Open status
+    navigate(`/new-task?taskId=${program.taskId}`);
+    return null;
+  }
 
   return (
     <AppLayout currentRoute="/station-assignment" pageTitle={`טיפול במשימה #${program.taskId}`}>
@@ -125,7 +208,7 @@ const StationAssignment = () => {
             
             <div className="flex items-center gap-3">
               <StatusBadge status={program.status} size="md" />
-              {canSave ? (
+              {permissions.canSave ? (
                 <Button onClick={handleSave} className="flex items-center gap-2 text-sm px-3 py-1.5">
                   <Save className="w-3 h-3" />
                   שמירה
@@ -136,7 +219,7 @@ const StationAssignment = () => {
                   שמירה
                 </Button>
               )}
-              {canFreeze ? (
+              {permissions.canFreeze ? (
                 <Button onClick={handleFreeze} variant="secondary" className="flex items-center gap-2 text-sm px-3 py-1.5">
                   <Lock className="w-3 h-3" />
                   קיבוע
@@ -157,7 +240,7 @@ const StationAssignment = () => {
           <div className="w-1/3 p-4 overflow-y-auto bg-white border-r">
             <ProgramForm 
               program={program}
-              canEdit={canEdit}
+              canEdit={permissions.canEdit}
               onProgramUpdate={handleProgramUpdate}
               isEditing={false}
               onSave={handleSave}
@@ -169,7 +252,7 @@ const StationAssignment = () => {
           <div className="w-2/3 p-4 overflow-y-auto bg-gray-50">
             <StationAssignmentForm 
               program={program}
-              canEdit={canEdit}
+              canEdit={permissions.canEdit}
               onSave={handleSave}
               onProgramUpdate={handleProgramUpdate}
             />

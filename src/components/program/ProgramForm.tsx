@@ -1,8 +1,10 @@
 import React, { useState } from 'react';
-import { Program, TaskStatus, STATUS_CONFIG, PLANNING_SOURCE_CONFIG, CURRENCY_CONFIG, currentUser } from '../../types';
+import { Program, TaskStatus, STATUS_CONFIG, PLANNING_SOURCE_CONFIG, CURRENCY_CONFIG } from '../../types';
 import { Input } from '../ui/input';
 import { Textarea } from '../ui/textarea';
 import { Label } from '../ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
+import { useAuth } from '../auth/AuthProvider';
 
 interface ProgramFormProps {
   program: Program;
@@ -15,6 +17,7 @@ interface ProgramFormProps {
 
 const ProgramForm: React.FC<ProgramFormProps> = ({ program, canEdit, onProgramUpdate }) => {
   const [formData, setFormData] = useState(program);
+  const { user } = useAuth();
 
   const handleChange = (field: keyof Program, value: any) => {
     const updatedProgram = { ...formData, [field]: value, lastUpdate: new Date() };
@@ -22,12 +25,92 @@ const ProgramForm: React.FC<ProgramFormProps> = ({ program, canEdit, onProgramUp
     onProgramUpdate(updatedProgram);
   };
 
-  const canEditStatus = currentUser.role === 'procurement_manager' || currentUser.role === 'team_leader';
-  const availableStatuses: TaskStatus[] = ['Open', 'Plan', 'In Progress', 'Complete', 'Done', 'Freeze', 'Cancel'];
+  // Get user permissions based on role and status
+  const getUserPermissions = () => {
+    const roleCode = user?.roleCode;
+    const status = program.status;
+    
+    return {
+      canEditPlanningSource: roleCode === 1, // מנהל רכש בלבד
+      canEditDomain: roleCode === 1, // מנהל רכש בלבד
+      canEditComplexity: roleCode === 1 && ['Open', 'Plan'].includes(status), // מנהל רכש בסטטוס Open/Plan
+      canEditOfficer: getOfficerEditPermission(roleCode, status),
+      canEditTeam: roleCode === 1, // מנהל רכש בלבד
+      canEditStartDate: roleCode === 1 && ['Open', 'Plan'].includes(status), // מנהל רכש בסטטוס Open/Plan
+      canEditPlanningNotes: roleCode === 1, // מנהל רכש בלבד
+      canEditOfficerNotes: [1, 2, 3].includes(roleCode || 0), // מנהל רכש, ראש צוות, קניין
+      canEditStatus: getStatusEditPermission(roleCode, status)
+    };
+  };
+
+  const getOfficerEditPermission = (roleCode?: number, status?: string) => {
+    // This would check the Permissions table in a real implementation
+    const assignPermissions = 'Manager only'; // Mock value
+    
+    if (assignPermissions === 'Manager only') {
+      return roleCode === 1;
+    } else if (assignPermissions === 'Team leader') {
+      return roleCode === 1 || roleCode === 2;
+    }
+    return false;
+  };
+
+  const getStatusEditPermission = (roleCode?: number, status?: string) => {
+    if (roleCode === 1) { // מנהל רכש
+      return ['Complete', 'Freeze'].includes(status || '');
+    } else if (roleCode === 2) { // ראש צוות
+      // This would check the Permissions table in a real implementation
+      const closePermissions = 'Team leader'; // Mock value
+      return status === 'Complete' && closePermissions === 'Team leader';
+    }
+    return false;
+  };
+
+  const permissions = getUserPermissions();
+
+  const getAvailableStatusOptions = () => {
+    const roleCode = user?.roleCode;
+    const currentStatus = program.status;
+    
+    if (roleCode === 1) { // מנהל רכש
+      if (currentStatus === 'Complete') {
+        return ['Complete', 'Done', 'Freeze', 'Cancel'];
+      } else if (currentStatus === 'Freeze') {
+        // Check if can return to previous status based on station completion
+        const hasStations = program.stations && program.stations.length > 0;
+        const completedStations = program.stations?.filter(s => s.completionDate) || [];
+        const assignedStations = program.stations?.filter(s => s.activityId) || [];
+        
+        const options = ['Freeze', 'Cancel'];
+        
+        if (!hasStations) {
+          options.push('Open');
+        } else if (completedStations.length === 0) {
+          options.push('Plan');
+        } else if (completedStations.length < assignedStations.length) {
+          options.push('In Progress');
+        } else if (completedStations.length === assignedStations.length) {
+          options.push('Done', 'Complete');
+        }
+        
+        return options;
+      } else if (['In Progress', 'Plan', 'Open'].includes(currentStatus)) {
+        return [currentStatus, 'Freeze', 'Cancel'];
+      }
+    } else if (roleCode === 2 && currentStatus === 'Complete') { // ראש צוות
+      const closePermissions = 'Team leader'; // Mock value
+      if (closePermissions === 'Team leader') {
+        return ['Complete', 'Done'];
+      }
+    }
+    
+    return [currentStatus]; // No changes allowed
+  };
+
+  const availableStatusOptions = getAvailableStatusOptions();
 
   return (
     <div className="space-y-3">
-      {/* Form Fields */}
       <div className="space-y-3">
         {/* Title */}
         <div className="grid grid-cols-1 gap-2">
@@ -56,7 +139,7 @@ const ProgramForm: React.FC<ProgramFormProps> = ({ program, canEdit, onProgramUp
           />
         </div>
 
-        {/* Work Year and Quarter in same row */}
+        {/* Work Year and Quarter */}
         <div className="grid grid-cols-2 gap-3">
           <div className="grid grid-cols-1 gap-2">
             <Label htmlFor="workYear" className="text-sm font-medium text-right">שנת עבודה *</Label>
@@ -84,7 +167,7 @@ const ProgramForm: React.FC<ProgramFormProps> = ({ program, canEdit, onProgramUp
           </div>
         </div>
 
-        {/* Requester and Division in same row */}
+        {/* Requester and Division */}
         <div className="grid grid-cols-2 gap-3">
           <div className="grid grid-cols-1 gap-2">
             <Label htmlFor="requesterName" className="text-sm font-medium text-right">גורם דורש *</Label>
@@ -110,7 +193,7 @@ const ProgramForm: React.FC<ProgramFormProps> = ({ program, canEdit, onProgramUp
           </div>
         </div>
 
-        {/* Department and Domain in same row */}
+        {/* Department and Domain */}
         <div className="grid grid-cols-2 gap-3">
           <div className="grid grid-cols-1 gap-2">
             <Label htmlFor="departmentName" className="text-sm font-medium text-right">מחלקה</Label>
@@ -128,13 +211,13 @@ const ProgramForm: React.FC<ProgramFormProps> = ({ program, canEdit, onProgramUp
               id="domainName"
               value={formData.domainName || ''}
               onChange={(e) => handleChange('domainName', e.target.value)}
-              disabled={!canEdit}
+              disabled={!permissions.canEditDomain}
               className="text-right text-sm h-8"
             />
           </div>
         </div>
 
-        {/* Amount and Currency in same row */}
+        {/* Amount and Currency */}
         <div className="grid grid-cols-2 gap-3">
           <div className="grid grid-cols-1 gap-2">
             <Label htmlFor="estimatedAmount" className="text-sm font-medium text-right">אומדן התקשרות</Label>
@@ -163,14 +246,14 @@ const ProgramForm: React.FC<ProgramFormProps> = ({ program, canEdit, onProgramUp
           </div>
         </div>
 
-        {/* Planning Source and Complexity in same row */}
+        {/* Planning Source and Complexity */}
         <div className="grid grid-cols-2 gap-3">
           <div className="grid grid-cols-1 gap-2">
             <Label htmlFor="planningSource" className="text-sm font-medium text-right">מקור תכנון *</Label>
             <select
               value={formData.planningSource}
               onChange={(e) => handleChange('planningSource', e.target.value)}
-              disabled={!canEdit}
+              disabled={!permissions.canEditPlanningSource}
               className="flex h-8 w-full rounded-md border border-input bg-background px-3 py-1 text-sm"
               required
             >
@@ -184,7 +267,7 @@ const ProgramForm: React.FC<ProgramFormProps> = ({ program, canEdit, onProgramUp
             <select
               value={formData.complexity || ''}
               onChange={(e) => handleChange('complexity', e.target.value ? Number(e.target.value) : undefined)}
-              disabled={!canEdit}
+              disabled={!permissions.canEditComplexity}
               className="flex h-8 w-full rounded-md border border-input bg-background px-3 py-1 text-sm"
             >
               <option value="">בחר רמת מורכבות</option>
@@ -195,8 +278,45 @@ const ProgramForm: React.FC<ProgramFormProps> = ({ program, canEdit, onProgramUp
           </div>
         </div>
 
+        {/* Officer and Team */}
+        <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 gap-2">
+            <Label htmlFor="assignedOfficerName" className="text-sm font-medium text-right">קניין</Label>
+            <Input
+              id="assignedOfficerName"
+              value={formData.assignedOfficerName || ''}
+              onChange={(e) => handleChange('assignedOfficerName', e.target.value)}
+              disabled={!permissions.canEditOfficer}
+              className="text-right text-sm h-8"
+            />
+          </div>
+          <div className="grid grid-cols-1 gap-2">
+            <Label htmlFor="teamName" className="text-sm font-medium text-right">צוות</Label>
+            <Input
+              id="teamName"
+              value={formData.teamName || ''}
+              onChange={(e) => handleChange('teamName', e.target.value)}
+              disabled={!permissions.canEditTeam}
+              className="text-right text-sm h-8"
+            />
+          </div>
+        </div>
+
+        {/* Start Date */}
+        <div className="grid grid-cols-1 gap-2">
+          <Label htmlFor="startDate" className="text-sm font-medium text-right">מועד נדרש להתנעה</Label>
+          <Input
+            id="startDate"
+            type="date"
+            value={formData.startDate ? formData.startDate.toISOString().split('T')[0] : ''}
+            onChange={(e) => handleChange('startDate', e.target.value ? new Date(e.target.value) : undefined)}
+            disabled={!permissions.canEditStartDate}
+            className="text-sm h-8"
+          />
+        </div>
+
         {/* Status (only for authorized users) */}
-        {canEditStatus && (
+        {permissions.canEditStatus && availableStatusOptions.length > 1 && (
           <div className="grid grid-cols-1 gap-2">
             <Label htmlFor="status" className="text-sm font-medium text-right">סטטוס</Label>
             <select
@@ -205,9 +325,9 @@ const ProgramForm: React.FC<ProgramFormProps> = ({ program, canEdit, onProgramUp
               disabled={!canEdit}
               className="flex h-8 w-full rounded-md border border-input bg-background px-3 py-1 text-sm"
             >
-              {availableStatuses.map(status => (
+              {availableStatusOptions.map(status => (
                 <option key={status} value={status}>
-                  {STATUS_CONFIG[status].label}
+                  {STATUS_CONFIG[status as TaskStatus].label}
                 </option>
               ))}
             </select>
@@ -221,7 +341,7 @@ const ProgramForm: React.FC<ProgramFormProps> = ({ program, canEdit, onProgramUp
             id="planningNotes"
             value={formData.planningNotes || ''}
             onChange={(e) => handleChange('planningNotes', e.target.value)}
-            disabled={!canEdit}
+            disabled={!permissions.canEditPlanningNotes}
             className="text-right text-sm min-h-[3rem]"
             rows={2}
           />
@@ -233,10 +353,18 @@ const ProgramForm: React.FC<ProgramFormProps> = ({ program, canEdit, onProgramUp
             id="officerNotes"
             value={formData.officerNotes || ''}
             onChange={(e) => handleChange('officerNotes', e.target.value)}
-            disabled={!canEdit}
+            disabled={!permissions.canEditOfficerNotes}
             className="text-right text-sm min-h-[3rem]"
             rows={2}
           />
+        </div>
+
+        {/* Last Update */}
+        <div className="grid grid-cols-1 gap-2">
+          <Label className="text-sm font-medium text-right">עדכון אחרון למשימה</Label>
+          <div className="text-sm text-gray-600 p-2 bg-gray-50 rounded">
+            {formData.lastUpdate ? formData.lastUpdate.toLocaleDateString('he-IL') : 'לא עודכן'}
+          </div>
         </div>
       </div>
     </div>
