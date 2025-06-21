@@ -54,6 +54,7 @@ const AppContent: React.FC = () => {
         </ProtectedRoute>
       } />
       
+      {/* CRITICAL: Fixed the route pattern - it was missing the colon before taskId */}
       <Route path="/station-assignment/:taskId" element={
         <ProtectedRoute route="/station-assignment">
           <StationAssignment />

@@ -20,6 +20,8 @@ declare global {
 }
 
 const StationAssignment = () => {
+  console.log('🔥 StationAssignment component is rendering!');
+  
   const navigate = useNavigate();
   const { taskId } = useParams();
   const { toast } = useToast();
@@ -27,17 +29,21 @@ const StationAssignment = () => {
   const [showPermissionDialog, setShowPermissionDialog] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
 
-  console.log('StationAssignment component loaded with taskId:', taskId);
-  console.log('Current user:', user);
+  console.log('📋 StationAssignment - taskId from params:', taskId);
+  console.log('👤 StationAssignment - current user:', user);
 
   // Find program from mock data
   const initialProgram = mockPrograms.find(p => p.taskId === Number(taskId));
   
+  console.log('🔍 Looking for program with taskId:', Number(taskId));
+  console.log('📊 Available programs:', mockPrograms.map(p => ({ id: p.taskId, title: p.title })));
+  console.log('✅ Found program:', initialProgram ? initialProgram.title : 'NOT FOUND');
+
   useEffect(() => {
-    console.log('StationAssignment useEffect running');
+    console.log('⚡ StationAssignment useEffect running');
     // Simulate loading time to ensure proper initialization
     const timer = setTimeout(() => {
-      console.log('Setting loading to false');
+      console.log('✅ Setting loading to false');
       setIsLoading(false);
     }, 100);
 
@@ -45,7 +51,7 @@ const StationAssignment = () => {
   }, []);
 
   if (isLoading) {
-    console.log('Still loading...');
+    console.log('⏳ Still loading...');
     return (
       <AppLayout currentRoute="/station-assignment">
         <div className="flex items-center justify-center h-64">
@@ -59,7 +65,7 @@ const StationAssignment = () => {
   }
 
   if (!initialProgram) {
-    console.log('Program not found for taskId:', taskId);
+    console.log('❌ Program not found for taskId:', taskId);
     return (
       <AppLayout currentRoute="/station-assignment">
         <div className="text-center py-12">
@@ -72,7 +78,7 @@ const StationAssignment = () => {
     );
   }
 
-  console.log('Program found:', initialProgram.title, 'Status:', initialProgram.status);
+  console.log('🎯 Program found:', initialProgram.title, 'Status:', initialProgram.status);
 
   const [program, setProgram] = useState<Program>({
     ...initialProgram,
@@ -88,12 +94,12 @@ const StationAssignment = () => {
   });
 
   const handleBack = () => {
-    console.log('Navigating back to dashboard');
+    console.log('🔙 Navigating back to dashboard');
     navigate('/');
   };
 
   const handleSave = () => {
-    console.log('Saving task changes');
+    console.log('💾 Saving task changes');
     toast({
       title: "שינויים נשמרו",
       description: "פרטי המשימה נשמרו בהצלחה",
@@ -101,7 +107,7 @@ const StationAssignment = () => {
   };
 
   const handleFreeze = () => {
-    console.log('Freezing task');
+    console.log('🧊 Freezing task');
     // Validate station assignment if program is in OPEN status
     if (program.status === 'Open') {
       if (window.validateStationAssignment && !window.validateStationAssignment()) {
@@ -129,7 +135,7 @@ const StationAssignment = () => {
   };
 
   const handleProgramUpdate = (updatedProgram: Program) => {
-    console.log('Program updated:', updatedProgram.title);
+    console.log('📝 Program updated:', updatedProgram.title);
     setProgram(updatedProgram);
   };
 
@@ -138,7 +144,7 @@ const StationAssignment = () => {
     const roleCode = user?.roleCode;
     const status = program.status;
 
-    console.log('Checking permissions for role:', roleCode, 'status:', status);
+    console.log('🔐 Checking permissions for role:', roleCode, 'status:', status);
 
     // גורם דורש
     if (roleCode === 4) {
@@ -225,14 +231,14 @@ const StationAssignment = () => {
   };
 
   const permissions = getPermissions();
-  console.log('Calculated permissions:', permissions);
+  console.log('✅ Calculated permissions:', permissions);
 
   // Show permission dialog instead of blocking access
   const handlePermissionDenied = () => {
     setShowPermissionDialog(true);
   };
 
-  console.log('Rendering StationAssignment component');
+  console.log('🎨 Rendering StationAssignment component');
 
   return (
     <AppLayout currentRoute="/station-assignment" pageTitle={`עדכון משימה #${program.taskId}`}>

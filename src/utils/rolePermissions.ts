@@ -25,6 +25,7 @@ export const hasPermissionForRoute = (roleCode: number, route: string): boolean 
   const permissions: Record<string, number[]> = {
     '/': [1, 2, 3, 4], // שולחן עבודה
     '/new-task': [1, 4], // דרישה חדשה
+    '/station-assignment': [1, 2, 3, 4], // טיפול במשימה - ADDED THIS LINE
     '/progress-tracking': [1], // מעקב התקדמות
     '/planning-convergence': [1], // התכנסות תכנון
     '/procurement-load': [1, 2], // העמסת קניינים
@@ -39,8 +40,8 @@ export const hasPermissionForRoute = (roleCode: number, route: string): boolean 
   };
 
   // Station assignment is accessible to anyone who has dashboard access
-  if (route.startsWith('/station-assignment/')) {
-    return permissions['/'].includes(roleCode);
+  if (route.startsWith('/station-assignment')) {
+    return permissions['/station-assignment'].includes(roleCode);
   }
 
   // System settings sub-routes
