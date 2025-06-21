@@ -1,19 +1,21 @@
 import React, { useState } from 'react';
-import { Program, TaskStatus, STATUS_CONFIG, PLANNING_SOURCE_CONFIG, CURRENCY_CONFIG } from '../../types';
+import { Program, TaskStatus, STATUS_CONFIG, PLANNING_SOURCE_CONFIG, CURRENCY_CONFIG, currentUser } from '../../types';
 import { Input } from '../ui/input';
 import { Textarea } from '../ui/textarea';
 import { Label } from '../ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
 import { useAuth } from '../auth/AuthProvider';
 
-// Mock data for dropdowns
-const mockRequesters = [
-  { id: 5, fullName: 'רחל אברהם' },
-  { id: 6, fullName: 'יוסי לוי' },
-  { id: 7, fullName: 'מירי דוד' },
-  { id: 8, fullName: 'דני רוזן' }
-];
+interface ProgramFormProps {
+  program: Program;
+  canEdit: boolean;
+  onProgramUpdate: (program: Program) => void;
+  isEditing?: boolean;
+  onSave?: (updatedProgram: Program) => void;
+  onCancel?: () => void;
+}
 
+// Mock data for dropdowns
 const mockDivisions = [
   { id: 1, name: 'לוגיסטיקה' },
   { id: 2, name: 'טכנולוגיה' },
@@ -24,12 +26,14 @@ const mockDivisions = [
 ];
 
 const mockDepartments = [
-  { id: 1, name: 'רכש וחוזים' },
-  { id: 2, name: 'תפעול ותחזוקה' },
-  { id: 3, name: 'מערכות מידע' },
-  { id: 4, name: 'פיתוח תוכנה' },
-  { id: 5, name: 'מחקר' },
-  { id: 6, name: 'פיתוח' }
+  { id: 1, name: 'רכש וחוזים', divisionId: 1 },
+  { id: 2, name: 'תפעול ותחזוקה', divisionId: 1 },
+  { id: 3, name: 'מערכות מידע', divisionId: 2 },
+  { id: 4, name: 'פיתוח תוכנה', divisionId: 2 },
+  { id: 5, name: 'מחקר', divisionId: 3 },
+  { id: 6, name: 'פיתוח', divisionId: 3 },
+  { id: 7, name: 'גיוס', divisionId: 4 },
+  { id: 8, name: 'שכר', divisionId: 4 }
 ];
 
 const mockDomains = [
@@ -41,34 +45,30 @@ const mockDomains = [
   { id: 6, description: 'תוכנה ומערכות' }
 ];
 
+const mockRequesters = [
+  { id: 5, fullName: 'רחל אברהם', divisionId: 4, departmentId: 7 },
+  { id: 6, fullName: 'יוסי לוי', divisionId: 3, departmentId: 5 },
+  { id: 7, fullName: 'מירי דוד', divisionId: 2, departmentId: 3 },
+  { id: 8, fullName: 'דני רוזן', divisionId: 1, departmentId: 1 }
+];
+
 const mockOfficers = [
-  { id: 3, fullName: 'שרה לוי', roleCode: 2, team: 'צוות טכנולוגי' },
-  { id: 4, fullName: 'אבי כהן', roleCode: 3, team: 'צוות לוגיסטי' },
-  { id: 5, fullName: 'דוד משה', roleCode: 3, team: 'צוות טכנולוגי' },
-  { id: 6, fullName: 'רונית כהן', roleCode: 3, team: 'צוות לוגיסטי' }
+  { id: 3, fullName: 'שרה לוי', roleCode: 2, procurementTeam: 'צוות טכנולוגי' },
+  { id: 4, fullName: 'אבי כהן', roleCode: 3, procurementTeam: 'צוות לוגיסטי' },
+  { id: 9, fullName: 'דן ישראל', roleCode: 3, procurementTeam: 'צוות טכנולוגי' },
+  { id: 10, fullName: 'מיכל רון', roleCode: 3, procurementTeam: 'צוות לוגיסטי' }
 ];
 
 const mockTeams = [
-  { id: 1, name: 'יעודי' },
-  { id: 2, name: 'טכנולוגי' },
-  { id: 3, name: 'לוגיסטי' },
-  { id: 4, name: 'מחשוב' },
-  { id: 5, name: 'הנדסי' },
-  { id: 6, name: 'ביטחוני' }
+  { id: 1, name: 'צוות טכנולוגי' },
+  { id: 2, name: 'צוות לוגיסטי' },
+  { id: 3, name: 'צוות ביטחוני' },
+  { id: 4, name: 'צוות מחשוב' }
 ];
 
-interface ProgramFormProps {
-  program: Program;
-  canEdit: boolean;
-  onProgramUpdate: (program: Program) => void;
-  isEditing?: boolean;
-  onSave?: (updatedProgram: Program) => void;
-  onCancel?: () => void;
-}
-
 const ProgramForm: React.FC<ProgramFormProps> = ({ program, canEdit, onProgramUpdate }) => {
-  const [formData, setFormData] = useState(program);
   const { user } = useAuth();
+  const [formData, setFormData] = useState(program);
 
   const handleChange = (field: keyof Program, value: any) => {
     const updatedProgram = { ...formData, [field]: value, lastUpdate: new Date() };
@@ -76,495 +76,469 @@ const ProgramForm: React.FC<ProgramFormProps> = ({ program, canEdit, onProgramUp
     onProgramUpdate(updatedProgram);
   };
 
-  // Get user permissions based on role and status
-  const getUserPermissions = () => {
-    const roleCode = user?.roleCode;
-    const status = program.status;
+  // Check if user can edit specific fields
+  const canEditField = (field: string) => {
+    if (!canEdit) return false;
     
-    return {
-      canEditPlanningSource: roleCode === 1, // מנהל רכש בלבד
-      canEditDomain: roleCode === 1, // מנהל רכש בלבד
-      canEditComplexity: roleCode === 1 && ['Open', 'Plan'].includes(status), // מנהל רכש בסטטוס Open/Plan
-      canEditOfficer: getOfficerEditPermission(roleCode, status),
-      canEditTeam: roleCode === 1, // מנהל רכש בלבד
-      canEditStartDate: roleCode === 1 && ['Open', 'Plan'].includes(status), // מנהל רכש בסטטוס Open/Plan
-      canEditPlanningNotes: roleCode === 1, // מנהל רכש בלבד
-      canEditOfficerNotes: [1, 2, 3].includes(roleCode || 0), // מנהל רכש, ראש צוות, קניין
-      canEditStatus: getStatusEditPermission(roleCode, status),
-      canEditRequester: roleCode === 1, // מנהל רכש בלבד
-      canEditDivision: roleCode === 1, // מנהל רכש בלבד
-      canEditDepartment: roleCode === 1 // מנהל רכש בלבד
-    };
-  };
-
-  const getOfficerEditPermission = (roleCode?: number, status?: string) => {
-    // This would check the Permissions table in a real implementation
-    const assignPermissions = 'Manager only'; // Mock value
-    
-    if (assignPermissions === 'Manager only') {
-      return roleCode === 1;
-    } else if (assignPermissions === 'Team leader') {
-      return roleCode === 1 || roleCode === 2;
+    switch (field) {
+      case 'planningSource':
+      case 'domainName':
+      case 'complexity':
+      case 'teamName':
+      case 'planningNotes':
+        return user?.roleCode === 1; // Only procurement manager
+      case 'assignedOfficerName':
+        // Based on assign permissions
+        return user?.roleCode === 1 || user?.roleCode === 2; // Manager or team leader
+      case 'startDate':
+        return user?.roleCode === 1 && ['Open', 'Plan'].includes(program.status);
+      case 'officerNotes':
+        return [1, 2, 3].includes(user?.roleCode || 0); // Manager, team leader, officer
+      default:
+        return user?.roleCode === 1; // Default to manager only
     }
-    return false;
   };
 
-  const getStatusEditPermission = (roleCode?: number, status?: string) => {
-    if (roleCode === 1) { // מנהל רכש
-      return ['Complete', 'Freeze'].includes(status || '');
-    } else if (roleCode === 2) { // ראש צוות
-      // This would check the Permissions table in a real implementation
-      const closePermissions = 'Team leader'; // Mock value
-      return status === 'Complete' && closePermissions === 'Team leader';
-    }
-    return false;
-  };
+  const canEditStatus = user?.roleCode === 1 || user?.roleCode === 2;
+  const availableStatuses: TaskStatus[] = ['Open', 'Plan', 'In Progress', 'Complete', 'Done', 'Freeze', 'Cancel'];
 
-  const permissions = getUserPermissions();
-
-  const getAvailableStatusOptions = () => {
-    const roleCode = user?.roleCode;
-    const currentStatus = program.status;
-    
-    if (roleCode === 1) { // מנהל רכש
-      if (currentStatus === 'Complete') {
-        return ['Complete', 'Done', 'Freeze', 'Cancel'];
-      } else if (currentStatus === 'Freeze') {
-        // Check if can return to previous status based on station completion
-        const hasStations = program.stations && program.stations.length > 0;
-        const completedStations = program.stations?.filter(s => s.completionDate) || [];
-        const assignedStations = program.stations?.filter(s => s.activityId) || [];
-        
-        const options = ['Freeze', 'Cancel'];
-        
-        if (!hasStations) {
-          options.push('Open');
-        } else if (completedStations.length === 0) {
-          options.push('Plan');
-        } else if (completedStations.length < assignedStations.length) {
-          options.push('In Progress');
-        } else if (completedStations.length === assignedStations.length) {
-          options.push('Done', 'Complete');
-        }
-        
-        return options;
-      } else if (['In Progress', 'Plan', 'Open'].includes(currentStatus)) {
-        return [currentStatus, 'Freeze', 'Cancel'];
-      }
-    } else if (roleCode === 2 && currentStatus === 'Complete') { // ראש צוות
-      const closePermissions = 'Team leader'; // Mock value
-      if (closePermissions === 'Team leader') {
-        return ['Complete', 'Done'];
-      }
-    }
-    
-    return [currentStatus]; // No changes allowed
-  };
-
+  // Get filtered officers based on user role
   const getAvailableOfficers = () => {
-    if (user?.roleCode === 2) { // ראש צוות
-      // Show only officers from the same team
-      return mockOfficers.filter(officer => officer.team === user.procurementTeam);
+    if (user?.roleCode === 1) {
+      // Procurement manager sees all officers
+      return mockOfficers;
+    } else if (user?.roleCode === 2) {
+      // Team leader sees only officers from their team
+      return mockOfficers.filter(officer => officer.procurementTeam === user.procurementTeam);
     }
-    return mockOfficers; // מנהל רכש sees all officers
+    return [];
   };
 
+  // Get available teams based on user role
   const getAvailableTeams = () => {
-    if (user?.roleCode === 2) { // ראש צוות
-      // Show only user's team
+    if (user?.roleCode === 1) {
+      // Procurement manager sees all teams
+      return mockTeams;
+    } else if (user?.roleCode === 2) {
+      // Team leader sees only their team
       return mockTeams.filter(team => team.name === user.procurementTeam);
     }
-    return mockTeams; // מנהל רכש sees all teams
+    return [];
   };
 
-  const availableStatusOptions = getAvailableStatusOptions();
-
   return (
-    <div className="space-y-6">
-      {/* Row 1: Title and Description */}
-      <div className="grid grid-cols-2 gap-6">
-        <div className="space-y-2">
+    <div className="space-y-3">
+      {/* Form Fields */}
+      <div className="space-y-3">
+        {/* Title */}
+        <div className="grid grid-cols-1 gap-2">
           <Label htmlFor="title" className="text-sm font-medium text-right">כותרת המשימה *</Label>
           <Input
             id="title"
             value={formData.title}
             onChange={(e) => handleChange('title', e.target.value)}
             disabled={!canEdit}
-            className="text-right"
+            className="text-right text-sm h-8"
             maxLength={25}
             required
           />
         </div>
-        <div className="space-y-2">
+
+        {/* Description */}
+        <div className="grid grid-cols-1 gap-2">
           <Label htmlFor="description" className="text-sm font-medium text-right">פירוט המשימה</Label>
           <Textarea
             id="description"
             value={formData.description || ''}
             onChange={(e) => handleChange('description', e.target.value)}
             disabled={!canEdit}
-            className="text-right min-h-[80px]"
+            className="text-right text-sm min-h-[4rem]"
             rows={3}
           />
         </div>
-      </div>
 
-      {/* Row 2: Work Year and Quarter */}
-      <div className="grid grid-cols-2 gap-6">
-        <div className="space-y-2">
-          <Label htmlFor="workYear" className="text-sm font-medium text-right">שנת עבודה *</Label>
-          <Input
-            id="workYear"
-            type="number"
-            value={formData.workYear}
-            onChange={(e) => handleChange('workYear', Number(e.target.value))}
-            disabled={!canEdit}
-            className="text-right"
-            required
-          />
+        {/* Work Year and Quarter in same row */}
+        <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 gap-2">
+            <Label htmlFor="workYear" className="text-sm font-medium text-right">שנת עבודה *</Label>
+            <Input
+              id="workYear"
+              type="number"
+              value={formData.workYear}
+              onChange={(e) => handleChange('workYear', Number(e.target.value))}
+              disabled={!canEdit}
+              className="text-right text-sm h-8"
+              required
+            />
+          </div>
+          <div className="grid grid-cols-1 gap-2">
+            <Label htmlFor="requiredQuarter" className="text-sm font-medium text-right">רבעון נדרש *</Label>
+            <Input
+              id="requiredQuarter"
+              type="date"
+              value={formData.requiredQuarter ? formData.requiredQuarter.toISOString().split('T')[0] : ''}
+              onChange={(e) => handleChange('requiredQuarter', e.target.value ? new Date(e.target.value) : new Date())}
+              disabled={!canEdit}
+              className="text-sm h-8"
+              required
+            />
+          </div>
         </div>
-        <div className="space-y-2">
-          <Label htmlFor="requiredQuarter" className="text-sm font-medium text-right">רבעון נדרש *</Label>
-          <Input
-            id="requiredQuarter"
-            type="date"
-            value={formData.requiredQuarter ? formData.requiredQuarter.toISOString().split('T')[0] : ''}
-            onChange={(e) => handleChange('requiredQuarter', e.target.value ? new Date(e.target.value) : new Date())}
-            disabled={!canEdit}
-            className="text-right"
-            required
-          />
-        </div>
-      </div>
 
-      {/* Row 3: Requester and Division */}
-      <div className="grid grid-cols-2 gap-6">
-        <div className="space-y-2">
-          <Label htmlFor="requesterName" className="text-sm font-medium text-right">גורם דורש *</Label>
-          {permissions.canEditRequester ? (
+        {/* Requester and Division in same row */}
+        <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 gap-2">
+            <Label htmlFor="requesterName" className="text-sm font-medium text-right">גורם דורש *</Label>
             <Select
-              value={formData.requesterName}
-              onValueChange={(value) => handleChange('requesterName', value)}
+              value={formData.requesterId?.toString() || 'none'}
+              onValueChange={(value) => {
+                if (value === 'none') {
+                  handleChange('requesterName', '');
+                  handleChange('requesterId', undefined);
+                } else {
+                  const requester = mockRequesters.find(r => r.id.toString() === value);
+                  if (requester) {
+                    handleChange('requesterName', requester.fullName);
+                    handleChange('requesterId', requester.id);
+                  }
+                }
+              }}
               disabled={!canEdit}
             >
-              <SelectTrigger className="text-right">
+              <SelectTrigger className="text-right text-sm h-8">
                 <SelectValue placeholder="בחר גורם דורש" />
               </SelectTrigger>
               <SelectContent>
+                <SelectItem value="none">ללא גורם דורש</SelectItem>
                 {mockRequesters.map(requester => (
-                  <SelectItem key={requester.id} value={requester.fullName}>
+                  <SelectItem key={requester.id} value={requester.id.toString()}>
                     {requester.fullName}
                   </SelectItem>
                 ))}
               </SelectContent>
             </Select>
-          ) : (
-            <Input
-              id="requesterName"
-              value={formData.requesterName}
-              disabled
-              className="text-right bg-gray-50"
-              required
-            />
-          )}
-        </div>
-        <div className="space-y-2">
-          <Label htmlFor="divisionName" className="text-sm font-medium text-right">אגף *</Label>
-          {permissions.canEditDivision ? (
+          </div>
+          <div className="grid grid-cols-1 gap-2">
+            <Label htmlFor="divisionName" className="text-sm font-medium text-right">אגף *</Label>
             <Select
-              value={formData.divisionName}
-              onValueChange={(value) => handleChange('divisionName', value)}
+              value={formData.divisionId?.toString() || 'none'}
+              onValueChange={(value) => {
+                if (value === 'none') {
+                  handleChange('divisionName', '');
+                  handleChange('divisionId', undefined);
+                } else {
+                  const division = mockDivisions.find(d => d.id.toString() === value);
+                  if (division) {
+                    handleChange('divisionName', division.name);
+                    handleChange('divisionId', division.id);
+                  }
+                }
+              }}
               disabled={!canEdit}
             >
-              <SelectTrigger className="text-right">
+              <SelectTrigger className="text-right text-sm h-8">
                 <SelectValue placeholder="בחר אגף" />
               </SelectTrigger>
               <SelectContent>
+                <SelectItem value="none">ללא אגף</SelectItem>
                 {mockDivisions.map(division => (
-                  <SelectItem key={division.id} value={division.name}>
+                  <SelectItem key={division.id} value={division.id.toString()}>
                     {division.name}
                   </SelectItem>
                 ))}
               </SelectContent>
             </Select>
-          ) : (
-            <Input
-              id="divisionName"
-              value={formData.divisionName}
-              disabled
-              className="text-right bg-gray-50"
-              required
-            />
-          )}
+          </div>
         </div>
-      </div>
 
-      {/* Row 4: Department and Domain */}
-      <div className="grid grid-cols-2 gap-6">
-        <div className="space-y-2">
-          <Label htmlFor="departmentName" className="text-sm font-medium text-right">מחלקה</Label>
-          {permissions.canEditDepartment ? (
+        {/* Department and Domain in same row */}
+        <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 gap-2">
+            <Label htmlFor="departmentName" className="text-sm font-medium text-right">מחלקה</Label>
             <Select
-              value={formData.departmentName || ''}
-              onValueChange={(value) => handleChange('departmentName', value)}
+              value={formData.departmentId?.toString() || 'none'}
+              onValueChange={(value) => {
+                if (value === 'none') {
+                  handleChange('departmentName', '');
+                  handleChange('departmentId', undefined);
+                } else {
+                  const department = mockDepartments.find(d => d.id.toString() === value);
+                  if (department) {
+                    handleChange('departmentName', department.name);
+                    handleChange('departmentId', department.id);
+                  }
+                }
+              }}
               disabled={!canEdit}
             >
-              <SelectTrigger className="text-right">
+              <SelectTrigger className="text-right text-sm h-8">
                 <SelectValue placeholder="בחר מחלקה" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">ללא מחלקה</SelectItem>
-                {mockDepartments.map(department => (
-                  <SelectItem key={department.id} value={department.name}>
-                    {department.name}
-                  </SelectItem>
-                ))}
+                <SelectItem value="none">ללא מחלקה</SelectItem>
+                {mockDepartments
+                  .filter(dept => !formData.divisionId || dept.divisionId === formData.divisionId)
+                  .map(department => (
+                    <SelectItem key={department.id} value={department.id.toString()}>
+                      {department.name}
+                    </SelectItem>
+                  ))}
               </SelectContent>
             </Select>
-          ) : (
-            <Input
-              id="departmentName"
-              value={formData.departmentName || ''}
-              disabled
-              className="text-right bg-gray-50"
-            />
-          )}
-        </div>
-        <div className="space-y-2">
-          <Label htmlFor="domainName" className="text-sm font-medium text-right">תחום רכש</Label>
-          {permissions.canEditDomain ? (
+          </div>
+          <div className="grid grid-cols-1 gap-2">
+            <Label htmlFor="domainName" className="text-sm font-medium text-right">תחום רכש</Label>
             <Select
-              value={formData.domainName || ''}
-              onValueChange={(value) => handleChange('domainName', value)}
-              disabled={!canEdit}
+              value={formData.domainId?.toString() || 'none'}
+              onValueChange={(value) => {
+                if (value === 'none') {
+                  handleChange('domainName', '');
+                  handleChange('domainId', undefined);
+                } else {
+                  const domain = mockDomains.find(d => d.id.toString() === value);
+                  if (domain) {
+                    handleChange('domainName', domain.description);
+                    handleChange('domainId', domain.id);
+                  }
+                }
+              }}
+              disabled={!canEditField('domainName')}
             >
-              <SelectTrigger className="text-right">
+              <SelectTrigger className="text-right text-sm h-8">
                 <SelectValue placeholder="בחר תחום רכש" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">ללא תחום</SelectItem>
+                <SelectItem value="none">ללא תחום</SelectItem>
                 {mockDomains.map(domain => (
-                  <SelectItem key={domain.id} value={domain.description}>
+                  <SelectItem key={domain.id} value={domain.id.toString()}>
                     {domain.description}
                   </SelectItem>
                 ))}
               </SelectContent>
             </Select>
-          ) : (
+          </div>
+        </div>
+
+        {/* Amount and Currency in same row */}
+        <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 gap-2">
+            <Label htmlFor="estimatedAmount" className="text-sm font-medium text-right">אומדן התקשרות</Label>
             <Input
-              id="domainName"
-              value={formData.domainName || ''}
-              disabled
-              className="text-right bg-gray-50"
+              id="estimatedAmount"
+              type="number"
+              value={formData.estimatedAmount || ''}
+              onChange={(e) => handleChange('estimatedAmount', e.target.value ? Number(e.target.value) : undefined)}
+              disabled={!canEdit}
+              className="text-right text-sm h-8"
             />
-          )}
-        </div>
-      </div>
-
-      {/* Row 5: Amount and Currency */}
-      <div className="grid grid-cols-2 gap-6">
-        <div className="space-y-2">
-          <Label htmlFor="estimatedAmount" className="text-sm font-medium text-right">אומדן התקשרות</Label>
-          <Input
-            id="estimatedAmount"
-            type="number"
-            value={formData.estimatedAmount || ''}
-            onChange={(e) => handleChange('estimatedAmount', e.target.value ? Number(e.target.value) : undefined)}
-            disabled={!canEdit}
-            className="text-right"
-          />
-        </div>
-        <div className="space-y-2">
-          <Label htmlFor="currency" className="text-sm font-medium text-right">מטבע</Label>
-          <select
-            value={formData.currency || ''}
-            onChange={(e) => handleChange('currency', e.target.value || undefined)}
-            disabled={!canEdit}
-            className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm text-right"
-          >
-            <option value="">בחר מטבע</option>
-            {Object.entries(CURRENCY_CONFIG).map(([key, label]) => (
-              <option key={key} value={key}>{label}</option>
-            ))}
-          </select>
-        </div>
-      </div>
-
-      {/* Row 6: Planning Source and Complexity */}
-      <div className="grid grid-cols-2 gap-6">
-        <div className="space-y-2">
-          <Label htmlFor="planningSource" className="text-sm font-medium text-right">מקור תכנון *</Label>
-          <select
-            value={formData.planningSource}
-            onChange={(e) => handleChange('planningSource', e.target.value)}
-            disabled={!permissions.canEditPlanningSource}
-            className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm text-right"
-            required
-          >
-            {Object.entries(PLANNING_SOURCE_CONFIG).map(([key, label]) => (
-              <option key={key} value={key}>{label}</option>
-            ))}
-          </select>
-        </div>
-        <div className="space-y-2">
-          <Label htmlFor="complexity" className="text-sm font-medium text-right">רמת מורכבות</Label>
-          <select
-            value={formData.complexity || ''}
-            onChange={(e) => handleChange('complexity', e.target.value ? Number(e.target.value) : undefined)}
-            disabled={!permissions.canEditComplexity}
-            className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm text-right"
-          >
-            <option value="">בחר רמת מורכבות</option>
-            <option value={1}>פשוט</option>
-            <option value={2}>בינוני</option>
-            <option value={3}>מורכב</option>
-          </select>
-        </div>
-      </div>
-
-      {/* Row 7: Officer and Team */}
-      <div className="grid grid-cols-2 gap-6">
-        <div className="space-y-2">
-          <Label htmlFor="assignedOfficerName" className="text-sm font-medium text-right">קניין</Label>
-          {permissions.canEditOfficer ? (
+          </div>
+          <div className="grid grid-cols-1 gap-2">
+            <Label htmlFor="currency" className="text-sm font-medium text-right">מטבע</Label>
             <Select
-              value={formData.assignedOfficerName || ''}
-              onValueChange={(value) => handleChange('assignedOfficerName', value)}
+              value={formData.currency || 'none'}
+              onValueChange={(value) => handleChange('currency', value === 'none' ? undefined : value)}
               disabled={!canEdit}
             >
-              <SelectTrigger className="text-right">
+              <SelectTrigger className="text-right text-sm h-8">
+                <SelectValue placeholder="בחר מטבע" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="none">ללא מטבע</SelectItem>
+                {Object.entries(CURRENCY_CONFIG).map(([key, label]) => (
+                  <SelectItem key={key} value={key}>{label}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
+
+        {/* Planning Source and Complexity in same row */}
+        <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 gap-2">
+            <Label htmlFor="planningSource" className="text-sm font-medium text-right">מקור תכנון *</Label>
+            <Select
+              value={formData.planningSource}
+              onValueChange={(value) => handleChange('planningSource', value)}
+              disabled={!canEditField('planningSource')}
+            >
+              <SelectTrigger className="text-right text-sm h-8">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {Object.entries(PLANNING_SOURCE_CONFIG).map(([key, label]) => (
+                  <SelectItem key={key} value={key}>{label}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="grid grid-cols-1 gap-2">
+            <Label htmlFor="complexity" className="text-sm font-medium text-right">רמת מורכבות</Label>
+            <Select
+              value={formData.complexity?.toString() || 'none'}
+              onValueChange={(value) => handleChange('complexity', value === 'none' ? undefined : Number(value))}
+              disabled={!canEditField('complexity')}
+            >
+              <SelectTrigger className="text-right text-sm h-8">
+                <SelectValue placeholder="בחר רמת מורכבות" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="none">ללא רמת מורכבות</SelectItem>
+                <SelectItem value="1">פשוט</SelectItem>
+                <SelectItem value="2">בינוני</SelectItem>
+                <SelectItem value="3">מורכב</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
+
+        {/* Officer and Team in same row */}
+        <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 gap-2">
+            <Label htmlFor="assignedOfficerName" className="text-sm font-medium text-right">קניין</Label>
+            <Select
+              value={formData.assignedOfficerId?.toString() || 'none'}
+              onValueChange={(value) => {
+                if (value === 'none') {
+                  handleChange('assignedOfficerName', '');
+                  handleChange('assignedOfficerId', undefined);
+                } else {
+                  const officer = getAvailableOfficers().find(o => o.id.toString() === value);
+                  if (officer) {
+                    handleChange('assignedOfficerName', officer.fullName);
+                    handleChange('assignedOfficerId', officer.id);
+                    // Auto-fill team
+                    handleChange('teamName', officer.procurementTeam);
+                  }
+                }
+              }}
+              disabled={!canEditField('assignedOfficerName')}
+            >
+              <SelectTrigger className="text-right text-sm h-8">
                 <SelectValue placeholder="בחר קניין" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">ללא קניין</SelectItem>
+                <SelectItem value="none">ללא קניין</SelectItem>
                 {getAvailableOfficers().map(officer => (
-                  <SelectItem key={officer.id} value={officer.fullName}>
+                  <SelectItem key={officer.id} value={officer.id.toString()}>
                     {officer.fullName}
                   </SelectItem>
                 ))}
               </SelectContent>
             </Select>
-          ) : (
-            <Input
-              id="assignedOfficerName"
-              value={formData.assignedOfficerName || ''}
-              disabled
-              className="text-right bg-gray-50"
-            />
-          )}
+          </div>
+          <div className="grid grid-cols-1 gap-2">
+            <Label htmlFor="teamName" className="text-sm font-medium text-right">צוות</Label>
+            {user?.roleCode === 2 ? (
+              <Input
+                value={user.procurementTeam || ''}
+                disabled
+                className="text-right text-sm h-8 bg-gray-50"
+              />
+            ) : (
+              <Select
+                value={formData.teamName || 'none'}
+                onValueChange={(value) => {
+                  if (value === 'none') {
+                    handleChange('teamName', '');
+                  } else {
+                    handleChange('teamName', value);
+                    // Auto-fill officer if team changes
+                    const teamOfficers = getAvailableOfficers().filter(o => o.procurementTeam === value);
+                    if (teamOfficers.length > 0) {
+                      const firstOfficer = teamOfficers[0];
+                      handleChange('assignedOfficerName', firstOfficer.fullName);
+                      handleChange('assignedOfficerId', firstOfficer.id);
+                    }
+                  }
+                }}
+                disabled={!canEditField('teamName')}
+              >
+                <SelectTrigger className="text-right text-sm h-8">
+                  <SelectValue placeholder="בחר צוות" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="none">ללא צוות</SelectItem>
+                  {getAvailableTeams().map(team => (
+                    <SelectItem key={team.id} value={team.name}>
+                      {team.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            )}
+          </div>
         </div>
-        <div className="space-y-2">
-          <Label htmlFor="teamName" className="text-sm font-medium text-right">צוות</Label>
-          {permissions.canEditTeam && user?.roleCode === 1 ? (
+
+        {/* Start Date */}
+        <div className="grid grid-cols-1 gap-2">
+          <Label htmlFor="startDate" className="text-sm font-medium text-right">מועד נדרש להתנעה</Label>
+          <Input
+            id="startDate"
+            type="date"
+            value={formData.startDate ? formData.startDate.toISOString().split('T')[0] : ''}
+            onChange={(e) => handleChange('startDate', e.target.value ? new Date(e.target.value) : undefined)}
+            disabled={!canEditField('startDate')}
+            className="text-right text-sm h-8"
+          />
+        </div>
+
+        {/* Status (only for authorized users) */}
+        {canEditStatus && (
+          <div className="grid grid-cols-1 gap-2">
+            <Label htmlFor="status" className="text-sm font-medium text-right">סטטוס</Label>
             <Select
-              value={formData.teamName || ''}
-              onValueChange={(value) => handleChange('teamName', value)}
+              value={formData.status}
+              onValueChange={(value) => handleChange('status', value as TaskStatus)}
               disabled={!canEdit}
             >
-              <SelectTrigger className="text-right">
-                <SelectValue placeholder="בחר צוות" />
+              <SelectTrigger className="text-right text-sm h-8">
+                <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">ללא צוות</SelectItem>
-                {getAvailableTeams().map(team => (
-                  <SelectItem key={team.id} value={team.name}>
-                    {team.name}
+                {availableStatuses.map(status => (
+                  <SelectItem key={status} value={status}>
+                    {STATUS_CONFIG[status].label}
                   </SelectItem>
                 ))}
               </SelectContent>
             </Select>
-          ) : (
-            <Input
-              id="teamName"
-              value={formData.teamName || (user?.roleCode === 2 ? user.procurementTeam : '')}
-              disabled
-              className="text-right bg-gray-50"
-            />
-          )}
+          </div>
+        )}
+
+        {/* Notes */}
+        <div className="grid grid-cols-1 gap-2">
+          <Label htmlFor="planningNotes" className="text-sm font-medium text-right">הערות לתכנון</Label>
+          <Textarea
+            id="planningNotes"
+            value={formData.planningNotes || ''}
+            onChange={(e) => handleChange('planningNotes', e.target.value)}
+            disabled={!canEditField('planningNotes')}
+            className="text-right text-sm min-h-[3rem]"
+            rows={3}
+          />
         </div>
-      </div>
 
-      {/* Row 8: Start Date */}
-      <div className="space-y-2">
-        <Label htmlFor="startDate" className="text-sm font-medium text-right">מועד נדרש להתנעה</Label>
-        <Input
-          id="startDate"
-          type="date"
-          value={formData.startDate ? formData.startDate.toISOString().split('T')[0] : ''}
-          onChange={(e) => handleChange('startDate', e.target.value ? new Date(e.target.value) : undefined)}
-          disabled={!permissions.canEditStartDate}
-          className="text-right"
-        />
-      </div>
-
-      {/* Row 9: Status (only for authorized users) */}
-      {permissions.canEditStatus && availableStatusOptions.length > 1 && (
-        <div className="space-y-2">
-          <Label htmlFor="status" className="text-sm font-medium text-right">סטטוס</Label>
-          <select
-            value={formData.status}
-            onChange={(e) => handleChange('status', e.target.value as TaskStatus)}
-            disabled={!canEdit}
-            className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm text-right"
-          >
-            {availableStatusOptions.map(status => (
-              <option key={status} value={status}>
-                {STATUS_CONFIG[status as TaskStatus].label}
-              </option>
-            ))}
-          </select>
+        <div className="grid grid-cols-1 gap-2">
+          <Label htmlFor="officerNotes" className="text-sm font-medium text-right">הערות טיפול קניין</Label>
+          <Textarea
+            id="officerNotes"
+            value={formData.officerNotes || ''}
+            onChange={(e) => handleChange('officerNotes', e.target.value)}
+            disabled={!canEditField('officerNotes')}
+            className="text-right text-sm min-h-[3rem]"
+            rows={3}
+          />
         </div>
-      )}
 
-      {/* Row 10: Planning Notes */}
-      <div className="space-y-2">
-        <Label htmlFor="planningNotes" className="text-sm font-medium text-right">הערות לתכנון</Label>
-        <Textarea
-          id="planningNotes"
-          value={formData.planningNotes || ''}
-          onChange={(e) => handleChange('planningNotes', e.target.value)}
-          disabled={!permissions.canEditPlanningNotes}
-          className="text-right min-h-[80px]"
-          rows={3}
-        />
-      </div>
-
-      {/* Row 11: Officer Notes */}
-      <div className="space-y-2">
-        <Label htmlFor="officerNotes" className="text-sm font-medium text-right">הערות טיפול קניין</Label>
-        <Textarea
-          id="officerNotes"
-          value={formData.officerNotes || ''}
-          onChange={(e) => handleChange('officerNotes', e.target.value)}
-          disabled={!permissions.canEditOfficerNotes}
-          className="text-right min-h-[80px]"
-          rows={3}
-        />
-      </div>
-
-      {/* Row 12: Suppliers */}
-      <div className="space-y-2">
-        <Label htmlFor="supplierList" className="text-sm font-medium text-right">ספקים פוטנציאליים</Label>
-        <Textarea
-          id="supplierList"
-          value={formData.supplierList || ''}
-          onChange={(e) => handleChange('supplierList', e.target.value)}
-          disabled={!canEdit}
-          className="text-right min-h-[80px]"
-          rows={3}
-        />
-      </div>
-
-      {/* Row 13: Justification */}
-      <div className="space-y-2">
-        <Label htmlFor="justification" className="text-sm font-medium text-right">הערות</Label>
-        <Textarea
-          id="justification"
-          value={formData.justification || ''}
-          onChange={(e) => handleChange('justification', e.target.value)}
-          disabled={!canEdit}
-          className="text-right min-h-[80px]"
-          rows={3}
-        />
+        {/* Last Update */}
+        <div className="grid grid-cols-1 gap-2">
+          <Label className="text-sm font-medium text-right">עדכון אחרון למשימה</Label>
+          <Input
+            value={formData.lastUpdate ? formData.lastUpdate.toLocaleDateString('he-IL') : ''}
+            disabled
+            className="text-right text-sm h-8 bg-gray-50"
+          />
+        </div>
       </div>
     </div>
   );
