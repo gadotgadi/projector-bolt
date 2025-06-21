@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import AppLayout from '../components/layout/AppLayout';
 import { Program, STATUS_CONFIG } from '../types';
@@ -20,52 +20,16 @@ declare global {
 }
 
 const StationAssignment = () => {
-  console.log('🔥 StationAssignment component is rendering!');
-  
   const navigate = useNavigate();
   const { taskId } = useParams();
   const { toast } = useToast();
   const { user } = useAuth();
   const [showPermissionDialog, setShowPermissionDialog] = useState(false);
-  const [isLoading, setIsLoading] = useState(true);
-
-  console.log('📋 StationAssignment - taskId from params:', taskId);
-  console.log('👤 StationAssignment - current user:', user);
 
   // Find program from mock data
   const initialProgram = mockPrograms.find(p => p.taskId === Number(taskId));
   
-  console.log('🔍 Looking for program with taskId:', Number(taskId));
-  console.log('📊 Available programs:', mockPrograms.map(p => ({ id: p.taskId, title: p.title })));
-  console.log('✅ Found program:', initialProgram ? initialProgram.title : 'NOT FOUND');
-
-  useEffect(() => {
-    console.log('⚡ StationAssignment useEffect running');
-    // Simulate loading time to ensure proper initialization
-    const timer = setTimeout(() => {
-      console.log('✅ Setting loading to false');
-      setIsLoading(false);
-    }, 100);
-
-    return () => clearTimeout(timer);
-  }, []);
-
-  if (isLoading) {
-    console.log('⏳ Still loading...');
-    return (
-      <AppLayout currentRoute="/station-assignment">
-        <div className="flex items-center justify-center h-64">
-          <div className="text-center">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
-            <p className="mt-2 text-gray-600">טוען משימה...</p>
-          </div>
-        </div>
-      </AppLayout>
-    );
-  }
-
   if (!initialProgram) {
-    console.log('❌ Program not found for taskId:', taskId);
     return (
       <AppLayout currentRoute="/station-assignment">
         <div className="text-center py-12">
@@ -78,28 +42,13 @@ const StationAssignment = () => {
     );
   }
 
-  console.log('🎯 Program found:', initialProgram.title, 'Status:', initialProgram.status);
-
-  const [program, setProgram] = useState<Program>({
-    ...initialProgram,
-    requiredQuarter: initialProgram.requiredQuarter ? new Date(initialProgram.requiredQuarter) : null,
-    startDate: initialProgram.startDate ? new Date(initialProgram.startDate) : null,
-    lastUpdate: initialProgram.lastUpdate ? new Date(initialProgram.lastUpdate) : new Date(),
-    createdAt: initialProgram.createdAt ? new Date(initialProgram.createdAt) : new Date(),
-    stations: initialProgram.stations?.map((station: any) => ({
-      ...station,
-      completionDate: station.completionDate ? new Date(station.completionDate) : null,
-      lastUpdate: station.lastUpdate ? new Date(station.lastUpdate) : new Date()
-    })) || []
-  });
+  const [program, setProgram] = useState<Program>(initialProgram);
 
   const handleBack = () => {
-    console.log('🔙 Navigating back to dashboard');
     navigate('/');
   };
 
   const handleSave = () => {
-    console.log('💾 Saving task changes');
     toast({
       title: "שינויים נשמרו",
       description: "פרטי המשימה נשמרו בהצלחה",
@@ -107,7 +56,6 @@ const StationAssignment = () => {
   };
 
   const handleFreeze = () => {
-    console.log('🧊 Freezing task');
     // Validate station assignment if program is in OPEN status
     if (program.status === 'Open') {
       if (window.validateStationAssignment && !window.validateStationAssignment()) {
@@ -135,110 +83,27 @@ const StationAssignment = () => {
   };
 
   const handleProgramUpdate = (updatedProgram: Program) => {
-    console.log('📝 Program updated:', updatedProgram.title);
     setProgram(updatedProgram);
   };
 
-  // Check permissions based on user role and task status
-  const getPermissions = () => {
-    const roleCode = user?.roleCode;
-    const status = program.status;
+  // Check permissions - allowing full access for technical users and procurement managers
+  const canEdit = user?.roleCode === 1 || user?.roleCode === 0 || user?.roleCode === 9;
+  const canSave = canEdit || 
+    (user?.roleCode === 4 && program.status === 'Open') ||
+    ([2, 3].includes(user?.roleCode || 0) && 
+     ['Open', 'Plan', 'In Progress'].includes(program.status));
+  
+  const canView = canEdit || 
+    (user?.roleCode === 4) ||
+    ([2, 3].includes(user?.roleCode || 0) && 
+     ['Open', 'Plan', 'In Progress'].includes(program.status));
 
-    console.log('🔐 Checking permissions for role:', roleCode, 'status:', status);
-
-    // גורם דורש
-    if (roleCode === 4) {
-      if (status === 'Open') {
-        // גורם דורש can edit in Open status (should redirect to new task form)
-        return {
-          canEdit: true,
-          canSave: true,
-          canFreeze: false,
-          isReadOnly: false
-        };
-      }
-      return {
-        canEdit: false,
-        canSave: false,
-        canFreeze: false,
-        isReadOnly: true
-      };
-    }
-
-    // מנהל רכש
-    if (roleCode === 1) {
-      return {
-        canEdit: true,
-        canSave: true,
-        canFreeze: status === 'Open',
-        isReadOnly: false
-      };
-    }
-
-    // ראש צוות
-    if (roleCode === 2) {
-      if (status === 'Plan' || status === 'In Progress') {
-        return {
-          canEdit: true,
-          canSave: true,
-          canFreeze: false,
-          isReadOnly: false
-        };
-      }
-      if (status === 'Complete') {
-        // Check close permissions from system settings
-        const closePermissions = 'Team Leader'; // This should come from system settings
-        return {
-          canEdit: closePermissions === 'Team Leader',
-          canSave: closePermissions === 'Team Leader',
-          canFreeze: false,
-          isReadOnly: closePermissions !== 'Team Leader'
-        };
-      }
-      return {
-        canEdit: false,
-        canSave: false,
-        canFreeze: false,
-        isReadOnly: true
-      };
-    }
-
-    // קניין
-    if (roleCode === 3) {
-      if (status === 'Plan' || status === 'In Progress') {
-        return {
-          canEdit: true,
-          canSave: true,
-          canFreeze: false,
-          isReadOnly: false
-        };
-      }
-      return {
-        canEdit: false,
-        canSave: false,
-        canFreeze: false,
-        isReadOnly: true
-      };
-    }
-
-    // Default - read only
-    return {
-      canEdit: false,
-      canSave: false,
-      canFreeze: false,
-      isReadOnly: true
-    };
-  };
-
-  const permissions = getPermissions();
-  console.log('✅ Calculated permissions:', permissions);
+  const canFreeze = canEdit && ['Open', 'Plan'].includes(program.status);
 
   // Show permission dialog instead of blocking access
   const handlePermissionDenied = () => {
     setShowPermissionDialog(true);
   };
-
-  console.log('🎨 Rendering StationAssignment component');
 
   return (
     <AppLayout currentRoute="/station-assignment" pageTitle={`עדכון משימה #${program.taskId}`}>
@@ -255,14 +120,24 @@ const StationAssignment = () => {
             
             <div className="flex items-center gap-3">
               <StatusBadge status={program.status} size="md" />
-              {permissions.canSave && (
+              {canSave ? (
                 <Button onClick={handleSave} className="flex items-center gap-2 text-sm px-3 py-1.5">
                   <Save className="w-3 h-3" />
                   שמירה
                 </Button>
+              ) : (
+                <Button onClick={handlePermissionDenied} className="flex items-center gap-2 text-sm px-3 py-1.5">
+                  <Save className="w-3 h-3" />
+                  שמירה
+                </Button>
               )}
-              {permissions.canFreeze && (
+              {canFreeze ? (
                 <Button onClick={handleFreeze} variant="secondary" className="flex items-center gap-2 text-sm px-3 py-1.5">
+                  <Lock className="w-3 h-3" />
+                  קיבוע
+                </Button>
+              ) : (
+                <Button onClick={handlePermissionDenied} variant="secondary" className="flex items-center gap-2 text-sm px-3 py-1.5">
                   <Lock className="w-3 h-3" />
                   קיבוע
                 </Button>
@@ -277,7 +152,7 @@ const StationAssignment = () => {
           <div className="w-1/3 p-4 overflow-y-auto bg-white border-r">
             <ProgramForm 
               program={program}
-              canEdit={permissions.canEdit}
+              canEdit={canEdit}
               onProgramUpdate={handleProgramUpdate}
               isEditing={false}
               onSave={handleSave}
@@ -289,7 +164,7 @@ const StationAssignment = () => {
           <div className="w-2/3 p-4 overflow-y-auto bg-gray-50">
             <StationAssignmentForm 
               program={program}
-              canEdit={permissions.canEdit}
+              canEdit={canEdit}
               onSave={handleSave}
               onProgramUpdate={handleProgramUpdate}
             />

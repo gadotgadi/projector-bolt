@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Program, ProgramTask } from '../../types';
+import { Program, ProgramTask, currentUser } from '../../types';
 import { ChevronDown, Calendar, MessageSquare } from 'lucide-react';
 import { mockActivityPool } from '../../data/mockData';
 import { mockEngagementTypes, getProcessesForEngagementType } from '../../data/engagementTypesData';
@@ -15,7 +15,6 @@ import { Button } from '../ui/button';
 import { Input } from '../ui/input';
 import { Textarea } from '../ui/textarea';
 import { Label } from '../ui/label';
-import { useAuth } from '../auth/AuthProvider';
 
 interface StationAssignmentFormProps {
   program: Program;
@@ -39,7 +38,6 @@ const StationAssignmentForm: React.FC<StationAssignmentFormProps> = ({
   const [stationReference, setStationReference] = useState('');
   const [stationNotes, setStationNotes] = useState('');
   const { toast } = useToast();
-  const { user } = useAuth();
 
   const handleEngagementTypeChange = (engagementTypeId: number) => {
     if (!canEdit || !['Open', 'Plan'].includes(program.status)) return;
@@ -148,33 +146,6 @@ const StationAssignmentForm: React.FC<StationAssignmentFormProps> = ({
         });
         return;
       }
-
-      // Validate sequence - can't complete a station if previous station is not completed
-      const previousStations = stations
-        .filter(s => s.stationId < stationId && s.activityId)
-        .sort((a, b) => a.stationId - b.stationId);
-      
-      if (previousStations.length > 0) {
-        const lastPreviousStation = previousStations[previousStations.length - 1];
-        if (!lastPreviousStation.completionDate) {
-          toast({
-            title: "שגיאה",
-            description: "לא ניתן להשלים תחנה זו לפני השלמת התחנה הקודמת",
-            variant: "destructive"
-          });
-          return;
-        }
-
-        // Check that the date is not earlier than the previous station
-        if (selectedDate < lastPreviousStation.completionDate) {
-          toast({
-            title: "שגיאה",
-            description: "תאריך השלמה לא יכול להיות מוקדם מהתחנה הקודמת",
-            variant: "destructive"
-          });
-          return;
-        }
-      }
     }
 
     const updatedStations = [...stations];
@@ -184,8 +155,8 @@ const StationAssignmentForm: React.FC<StationAssignmentFormProps> = ({
       updatedStations[existingStationIndex] = {
         ...updatedStations[existingStationIndex],
         completionDate: dateValue ? new Date(dateValue) : undefined,
-        reportingUserId: dateValue ? Number(user?.id) : undefined,
-        reportingUserName: dateValue ? user?.fullName : undefined,
+        reportingUserId: dateValue ? Number(currentUser.id) : undefined,
+        reportingUserName: dateValue ? currentUser.name : undefined,
         lastUpdate: new Date()
       };
       
@@ -218,20 +189,9 @@ const StationAssignmentForm: React.FC<StationAssignmentFormProps> = ({
       newStatus = 'In Progress';
     }
     
-    // If all assigned stations are completed, determine final status based on permissions
+    // If all assigned stations are completed, move to Complete
     if (assignedStations > 0 && completedStations === assignedStations && programToUpdate.status === 'In Progress') {
-      // Check close permissions from system settings
-      const closePermissions = 'Automatic'; // This should come from system settings
-      
-      if (closePermissions === 'Automatic') {
-        newStatus = 'Done';
-      } else if (closePermissions === 'Team Leader' && (user?.roleCode === 2 || user?.roleCode === 1)) {
-        newStatus = 'Done';
-      } else if (closePermissions === 'Manager only' && user?.roleCode === 1) {
-        newStatus = 'Done';
-      } else {
-        newStatus = 'Complete';
-      }
+      newStatus = 'Complete';
     }
     
     return {
@@ -289,14 +249,10 @@ const StationAssignmentForm: React.FC<StationAssignmentFormProps> = ({
   const canEditCompletionDate = (stationId: number) => {
     if (!canEdit || !['Plan', 'In Progress'].includes(program.status)) return false;
     
-    // For Plan status, only first station can be completed
-    if (program.status === 'Plan') {
-      return stationId === 1 && stations.find(s => s.stationId === 1)?.activityId;
-    }
-    
-    // For In Progress status, can edit last completed station (to fix mistakes) or next station to complete
     const lastCompleted = getLastCompletedStation();
     const nextToComplete = getNextStationToComplete();
+    
+    // Can edit if it's the last completed station (to fix mistakes) or the next station to complete
     return stationId === lastCompleted || stationId === nextToComplete;
   };
 
@@ -305,11 +261,15 @@ const StationAssignmentForm: React.FC<StationAssignmentFormProps> = ({
   };
 
   const canEditActivity = (stationId: number) => {
-    if (!canEdit || program.status !== 'Open') return false;
+    if (!canEdit || !['Open', 'Plan'].includes(program.status)) return false;
     
-    const assignedStations = stations.filter(s => s.activityId).map(s => s.stationId).sort((a, b) => a - b);
-    const lastAssignedStation = assignedStations.length > 0 ? Math.max(...assignedStations) : 0;
-    return stationId <= lastAssignedStation + 1;
+    if (program.status === 'Open') {
+      const assignedStations = stations.filter(s => s.activityId).map(s => s.stationId).sort((a, b) => a - b);
+      const lastAssignedStation = assignedStations.length > 0 ? Math.max(...assignedStations) : 0;
+      return stationId <= lastAssignedStation + 1;
+    }
+    
+    return true;
   };
 
   const getAvailableActivities = (stationId: number) => {
@@ -419,11 +379,10 @@ const StationAssignmentForm: React.FC<StationAssignmentFormProps> = ({
           <div className="space-y-3">
             {/* Engagement Type */}
             <div className="flex items-center gap-3">
-              <Label htmlFor="engagement-type-select" className="text-sm font-medium text-gray-700 w-32 text-right flex-shrink-0">סוג התקשרות</Label>
-              {fieldsEditable && program.status === 'Open' ? (
+              <label className="text-sm font-medium text-gray-700 w-32 text-right flex-shrink-0">סוג התקשרות</label>
+              {fieldsEditable ? (
                 <div className="relative flex-1">
                   <select
-                    id="engagement-type-select"
                     value={selectedEngagementTypeId || ''}
                     onChange={(e) => handleEngagementTypeChange(Number(e.target.value))}
                     className="w-full text-sm border border-gray-300 rounded px-3 py-2 bg-white appearance-none pr-8"
@@ -446,10 +405,9 @@ const StationAssignmentForm: React.FC<StationAssignmentFormProps> = ({
             
             {/* Start Date */}
             <div className="flex items-center gap-3">
-              <Label htmlFor="start-date-input" className="text-sm font-medium text-gray-700 w-32 text-right flex-shrink-0">מועד התנעה נדרש</Label>
+              <label className="text-sm font-medium text-gray-700 w-32 text-right flex-shrink-0">מועד התנעה נדרש</label>
               {fieldsEditable ? (
                 <input
-                  id="start-date-input"
                   type="date"
                   value={program.startDate ? program.startDate.toISOString().split('T')[0] : ''}
                   className="flex-1 text-sm border border-gray-300 rounded px-3 py-2 bg-white"
@@ -492,7 +450,6 @@ const StationAssignmentForm: React.FC<StationAssignmentFormProps> = ({
                           value={stationData?.activityId || ''}
                           onChange={(e) => handleActivityChange(stationNumber, Number(e.target.value))}
                           className="w-full text-sm border border-gray-300 rounded px-3 py-2 bg-white appearance-none pr-8 min-h-[2.5rem]"
-                          aria-label={`פעילות לתחנה ${stationNumber}`}
                         >
                           <option value="">בחר פעילות</option>
                           {availableActivities.map(activity => (
@@ -519,7 +476,6 @@ const StationAssignmentForm: React.FC<StationAssignmentFormProps> = ({
                         onChange={(e) => handleCompletionDateChange(stationNumber, e.target.value)}
                         max={getTodayDateString()}
                         className="text-xs border border-gray-300 rounded px-2 py-1 bg-white"
-                        aria-label={`תאריך השלמה לתחנה ${stationNumber}`}
                       />
                     ) : (
                       <span className="text-sm">
@@ -534,12 +490,11 @@ const StationAssignmentForm: React.FC<StationAssignmentFormProps> = ({
                   {/* Reporting user */}
                   <div className="col-span-2 flex items-center gap-1 justify-center">
                     <span className="text-sm">
-                      {stationData?.completionDate ? (stationData.reportingUserName || user?.fullName) : ''}
+                      {stationData?.completionDate ? (stationData.reportingUserName || currentUser.name) : ''}
                     </span>
                     <MessageSquare 
                       className="w-4 h-4 text-gray-600 cursor-pointer hover:text-blue-600" 
                       onClick={() => handleStationNotesClick(stationNumber)}
-                      aria-label={`הערות לתחנה ${stationNumber}`}
                     />
                   </div>
                 </div>
@@ -582,9 +537,9 @@ const StationAssignmentForm: React.FC<StationAssignmentFormProps> = ({
           </DialogHeader>
           <div className="grid gap-4 py-4">
             <div className="grid gap-2">
-              <Label htmlFor="station-reference" className="text-right">סימוכין</Label>
+              <Label htmlFor="reference" className="text-right">סימוכין</Label>
               <Input
-                id="station-reference"
+                id="reference"
                 value={stationReference}
                 onChange={(e) => setStationReference(e.target.value)}
                 className="text-right"
@@ -592,9 +547,9 @@ const StationAssignmentForm: React.FC<StationAssignmentFormProps> = ({
               />
             </div>
             <div className="grid gap-2">
-              <Label htmlFor="station-notes" className="text-right">הערת ביצוע תחנה</Label>
+              <Label htmlFor="notes" className="text-right">הערת ביצוע תחנה</Label>
               <Textarea
-                id="station-notes"
+                id="notes"
                 value={stationNotes}
                 onChange={(e) => setStationNotes(e.target.value)}
                 className="text-right min-h-[100px]"
