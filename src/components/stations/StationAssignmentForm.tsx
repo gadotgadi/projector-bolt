@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Program, ProgramTask, TaskStatus } from '../../types';
-import { ChevronDown, Calendar, MessageSquare } from 'lucide-react';
+import { ChevronDown, Calendar, MessageSquare, Trash2 } from 'lucide-react';
 import { mockActivityPool } from '../../data/mockData';
 import { mockEngagementTypes, getProcessesForEngagementType } from '../../data/engagementTypesData';
 import { useToast } from '../ui/use-toast';
@@ -47,8 +47,8 @@ const StationAssignmentForm: React.FC<StationAssignmentFormProps> = ({
     const status = program.status;
     
     return {
-      canEditEngagementType: roleCode === 1 && status === 'Open', // מנהל רכש בסטטוס Open
-      canEditActivities: roleCode === 1 && status === 'Open', // מנהל רכש בסטטוס Open
+      canEditEngagementType: roleCode === 1 && ['Open', 'Plan'].includes(status), // מנהל רכש בסטטוס Open/Plan
+      canEditActivities: roleCode === 1 && ['Open', 'Plan'].includes(status), // מנהל רכש בסטטוס Open/Plan
       canEditCompletionDates: ['Plan', 'In Progress'].includes(status) && [1, 2, 3].includes(roleCode || 0),
       canEditStationNotes: [1, 2, 3].includes(roleCode || 0)
     };
@@ -108,8 +108,14 @@ const StationAssignmentForm: React.FC<StationAssignmentFormProps> = ({
     onProgramUpdate(updatedProgram);
   };
 
-  const handleActivityChange = (stationId: number, activityId: number) => {
+  const handleActivityChange = (stationId: number, activityId: number | null) => {
     if (!permissions.canEditActivities) return;
+    
+    if (activityId === null) {
+      // Remove activity and shift others back
+      handleDeleteActivity(stationId);
+      return;
+    }
     
     const existingAssignment = stations.find(s => s.activityId === activityId && s.stationId !== stationId);
     if (existingAssignment) {
@@ -163,6 +169,44 @@ const StationAssignmentForm: React.FC<StationAssignmentFormProps> = ({
       lastUpdate: new Date()
     };
     onProgramUpdate(updatedProgram);
+  };
+
+  const handleDeleteActivity = (stationId: number) => {
+    if (!permissions.canEditActivities) return;
+    
+    const updatedStations = [...stations];
+    const stationToDelete = updatedStations.find(s => s.stationId === stationId);
+    
+    if (!stationToDelete || !stationToDelete.activityId) return;
+    
+    // Remove the station
+    const filteredStations = updatedStations.filter(s => s.stationId !== stationId);
+    
+    // Shift all stations after the deleted one back by one position
+    const shiftedStations = filteredStations.map(station => {
+      if (station.stationId > stationId) {
+        return {
+          ...station,
+          stationId: station.stationId - 1,
+          lastUpdate: new Date()
+        };
+      }
+      return station;
+    });
+    
+    setStations(shiftedStations);
+    
+    const updatedProgram = {
+      ...program,
+      stations: shiftedStations,
+      lastUpdate: new Date()
+    };
+    onProgramUpdate(updatedProgram);
+    
+    toast({
+      title: "פעילות הוסרה",
+      description: "הפעילות הוסרה והתחנות הבאות הוזזו אחורה",
+    });
   };
 
   const handleCompletionDateChange = (stationId: number, dateValue: string) => {
@@ -471,13 +515,13 @@ const StationAssignmentForm: React.FC<StationAssignmentFormProps> = ({
                   {stationNumber}
                 </div>
                 
-                {/* Activity name - narrower with text wrapping */}
+                {/* Activity name - narrower with text wrapping and delete option */}
                 <div className="col-span-6 flex items-center">
                   {canEditActivity(stationNumber) ? (
-                    <div className="relative w-full">
+                    <div className="relative w-full flex items-center gap-1">
                       <select
                         value={stationData?.activityId || ''}
-                        onChange={(e) => handleActivityChange(stationNumber, Number(e.target.value))}
+                        onChange={(e) => handleActivityChange(stationNumber, e.target.value ? Number(e.target.value) : null)}
                         className="w-full text-xs border border-gray-300 rounded px-2 py-1 bg-white appearance-none min-h-[2rem]"
                       >
                         <option value="">בחר פעילות</option>
@@ -487,6 +531,15 @@ const StationAssignmentForm: React.FC<StationAssignmentFormProps> = ({
                           </option>
                         ))}
                       </select>
+                      {stationData?.activityId && (
+                        <button
+                          onClick={() => handleDeleteActivity(stationNumber)}
+                          className="text-red-500 hover:text-red-700 p-1"
+                          title="מחק פעילות"
+                        >
+                          <Trash2 className="w-3 h-3" />
+                        </button>
+                      )}
                       <ChevronDown className="absolute left-1 top-1/2 transform -translate-y-1/2 w-3 h-3 text-gray-400 pointer-events-none" />
                     </div>
                   ) : (

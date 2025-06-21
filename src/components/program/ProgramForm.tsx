@@ -6,6 +6,57 @@ import { Label } from '../ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
 import { useAuth } from '../auth/AuthProvider';
 
+// Mock data for dropdowns
+const mockRequesters = [
+  { id: 5, fullName: 'רחל אברהם' },
+  { id: 6, fullName: 'יוסי לוי' },
+  { id: 7, fullName: 'מירי דוד' },
+  { id: 8, fullName: 'דני רוזן' }
+];
+
+const mockDivisions = [
+  { id: 1, name: 'לוגיסטיקה' },
+  { id: 2, name: 'טכנולוגיה' },
+  { id: 3, name: 'מחקר ופיתוח' },
+  { id: 4, name: 'משאבי אנוש' },
+  { id: 5, name: 'מכירות' },
+  { id: 6, name: 'תפעול' }
+];
+
+const mockDepartments = [
+  { id: 1, name: 'רכש וחוזים' },
+  { id: 2, name: 'תפעול ותחזוקה' },
+  { id: 3, name: 'מערכות מידע' },
+  { id: 4, name: 'פיתוח תוכנה' },
+  { id: 5, name: 'מחקר' },
+  { id: 6, name: 'פיתוח' }
+];
+
+const mockDomains = [
+  { id: 1, description: 'רכש לוגיסטי' },
+  { id: 2, description: 'רכש טכנולוגי' },
+  { id: 3, description: 'שירותים מקצועיים' },
+  { id: 4, description: 'תחזוקה ותפעול' },
+  { id: 5, description: 'ציוד משרדי' },
+  { id: 6, description: 'תוכנה ומערכות' }
+];
+
+const mockOfficers = [
+  { id: 3, fullName: 'שרה לוי', roleCode: 2, team: 'צוות טכנולוגי' },
+  { id: 4, fullName: 'אבי כהן', roleCode: 3, team: 'צוות לוגיסטי' },
+  { id: 5, fullName: 'דוד משה', roleCode: 3, team: 'צוות טכנולוגי' },
+  { id: 6, fullName: 'רונית כהן', roleCode: 3, team: 'צוות לוגיסטי' }
+];
+
+const mockTeams = [
+  { id: 1, name: 'יעודי' },
+  { id: 2, name: 'טכנולוגי' },
+  { id: 3, name: 'לוגיסטי' },
+  { id: 4, name: 'מחשוב' },
+  { id: 5, name: 'הנדסי' },
+  { id: 6, name: 'ביטחוני' }
+];
+
 interface ProgramFormProps {
   program: Program;
   canEdit: boolean;
@@ -39,7 +90,10 @@ const ProgramForm: React.FC<ProgramFormProps> = ({ program, canEdit, onProgramUp
       canEditStartDate: roleCode === 1 && ['Open', 'Plan'].includes(status), // מנהל רכש בסטטוס Open/Plan
       canEditPlanningNotes: roleCode === 1, // מנהל רכש בלבד
       canEditOfficerNotes: [1, 2, 3].includes(roleCode || 0), // מנהל רכש, ראש צוות, קניין
-      canEditStatus: getStatusEditPermission(roleCode, status)
+      canEditStatus: getStatusEditPermission(roleCode, status),
+      canEditRequester: roleCode === 1, // מנהל רכש בלבד
+      canEditDivision: roleCode === 1, // מנהל רכש בלבד
+      canEditDepartment: roleCode === 1 // מנהל רכש בלבד
     };
   };
 
@@ -107,6 +161,22 @@ const ProgramForm: React.FC<ProgramFormProps> = ({ program, canEdit, onProgramUp
     return [currentStatus]; // No changes allowed
   };
 
+  const getAvailableOfficers = () => {
+    if (user?.roleCode === 2) { // ראש צוות
+      // Show only officers from the same team
+      return mockOfficers.filter(officer => officer.team === user.procurementTeam);
+    }
+    return mockOfficers; // מנהל רכש sees all officers
+  };
+
+  const getAvailableTeams = () => {
+    if (user?.roleCode === 2) { // ראש צוות
+      // Show only user's team
+      return mockTeams.filter(team => team.name === user.procurementTeam);
+    }
+    return mockTeams; // מנהל רכש sees all teams
+  };
+
   const availableStatusOptions = getAvailableStatusOptions();
 
   return (
@@ -170,25 +240,61 @@ const ProgramForm: React.FC<ProgramFormProps> = ({ program, canEdit, onProgramUp
       <div className="grid grid-cols-2 gap-6">
         <div className="space-y-2">
           <Label htmlFor="requesterName" className="text-sm font-medium text-right">גורם דורש *</Label>
-          <Input
-            id="requesterName"
-            value={formData.requesterName}
-            onChange={(e) => handleChange('requesterName', e.target.value)}
-            disabled={!canEdit}
-            className="text-right"
-            required
-          />
+          {permissions.canEditRequester ? (
+            <Select
+              value={formData.requesterName}
+              onValueChange={(value) => handleChange('requesterName', value)}
+              disabled={!canEdit}
+            >
+              <SelectTrigger className="text-right">
+                <SelectValue placeholder="בחר גורם דורש" />
+              </SelectTrigger>
+              <SelectContent>
+                {mockRequesters.map(requester => (
+                  <SelectItem key={requester.id} value={requester.fullName}>
+                    {requester.fullName}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          ) : (
+            <Input
+              id="requesterName"
+              value={formData.requesterName}
+              disabled
+              className="text-right bg-gray-50"
+              required
+            />
+          )}
         </div>
         <div className="space-y-2">
           <Label htmlFor="divisionName" className="text-sm font-medium text-right">אגף *</Label>
-          <Input
-            id="divisionName"
-            value={formData.divisionName}
-            onChange={(e) => handleChange('divisionName', e.target.value)}
-            disabled={!canEdit}
-            className="text-right"
-            required
-          />
+          {permissions.canEditDivision ? (
+            <Select
+              value={formData.divisionName}
+              onValueChange={(value) => handleChange('divisionName', value)}
+              disabled={!canEdit}
+            >
+              <SelectTrigger className="text-right">
+                <SelectValue placeholder="בחר אגף" />
+              </SelectTrigger>
+              <SelectContent>
+                {mockDivisions.map(division => (
+                  <SelectItem key={division.id} value={division.name}>
+                    {division.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          ) : (
+            <Input
+              id="divisionName"
+              value={formData.divisionName}
+              disabled
+              className="text-right bg-gray-50"
+              required
+            />
+          )}
         </div>
       </div>
 
@@ -196,23 +302,61 @@ const ProgramForm: React.FC<ProgramFormProps> = ({ program, canEdit, onProgramUp
       <div className="grid grid-cols-2 gap-6">
         <div className="space-y-2">
           <Label htmlFor="departmentName" className="text-sm font-medium text-right">מחלקה</Label>
-          <Input
-            id="departmentName"
-            value={formData.departmentName || ''}
-            onChange={(e) => handleChange('departmentName', e.target.value)}
-            disabled={!canEdit}
-            className="text-right"
-          />
+          {permissions.canEditDepartment ? (
+            <Select
+              value={formData.departmentName || ''}
+              onValueChange={(value) => handleChange('departmentName', value)}
+              disabled={!canEdit}
+            >
+              <SelectTrigger className="text-right">
+                <SelectValue placeholder="בחר מחלקה" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="">ללא מחלקה</SelectItem>
+                {mockDepartments.map(department => (
+                  <SelectItem key={department.id} value={department.name}>
+                    {department.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          ) : (
+            <Input
+              id="departmentName"
+              value={formData.departmentName || ''}
+              disabled
+              className="text-right bg-gray-50"
+            />
+          )}
         </div>
         <div className="space-y-2">
           <Label htmlFor="domainName" className="text-sm font-medium text-right">תחום רכש</Label>
-          <Input
-            id="domainName"
-            value={formData.domainName || ''}
-            onChange={(e) => handleChange('domainName', e.target.value)}
-            disabled={!permissions.canEditDomain}
-            className="text-right"
-          />
+          {permissions.canEditDomain ? (
+            <Select
+              value={formData.domainName || ''}
+              onValueChange={(value) => handleChange('domainName', value)}
+              disabled={!canEdit}
+            >
+              <SelectTrigger className="text-right">
+                <SelectValue placeholder="בחר תחום רכש" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="">ללא תחום</SelectItem>
+                {mockDomains.map(domain => (
+                  <SelectItem key={domain.id} value={domain.description}>
+                    {domain.description}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          ) : (
+            <Input
+              id="domainName"
+              value={formData.domainName || ''}
+              disabled
+              className="text-right bg-gray-50"
+            />
+          )}
         </div>
       </div>
 
@@ -281,23 +425,61 @@ const ProgramForm: React.FC<ProgramFormProps> = ({ program, canEdit, onProgramUp
       <div className="grid grid-cols-2 gap-6">
         <div className="space-y-2">
           <Label htmlFor="assignedOfficerName" className="text-sm font-medium text-right">קניין</Label>
-          <Input
-            id="assignedOfficerName"
-            value={formData.assignedOfficerName || ''}
-            onChange={(e) => handleChange('assignedOfficerName', e.target.value)}
-            disabled={!permissions.canEditOfficer}
-            className="text-right"
-          />
+          {permissions.canEditOfficer ? (
+            <Select
+              value={formData.assignedOfficerName || ''}
+              onValueChange={(value) => handleChange('assignedOfficerName', value)}
+              disabled={!canEdit}
+            >
+              <SelectTrigger className="text-right">
+                <SelectValue placeholder="בחר קניין" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="">ללא קניין</SelectItem>
+                {getAvailableOfficers().map(officer => (
+                  <SelectItem key={officer.id} value={officer.fullName}>
+                    {officer.fullName}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          ) : (
+            <Input
+              id="assignedOfficerName"
+              value={formData.assignedOfficerName || ''}
+              disabled
+              className="text-right bg-gray-50"
+            />
+          )}
         </div>
         <div className="space-y-2">
           <Label htmlFor="teamName" className="text-sm font-medium text-right">צוות</Label>
-          <Input
-            id="teamName"
-            value={formData.teamName || ''}
-            onChange={(e) => handleChange('teamName', e.target.value)}
-            disabled={!permissions.canEditTeam}
-            className="text-right"
-          />
+          {permissions.canEditTeam && user?.roleCode === 1 ? (
+            <Select
+              value={formData.teamName || ''}
+              onValueChange={(value) => handleChange('teamName', value)}
+              disabled={!canEdit}
+            >
+              <SelectTrigger className="text-right">
+                <SelectValue placeholder="בחר צוות" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="">ללא צוות</SelectItem>
+                {getAvailableTeams().map(team => (
+                  <SelectItem key={team.id} value={team.name}>
+                    {team.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          ) : (
+            <Input
+              id="teamName"
+              value={formData.teamName || (user?.roleCode === 2 ? user.procurementTeam : '')}
+              disabled
+              className="text-right bg-gray-50"
+            />
+          )}
         </div>
       </div>
 

@@ -103,219 +103,123 @@ const DashboardFilters: React.FC<DashboardFiltersProps> = ({
   const getVisibleFilters = () => {
     switch (userRole) {
       case 4: // גורם דורש
-        return ['status', 'requester', 'quarter'];
+        return [
+          { key: 'status', label: 'סטטוס:' },
+          { key: 'requester', label: 'דורש:' },
+          { key: 'quarter', label: 'רבעון:' }
+        ];
       case 1: // מנהל רכש
-        return ['status', 'team', 'requester', 'quarter'];
+        return [
+          { key: 'status', label: 'סטטוס:' },
+          { key: 'team', label: 'צוות:' },
+          { key: 'requester', label: 'דורש:' },
+          { key: 'quarter', label: 'רבעון:' }
+        ];
       case 3: // קניין
-        return ['status', 'requester', 'quarter'];
+        return [
+          { key: 'status', label: 'סטטוס:' },
+          { key: 'requester', label: 'דורש:' },
+          { key: 'quarter', label: 'רבעון:' }
+        ];
       case 2: // ראש צוות
-        return ['status', 'assignedOfficer', 'quarter'];
+        return [
+          { key: 'status', label: 'סטטוס:' },
+          { key: 'assignedOfficer', label: 'קניין:' },
+          { key: 'quarter', label: 'רבעון:' }
+        ];
       default:
-        return ['status', 'assignedOfficer', 'domain', 'complexity'];
+        return [
+          { key: 'status', label: 'סטטוס:' },
+          { key: 'assignedOfficer', label: 'קניין מטפל:' },
+          { key: 'domain', label: 'תחום רכש:' },
+          { key: 'complexity', label: 'מורכבות:' }
+        ];
     }
   };
 
   const visibleFilters = getVisibleFilters();
-  const filterCount = visibleFilters.length;
 
-  return (
-    <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-6">
-      <div className={`grid grid-cols-1 lg:grid-cols-${filterCount} gap-6`}>
-        {/* Status Filter */}
-        {visibleFilters.includes('status') && (
-          <div>
-            <Collapsible open={openSections.status} onOpenChange={(isOpen) => setOpenSections(prev => ({ ...prev, status: isOpen }))}>
-              <CollapsibleTrigger asChild>
-                <Button
-                  variant="outline"
-                  className="w-full justify-between text-right"
-                >
-                  <ChevronDown className={`h-4 w-4 transition-transform ${openSections.status ? 'rotate-180' : ''}`} />
-                  <span>{getDisplayText('status', 'בחר סטטוס')}</span>
-                </Button>
-              </CollapsibleTrigger>
-              <CollapsibleContent className="mt-2">
-                <div className="border rounded-md p-2 space-y-2 bg-white max-h-32 overflow-y-auto">
-                  {Object.entries(STATUS_CONFIG).map(([status, config]) => (
-                    <div key={status} className="flex items-center space-x-2 justify-end">
-                      <label className="text-sm text-gray-700 cursor-pointer">{config.label}</label>
-                      <Checkbox
-                        checked={filters.status.includes(status)}
-                        onCheckedChange={(checked) => handleFilterChange('status', status, checked as boolean)}
-                      />
-                    </div>
-                  ))}
+  const renderFilter = (filterConfig: { key: string; label: string }) => {
+    const { key, label } = filterConfig;
+    
+    return (
+      <div key={key} className="flex items-center gap-2">
+        <span className="text-sm font-medium text-gray-700 whitespace-nowrap">{label}</span>
+        <Collapsible open={openSections[key]} onOpenChange={(isOpen) => setOpenSections(prev => ({ ...prev, [key]: isOpen }))}>
+          <CollapsibleTrigger asChild>
+            <Button
+              variant="outline"
+              className="justify-between text-right min-w-[150px]"
+              size="sm"
+            >
+              <ChevronDown className={`h-4 w-4 transition-transform ${openSections[key] ? 'rotate-180' : ''}`} />
+              <span className="truncate">{getDisplayText(key as keyof FilterState, 'הכל')}</span>
+            </Button>
+          </CollapsibleTrigger>
+          <CollapsibleContent className="absolute z-10 mt-1">
+            <div className="border rounded-md p-2 space-y-2 bg-white max-h-32 overflow-y-auto shadow-lg min-w-[200px]">
+              {key === 'status' && Object.entries(STATUS_CONFIG).map(([status, config]) => (
+                <div key={status} className="flex items-center space-x-2 justify-end">
+                  <label className="text-sm text-gray-700 cursor-pointer">{config.label}</label>
+                  <Checkbox
+                    checked={filters.status.includes(status)}
+                    onCheckedChange={(checked) => handleFilterChange('status', status, checked as boolean)}
+                  />
                 </div>
-              </CollapsibleContent>
-            </Collapsible>
-          </div>
-        )}
-
-        {/* Team Filter */}
-        {visibleFilters.includes('team') && (
-          <div>
-            <Collapsible open={openSections.team} onOpenChange={(isOpen) => setOpenSections(prev => ({ ...prev, team: isOpen }))}>
-              <CollapsibleTrigger asChild>
-                <Button
-                  variant="outline"
-                  className="w-full justify-between text-right"
-                >
-                  <ChevronDown className={`h-4 w-4 transition-transform ${openSections.team ? 'rotate-180' : ''}`} />
-                  <span>{getDisplayText('team', 'בחר צוות')}</span>
-                </Button>
-              </CollapsibleTrigger>
-              <CollapsibleContent className="mt-2">
-                <div className="border rounded-md p-2 space-y-2 bg-white max-h-32 overflow-y-auto">
-                  {uniqueTeams.map(team => (
-                    <div key={team} className="flex items-center space-x-2 justify-end">
-                      <label className="text-sm text-gray-700 cursor-pointer">{team}</label>
-                      <Checkbox
-                        checked={filters.team.includes(team)}
-                        onCheckedChange={(checked) => handleFilterChange('team', team, checked as boolean)}
-                      />
-                    </div>
-                  ))}
+              ))}
+              
+              {key === 'team' && uniqueTeams.map(team => (
+                <div key={team} className="flex items-center space-x-2 justify-end">
+                  <label className="text-sm text-gray-700 cursor-pointer">{team}</label>
+                  <Checkbox
+                    checked={filters.team.includes(team)}
+                    onCheckedChange={(checked) => handleFilterChange('team', team, checked as boolean)}
+                  />
                 </div>
-              </CollapsibleContent>
-            </Collapsible>
-          </div>
-        )}
-
-        {/* Officer Filter */}
-        {visibleFilters.includes('assignedOfficer') && (
-          <div>
-            <Collapsible open={openSections.assignedOfficer} onOpenChange={(isOpen) => setOpenSections(prev => ({ ...prev, assignedOfficer: isOpen }))}>
-              <CollapsibleTrigger asChild>
-                <Button
-                  variant="outline"
-                  className="w-full justify-between text-right"
-                >
-                  <ChevronDown className={`h-4 w-4 transition-transform ${openSections.assignedOfficer ? 'rotate-180' : ''}`} />
-                  <span>{getDisplayText('assignedOfficer', 'בחר קניין מטפל')}</span>
-                </Button>
-              </CollapsibleTrigger>
-              <CollapsibleContent className="mt-2">
-                <div className="border rounded-md p-2 space-y-2 bg-white max-h-32 overflow-y-auto">
-                  {uniqueOfficers.map(officer => (
-                    <div key={officer} className="flex items-center space-x-2 justify-end">
-                      <label className="text-sm text-gray-700 cursor-pointer">{officer}</label>
-                      <Checkbox
-                        checked={filters.assignedOfficer.includes(officer)}
-                        onCheckedChange={(checked) => handleFilterChange('assignedOfficer', officer, checked as boolean)}
-                      />
-                    </div>
-                  ))}
+              ))}
+              
+              {key === 'assignedOfficer' && uniqueOfficers.map(officer => (
+                <div key={officer} className="flex items-center space-x-2 justify-end">
+                  <label className="text-sm text-gray-700 cursor-pointer">{officer}</label>
+                  <Checkbox
+                    checked={filters.assignedOfficer.includes(officer)}
+                    onCheckedChange={(checked) => handleFilterChange('assignedOfficer', officer, checked as boolean)}
+                  />
                 </div>
-              </CollapsibleContent>
-            </Collapsible>
-          </div>
-        )}
-
-        {/* Requester Filter */}
-        {visibleFilters.includes('requester') && (
-          <div>
-            <Collapsible open={openSections.requester} onOpenChange={(isOpen) => setOpenSections(prev => ({ ...prev, requester: isOpen }))}>
-              <CollapsibleTrigger asChild>
-                <Button
-                  variant="outline"
-                  className="w-full justify-between text-right"
-                >
-                  <ChevronDown className={`h-4 w-4 transition-transform ${openSections.requester ? 'rotate-180' : ''}`} />
-                  <span>{getDisplayText('requester', 'בחר גורם דורש')}</span>
-                </Button>
-              </CollapsibleTrigger>
-              <CollapsibleContent className="mt-2">
-                <div className="border rounded-md p-2 space-y-2 bg-white max-h-32 overflow-y-auto">
-                  {uniqueRequesters.map(requester => (
-                    <div key={requester} className="flex items-center space-x-2 justify-end">
-                      <label className="text-sm text-gray-700 cursor-pointer">{requester}</label>
-                      <Checkbox
-                        checked={filters.requester.includes(requester)}
-                        onCheckedChange={(checked) => handleFilterChange('requester', requester, checked as boolean)}
-                      />
-                    </div>
-                  ))}
+              ))}
+              
+              {key === 'requester' && uniqueRequesters.map(requester => (
+                <div key={requester} className="flex items-center space-x-2 justify-end">
+                  <label className="text-sm text-gray-700 cursor-pointer">{requester}</label>
+                  <Checkbox
+                    checked={filters.requester.includes(requester)}
+                    onCheckedChange={(checked) => handleFilterChange('requester', requester, checked as boolean)}
+                  />
                 </div>
-              </CollapsibleContent>
-            </Collapsible>
-          </div>
-        )}
-
-        {/* Quarter Filter */}
-        {visibleFilters.includes('quarter') && (
-          <div>
-            <Collapsible open={openSections.quarter} onOpenChange={(isOpen) => setOpenSections(prev => ({ ...prev, quarter: isOpen }))}>
-              <CollapsibleTrigger asChild>
-                <Button
-                  variant="outline"
-                  className="w-full justify-between text-right"
-                >
-                  <ChevronDown className={`h-4 w-4 transition-transform ${openSections.quarter ? 'rotate-180' : ''}`} />
-                  <span>{getDisplayText('quarter', 'בחר רבעון')}</span>
-                </Button>
-              </CollapsibleTrigger>
-              <CollapsibleContent className="mt-2">
-                <div className="border rounded-md p-2 space-y-2 bg-white max-h-32 overflow-y-auto">
-                  {uniqueQuarters.map(quarter => (
-                    <div key={quarter} className="flex items-center space-x-2 justify-end">
-                      <label className="text-sm text-gray-700 cursor-pointer">{quarter}</label>
-                      <Checkbox
-                        checked={filters.quarter.includes(quarter)}
-                        onCheckedChange={(checked) => handleFilterChange('quarter', quarter, checked as boolean)}
-                      />
-                    </div>
-                  ))}
+              ))}
+              
+              {key === 'quarter' && uniqueQuarters.map(quarter => (
+                <div key={quarter} className="flex items-center space-x-2 justify-end">
+                  <label className="text-sm text-gray-700 cursor-pointer">{quarter}</label>
+                  <Checkbox
+                    checked={filters.quarter.includes(quarter)}
+                    onCheckedChange={(checked) => handleFilterChange('quarter', quarter, checked as boolean)}
+                  />
                 </div>
-              </CollapsibleContent>
-            </Collapsible>
-          </div>
-        )}
-
-        {/* Domain Filter */}
-        {visibleFilters.includes('domain') && (
-          <div>
-            <Collapsible open={openSections.domain} onOpenChange={(isOpen) => setOpenSections(prev => ({ ...prev, domain: isOpen }))}>
-              <CollapsibleTrigger asChild>
-                <Button
-                  variant="outline"
-                  className="w-full justify-between text-right"
-                >
-                  <ChevronDown className={`h-4 w-4 transition-transform ${openSections.domain ? 'rotate-180' : ''}`} />
-                  <span>{getDisplayText('domain', 'בחר תחום רכש')}</span>
-                </Button>
-              </CollapsibleTrigger>
-              <CollapsibleContent className="mt-2">
-                <div className="border rounded-md p-2 space-y-2 bg-white max-h-32 overflow-y-auto">
-                  {uniqueDomains.map(domain => (
-                    <div key={domain} className="flex items-center space-x-2 justify-end">
-                      <label className="text-sm text-gray-700 cursor-pointer">{domain}</label>
-                      <Checkbox
-                        checked={filters.domain.includes(domain)}
-                        onCheckedChange={(checked) => handleFilterChange('domain', domain, checked as boolean)}
-                      />
-                    </div>
-                  ))}
+              ))}
+              
+              {key === 'domain' && uniqueDomains.map(domain => (
+                <div key={domain} className="flex items-center space-x-2 justify-end">
+                  <label className="text-sm text-gray-700 cursor-pointer">{domain}</label>
+                  <Checkbox
+                    checked={filters.domain.includes(domain)}
+                    onCheckedChange={(checked) => handleFilterChange('domain', domain, checked as boolean)}
+                  />
                 </div>
-              </CollapsibleContent>
-            </Collapsible>
-          </div>
-        )}
-
-        {/* Complexity Filter */}
-        {visibleFilters.includes('complexity') && (
-          <div>
-            <Collapsible open={openSections.complexity} onOpenChange={(isOpen) => setOpenSections(prev => ({ ...prev, complexity: isOpen }))}>
-              <CollapsibleTrigger asChild>
-                <Button
-                  variant="outline"
-                  className="w-full justify-between text-right"
-                >
-                  <ChevronDown className={`h-4 w-4 transition-transform ${openSections.complexity ? 'rotate-180' : ''}`} />
-                  <span>{getDisplayText('complexity', 'בחר רמת מורכבות')}</span>
-                </Button>
-              </CollapsibleTrigger>
-              <CollapsibleContent className="mt-2">
-                <div className="border rounded-md p-2 space-y-2 bg-white max-h-32 overflow-y-auto">
+              ))}
+              
+              {key === 'complexity' && (
+                <>
                   <div className="flex items-center space-x-2 justify-end">
                     <label className="text-sm text-gray-700 cursor-pointer">פשוט</label>
                     <Checkbox
@@ -337,11 +241,19 @@ const DashboardFilters: React.FC<DashboardFiltersProps> = ({
                       onCheckedChange={(checked) => handleFilterChange('complexity', '3', checked as boolean)}
                     />
                   </div>
-                </div>
-              </CollapsibleContent>
-            </Collapsible>
-          </div>
-        )}
+                </>
+              )}
+            </div>
+          </CollapsibleContent>
+        </Collapsible>
+      </div>
+    );
+  };
+
+  return (
+    <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 mb-6">
+      <div className="flex flex-wrap items-center gap-6 justify-end">
+        {visibleFilters.map(renderFilter)}
       </div>
     </div>
   );

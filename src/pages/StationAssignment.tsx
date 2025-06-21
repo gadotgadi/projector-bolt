@@ -170,7 +170,15 @@ const StationAssignment = () => {
   };
 
   const getSavePermission = (roleCode?: number, status?: string) => {
-    // Same as edit permission for most cases
+    // Don't show save button for certain statuses and roles
+    if (['Done', 'Cancel'].includes(status || '')) return false;
+    if (roleCode === 4) return false; // גורם דורש
+    if (roleCode === 2 && status === 'Complete') {
+      const closePermissions = 'Team leader'; // Mock value
+      return closePermissions === 'Team leader';
+    }
+    if ([3].includes(roleCode || 0) && ['Complete', 'Freeze'].includes(status || '')) return false;
+    
     return getEditPermission(roleCode, status);
   };
 
@@ -180,11 +188,6 @@ const StationAssignment = () => {
   };
 
   const permissions = getUserPermissions();
-
-  // Show permission dialog instead of blocking access
-  const handlePermissionDenied = () => {
-    setShowPermissionDialog(true);
-  };
 
   // Check if user should be redirected to new task form
   if (user?.roleCode === 4 && program.status === 'Open') {
@@ -199,31 +202,31 @@ const StationAssignment = () => {
         {/* Header */}
         <div className="bg-white border-b px-6 py-4">
           <div className="flex items-center justify-between">
+            {/* Left side - Action buttons */}
             <div className="flex items-center gap-4">
               <Button variant="outline" onClick={handleBack} className="flex items-center gap-2 px-4 py-2">
                 <ArrowRight className="w-4 h-4" />
                 חזרה
               </Button>
-            </div>
-            
-            <div className="flex items-center gap-4">
-              {permissions.canSave ? (
+              
+              {permissions.canSave && (
                 <Button onClick={handleSave} className="flex items-center gap-2 px-6 py-3 text-lg font-medium">
                   <Save className="w-5 h-5" />
                   שמור
                 </Button>
-              ) : (
-                <Button onClick={handlePermissionDenied} className="flex items-center gap-2 px-6 py-3 text-lg font-medium">
-                  <Save className="w-5 h-5" />
-                  שמור
-                </Button>
               )}
+              
               {permissions.canFreeze && (
                 <Button onClick={handleFreeze} variant="secondary" className="flex items-center gap-2 px-6 py-3 text-lg font-medium">
                   <Lock className="w-5 h-5" />
                   קיבוע
                 </Button>
               )}
+            </div>
+            
+            {/* Right side - Title */}
+            <div className="text-xl font-bold text-gray-900">
+              טיפול במשימה #{program.taskId}
             </div>
           </div>
         </div>
@@ -240,7 +243,6 @@ const StationAssignment = () => {
               </div>
               <div className="flex items-center gap-4">
                 <StatusBadge status={program.status} size="lg" />
-                <div className="text-lg font-bold text-gray-900">#{program.taskId}</div>
               </div>
             </div>
             
@@ -258,7 +260,7 @@ const StationAssignment = () => {
           <div className="w-1/3 space-y-4">
             {/* Last Update */}
             <div className="bg-white rounded-lg border p-4">
-              <div className="text-sm font-medium text-gray-700 mb-2 text-right">עדכון אחרון</div>
+              <div className="text-sm font-medium text-gray-700 mb-2 text-right">עדכון אחרון למשימה</div>
               <div className="text-sm text-gray-600">
                 {program.lastUpdate ? program.lastUpdate.toLocaleDateString('he-IL') : 'לא עודכן'}
               </div>
