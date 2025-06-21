@@ -26,10 +26,13 @@ const StationAssignment = () => {
   const { user } = useAuth();
   const [showPermissionDialog, setShowPermissionDialog] = useState(false);
 
+  console.log('StationAssignment component loaded with taskId:', taskId);
+
   // Find program from mock data
   const initialProgram = mockPrograms.find(p => p.taskId === Number(taskId));
   
   if (!initialProgram) {
+    console.log('Program not found for taskId:', taskId);
     return (
       <AppLayout currentRoute="/station-assignment">
         <div className="text-center py-12">
@@ -41,6 +44,8 @@ const StationAssignment = () => {
       </AppLayout>
     );
   }
+
+  console.log('Program found:', initialProgram);
 
   const [program, setProgram] = useState<Program>(initialProgram);
 
@@ -106,7 +111,7 @@ const StationAssignment = () => {
   };
 
   return (
-    <AppLayout currentRoute="/station-assignment" pageTitle={`עדכון משימה #${program.taskId}`}>
+    <AppLayout currentRoute="/station-assignment" pageTitle={`טיפול במשימה #${program.taskId}`}>
       <div className="min-h-screen bg-gray-50" style={{ transform: 'scale(0.75)', transformOrigin: 'top right' }}>
         {/* Header */}
         <div className="bg-white border-b px-6 py-3">

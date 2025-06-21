@@ -83,6 +83,7 @@ const Dashboard = () => {
   }, [programs, filters, user]);
 
   const handleProgramClick = (program: Program) => {
+    console.log('Navigating to station-assignment for task:', program.taskId);
     navigate(`/station-assignment/${program.taskId}`);
   };
 
