@@ -11,6 +11,9 @@ interface FilterState {
   assignedOfficer: string[];
   domain: string[];
   complexity: string[];
+  requester: string[];
+  team: string[];
+  quarter: string[];
 }
 
 const Dashboard = () => {
@@ -20,7 +23,10 @@ const Dashboard = () => {
     status: [],
     assignedOfficer: [],
     domain: [],
-    complexity: []
+    complexity: [],
+    requester: [],
+    team: [],
+    quarter: []
   });
   
   const [programs, setPrograms] = useState<Program[]>([]);
@@ -62,21 +68,67 @@ const Dashboard = () => {
     }
   };
 
+  // Get default status filter based on user role
+  const getDefaultStatusFilter = () => {
+    if (user?.roleCode === 3) { // קניין
+      return ['Plan', 'In Progress', 'Complete'];
+    } else if (user?.roleCode === 2) { // ראש צוות
+      return ['Plan', 'In Progress', 'Complete'];
+    } else {
+      // For all other users, exclude Freeze and Cancel by default
+      return ['Open', 'Plan', 'In Progress', 'Complete', 'Done'];
+    }
+  };
+
+  // Initialize default filters based on user role
+  useEffect(() => {
+    if (user) {
+      setFilters(prev => ({
+        ...prev,
+        status: getDefaultStatusFilter()
+      }));
+    }
+  }, [user]);
+
   const filteredPrograms = useMemo(() => {
     return programs.filter(program => {
       // Role-based filtering
-      if (user?.roleCode === 3 && program.assignedOfficerName !== user.fullName) {
-        return false;
+      if (user?.roleCode === 4) { // גורם דורש
+        // Show only tasks where division or department matches user's division/department
+        // For demo purposes, we'll show tasks where requester matches user
+        if (program.requesterName !== user.fullName) {
+          return false;
+        }
+      } else if (user?.roleCode === 3) { // קניין
+        // Show only tasks assigned to this officer with specific statuses
+        if (program.assignedOfficerName !== user.fullName) {
+          return false;
+        }
+        // Status filtering is handled by default status filter
+      } else if (user?.roleCode === 2) { // ראש צוות
+        // Show only tasks where team matches user's team with specific statuses
+        if (program.teamName !== user.procurementTeam) {
+          return false;
+        }
+        // Status filtering is handled by default status filter
       }
-      if (user?.roleCode === 4 && program.requesterName !== user.fullName) {
-        return false;
-      }
+      // For מנהל רכש (roleCode 1), show all tasks
 
-      // Multi-selection filter-based filtering
+      // Apply filter selections
       if (filters.status.length > 0 && !filters.status.includes(program.status)) return false;
       if (filters.assignedOfficer.length > 0 && !filters.assignedOfficer.includes(program.assignedOfficerName || '')) return false;
       if (filters.domain.length > 0 && !filters.domain.includes(program.domainName || '')) return false;
       if (filters.complexity.length > 0 && !filters.complexity.includes(program.complexity?.toString() || '')) return false;
+      if (filters.requester.length > 0 && !filters.requester.includes(program.requesterName || '')) return false;
+      if (filters.team.length > 0 && !filters.team.includes(program.teamName || '')) return false;
+      
+      // Quarter filter
+      if (filters.quarter.length > 0) {
+        const programQuarter = program.requiredQuarter ? 
+          `Q${Math.ceil((program.requiredQuarter.getMonth() + 1) / 3)}/${program.requiredQuarter.getFullYear().toString().slice(-2)}` : 
+          '';
+        if (!filters.quarter.includes(programQuarter)) return false;
+      }
 
       return true;
     });
@@ -105,6 +157,7 @@ const Dashboard = () => {
         filters={filters}
         onFiltersChange={setFilters}
         programs={programs}
+        userRole={user?.roleCode}
       />
 
       {/* Programs Grid - 3 columns for wider cards */}

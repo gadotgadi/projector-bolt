@@ -8,6 +8,8 @@ export interface MockUser {
   procurementTeam?: string;
   email?: string;
   password: string; // For demo purposes
+  divisionId?: number;
+  departmentId?: number;
 }
 
 export const mockUsers: MockUser[] = [
@@ -56,7 +58,9 @@ export const mockUsers: MockUser[] = [
     roleCode: 4,
     roleDescription: 'גורם דורש',
     email: 'rachel.abraham@company.com',
-    password: '123456'
+    password: '123456',
+    divisionId: 1, // לוגיסטיקה
+    departmentId: 1 // רכש וחוזים
   },
   {
     id: 6,
@@ -65,7 +69,9 @@ export const mockUsers: MockUser[] = [
     roleCode: 5,
     roleDescription: 'מנהל יחידה',
     email: 'yossi.levi@company.com',
-    password: '123456'
+    password: '123456',
+    divisionId: 2, // טכנולוגיה
+    departmentId: 3 // מערכות מידע
   },
   {
     id: 7,
