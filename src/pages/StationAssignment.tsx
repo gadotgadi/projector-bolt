@@ -195,38 +195,32 @@ const StationAssignment = () => {
 
   return (
     <AppLayout currentRoute="/station-assignment" pageTitle={`טיפול במשימה #${program.taskId}`}>
-      <div className="min-h-screen bg-gray-50" style={{ transform: 'scale(0.75)', transformOrigin: 'top right' }}>
+      <div className="min-h-screen bg-gray-50" dir="rtl">
         {/* Header */}
-        <div className="bg-white border-b px-6 py-3">
+        <div className="bg-white border-b px-6 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
-              <Button variant="outline" onClick={handleBack} className="flex items-center gap-2 text-sm px-3 py-1.5">
-                <ArrowRight className="w-3 h-3" />
+              <Button variant="outline" onClick={handleBack} className="flex items-center gap-2 px-4 py-2">
+                <ArrowRight className="w-4 h-4" />
                 חזרה
               </Button>
             </div>
             
-            <div className="flex items-center gap-3">
-              <StatusBadge status={program.status} size="md" />
+            <div className="flex items-center gap-4">
               {permissions.canSave ? (
-                <Button onClick={handleSave} className="flex items-center gap-2 text-sm px-3 py-1.5">
-                  <Save className="w-3 h-3" />
-                  שמירה
+                <Button onClick={handleSave} className="flex items-center gap-2 px-6 py-3 text-lg font-medium">
+                  <Save className="w-5 h-5" />
+                  שמור
                 </Button>
               ) : (
-                <Button onClick={handlePermissionDenied} className="flex items-center gap-2 text-sm px-3 py-1.5">
-                  <Save className="w-3 h-3" />
-                  שמירה
+                <Button onClick={handlePermissionDenied} className="flex items-center gap-2 px-6 py-3 text-lg font-medium">
+                  <Save className="w-5 h-5" />
+                  שמור
                 </Button>
               )}
-              {permissions.canFreeze ? (
-                <Button onClick={handleFreeze} variant="secondary" className="flex items-center gap-2 text-sm px-3 py-1.5">
-                  <Lock className="w-3 h-3" />
-                  קיבוע
-                </Button>
-              ) : (
-                <Button onClick={handlePermissionDenied} variant="secondary" className="flex items-center gap-2 text-sm px-3 py-1.5">
-                  <Lock className="w-3 h-3" />
+              {permissions.canFreeze && (
+                <Button onClick={handleFreeze} variant="secondary" className="flex items-center gap-2 px-6 py-3 text-lg font-medium">
+                  <Lock className="w-5 h-5" />
                   קיבוע
                 </Button>
               )}
@@ -235,9 +229,21 @@ const StationAssignment = () => {
         </div>
 
         {/* Main Content */}
-        <div className="flex" style={{ height: 'calc(100vh - 60px)' }}>
-          {/* Left Side - Program Details */}
-          <div className="w-1/3 p-4 overflow-y-auto bg-white border-r">
+        <div className="flex p-6 gap-6">
+          {/* Right Side - Program Details (2/3 width) */}
+          <div className="w-2/3 bg-white rounded-lg border p-6">
+            <div className="flex items-center gap-4 mb-6">
+              <div className="flex-1">
+                <h2 className="text-xl font-bold text-gray-900 text-right">
+                  כותרת המשימה
+                </h2>
+              </div>
+              <div className="flex items-center gap-4">
+                <StatusBadge status={program.status} size="lg" />
+                <div className="text-lg font-bold text-gray-900">#{program.taskId}</div>
+              </div>
+            </div>
+            
             <ProgramForm 
               program={program}
               canEdit={permissions.canEdit}
@@ -248,14 +254,26 @@ const StationAssignment = () => {
             />
           </div>
 
-          {/* Right Side - Station Assignment */}
-          <div className="w-2/3 p-4 overflow-y-auto bg-gray-50">
-            <StationAssignmentForm 
-              program={program}
-              canEdit={permissions.canEdit}
-              onSave={handleSave}
-              onProgramUpdate={handleProgramUpdate}
-            />
+          {/* Left Side - Station Assignment (1/3 width) */}
+          <div className="w-1/3 space-y-4">
+            {/* Last Update */}
+            <div className="bg-white rounded-lg border p-4">
+              <div className="text-sm font-medium text-gray-700 mb-2 text-right">עדכון אחרון</div>
+              <div className="text-sm text-gray-600">
+                {program.lastUpdate ? program.lastUpdate.toLocaleDateString('he-IL') : 'לא עודכן'}
+              </div>
+            </div>
+
+            {/* Station Assignment */}
+            <div className="bg-white rounded-lg border p-4">
+              <h3 className="text-lg font-bold text-gray-900 mb-4 text-right">פריסת תחנות</h3>
+              <StationAssignmentForm 
+                program={program}
+                canEdit={permissions.canEdit}
+                onSave={handleSave}
+                onProgramUpdate={handleProgramUpdate}
+              />
+            </div>
           </div>
         </div>
 

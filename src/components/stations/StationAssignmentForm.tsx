@@ -426,150 +426,145 @@ const StationAssignmentForm: React.FC<StationAssignmentFormProps> = ({
   return (
     <>
       <div className="space-y-4">
-        {/* Top fields section */}
-        <div className="bg-white rounded-lg border p-4">
-          <div className="space-y-3">
-            {/* Engagement Type */}
-            <div className="flex items-center gap-3">
-              <label className="text-sm font-medium text-gray-700 w-32 text-right flex-shrink-0">סוג התקשרות</label>
-              {permissions.canEditEngagementType ? (
-                <div className="relative flex-1">
-                  <select
-                    value={selectedEngagementTypeId || ''}
-                    onChange={(e) => handleEngagementTypeChange(Number(e.target.value))}
-                    className="w-full text-sm border border-gray-300 rounded px-3 py-2 bg-white appearance-none pr-8"
-                  >
-                    <option value="">בחר סוג התקשרות</option>
-                    {mockEngagementTypes.map(engagementType => (
-                      <option key={engagementType.id} value={engagementType.id}>
-                        {engagementType.name}
-                      </option>
-                    ))}
-                  </select>
-                  <ChevronDown className="absolute left-2 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
-                </div>
-              ) : (
-                <div className="text-sm text-gray-900 flex-1">
-                  {program.engagementTypeName || 'לא הוגדר'}
-                </div>
-              )}
+        {/* Engagement Type */}
+        <div className="space-y-2">
+          <Label className="text-sm font-medium text-right">סוג התקשרות</Label>
+          {permissions.canEditEngagementType ? (
+            <div className="relative">
+              <select
+                value={selectedEngagementTypeId || ''}
+                onChange={(e) => handleEngagementTypeChange(Number(e.target.value))}
+                className="w-full text-sm border border-gray-300 rounded px-3 py-2 bg-white appearance-none text-right"
+              >
+                <option value="">בחר סוג התקשרות</option>
+                {mockEngagementTypes.map(engagementType => (
+                  <option key={engagementType.id} value={engagementType.id}>
+                    {engagementType.name}
+                  </option>
+                ))}
+              </select>
+              <ChevronDown className="absolute left-2 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
             </div>
-            
-            {/* Start Date */}
-            <div className="flex items-center gap-3">
-              <label className="text-sm font-medium text-gray-700 w-32 text-right flex-shrink-0">מועד התנעה נדרש</label>
-              <div className="text-sm text-gray-900 flex-1">
-                {program.startDate ? program.startDate.toLocaleDateString('he-IL') : 'לא הוגדר'}
-              </div>
+          ) : (
+            <div className="text-sm text-gray-900 p-2 bg-gray-50 rounded">
+              {program.engagementTypeName || 'לא הוגדר'}
             </div>
-          </div>
+          )}
         </div>
 
         {/* Station Assignment Table */}
-        <div className="bg-white rounded-lg border p-4">
-          <div className="space-y-1">
-            {/* Station rows */}
-            {Array.from({ length: 10 }, (_, index) => {
-              const stationNumber = index + 1;
-              const stationData = getStationData(stationNumber);
-              const stationStatus = getStationStatus(stationNumber);
-              const availableActivities = getAvailableActivities(stationNumber);
-              
-              return (
-                <div 
-                  key={stationNumber} 
-                  className={`grid grid-cols-12 gap-2 p-2 rounded ${stationStatus.bgColor} ${stationStatus.textColor}`}
-                >
-                  {/* Station number */}
-                  <div className="col-span-1 text-center font-bold text-sm flex items-center justify-center min-h-[2.5rem]">
-                    {stationNumber}
-                  </div>
-                  
-                  {/* Activity name */}
-                  <div className="col-span-7 flex items-center">
-                    {canEditActivity(stationNumber) ? (
-                      <div className="relative w-full">
-                        <select
-                          value={stationData?.activityId || ''}
-                          onChange={(e) => handleActivityChange(stationNumber, Number(e.target.value))}
-                          className="w-full text-sm border border-gray-300 rounded px-3 py-2 bg-white appearance-none pr-8 min-h-[2.5rem]"
-                        >
-                          <option value="">בחר פעילות</option>
-                          {availableActivities.map(activity => (
-                            <option key={activity.id} value={activity.id}>
-                              {activity.name}
-                            </option>
-                          ))}
-                        </select>
-                        <ChevronDown className="absolute left-2 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
-                      </div>
-                    ) : (
-                      <div className="text-sm break-words leading-tight py-2 px-1 w-full min-h-[2.5rem] flex items-center">
-                        {stationData?.activity?.name || ''}
-                      </div>
-                    )}
-                  </div>
-                  
-                  {/* Completion date */}
-                  <div className="col-span-2 flex items-center gap-1 justify-center">
-                    {canEditCompletionDate(stationNumber) ? (
-                      <input
-                        type="date"
-                        value={stationData?.completionDate ? stationData.completionDate.toISOString().split('T')[0] : ''}
-                        onChange={(e) => handleCompletionDateChange(stationNumber, e.target.value)}
-                        max={getTodayDateString()}
-                        className="text-xs border border-gray-300 rounded px-2 py-1 bg-white"
-                      />
-                    ) : (
-                      <span className="text-sm">
-                        {stationData?.completionDate ? stationData.completionDate.toLocaleDateString('he-IL') : ''}
-                      </span>
-                    )}
-                    {shouldShowCalendar(stationNumber) && (
-                      <Calendar className="w-4 h-4 text-gray-600" />
-                    )}
-                  </div>
-                  
-                  {/* Reporting user */}
-                  <div className="col-span-2 flex items-center gap-1 justify-center">
-                    <span className="text-sm">
-                      {stationData?.completionDate ? (stationData.reportingUserName || user?.fullName) : ''}
-                    </span>
-                    <MessageSquare 
-                      className={`w-4 h-4 ${permissions.canEditStationNotes ? 'text-gray-600 cursor-pointer hover:text-blue-600' : 'text-gray-400'}`}
-                      onClick={() => handleStationNotesClick(stationNumber)}
-                    />
-                  </div>
+        <div className="space-y-1">
+          {/* Station rows */}
+          {Array.from({ length: 10 }, (_, index) => {
+            const stationNumber = index + 1;
+            const stationData = getStationData(stationNumber);
+            const stationStatus = getStationStatus(stationNumber);
+            const availableActivities = getAvailableActivities(stationNumber);
+            
+            return (
+              <div 
+                key={stationNumber} 
+                className={`grid grid-cols-12 gap-1 p-2 rounded text-xs ${stationStatus.bgColor} ${stationStatus.textColor}`}
+              >
+                {/* Station number */}
+                <div className="col-span-1 text-center font-bold flex items-center justify-center min-h-[2rem]">
+                  {stationNumber}
                 </div>
-              );
-            })}
-          </div>
-        
-          {/* Assignment status indicator for OPEN status */}
-          {program.status === 'Open' && (
-            <div className="mt-3 p-2 bg-blue-50 rounded border">
-              <div className="text-xs text-blue-800">
-                {isAssignmentValid() ? (
-                  <span className="text-green-700">✓ שיבוץ התחנות תקין - ניתן לקבע את המשימה</span>
-                ) : (
-                  <span>יש לשבץ לפחות 2 תחנות לפני קיבוע המשימה</span>
-                )}
+                
+                {/* Activity name - narrower with text wrapping */}
+                <div className="col-span-6 flex items-center">
+                  {canEditActivity(stationNumber) ? (
+                    <div className="relative w-full">
+                      <select
+                        value={stationData?.activityId || ''}
+                        onChange={(e) => handleActivityChange(stationNumber, Number(e.target.value))}
+                        className="w-full text-xs border border-gray-300 rounded px-2 py-1 bg-white appearance-none min-h-[2rem]"
+                      >
+                        <option value="">בחר פעילות</option>
+                        {availableActivities.map(activity => (
+                          <option key={activity.id} value={activity.id}>
+                            {activity.name.length > 30 ? activity.name.substring(0, 30) + '...' : activity.name}
+                          </option>
+                        ))}
+                      </select>
+                      <ChevronDown className="absolute left-1 top-1/2 transform -translate-y-1/2 w-3 h-3 text-gray-400 pointer-events-none" />
+                    </div>
+                  ) : (
+                    <div className="text-xs break-words leading-tight py-1 px-1 w-full min-h-[2rem] flex items-center">
+                      {stationData?.activity?.name ? 
+                        (stationData.activity.name.length > 30 ? 
+                          stationData.activity.name.substring(0, 30) + '...' : 
+                          stationData.activity.name) : 
+                        ''}
+                    </div>
+                  )}
+                </div>
+                
+                {/* Completion date */}
+                <div className="col-span-2 flex items-center gap-1 justify-center">
+                  {canEditCompletionDate(stationNumber) ? (
+                    <input
+                      type="date"
+                      value={stationData?.completionDate ? stationData.completionDate.toISOString().split('T')[0] : ''}
+                      onChange={(e) => handleCompletionDateChange(stationNumber, e.target.value)}
+                      max={getTodayDateString()}
+                      className="text-xs border border-gray-300 rounded px-1 py-1 bg-white w-full"
+                    />
+                  ) : (
+                    <span className="text-xs">
+                      {stationData?.completionDate ? stationData.completionDate.toLocaleDateString('he-IL') : ''}
+                    </span>
+                  )}
+                  {shouldShowCalendar(stationNumber) && (
+                    <Calendar className="w-3 h-3 text-gray-600" />
+                  )}
+                </div>
+                
+                {/* Reporting user - narrower with text wrapping */}
+                <div className="col-span-3 flex items-center gap-1 justify-center">
+                  <div className="text-xs break-words leading-tight text-center min-h-[2rem] flex items-center justify-center flex-1">
+                    {stationData?.completionDate ? 
+                      (stationData.reportingUserName ? 
+                        (stationData.reportingUserName.length > 20 ? 
+                          stationData.reportingUserName.substring(0, 20) + '...' : 
+                          stationData.reportingUserName) : 
+                        user?.fullName || '') : 
+                      ''}
+                  </div>
+                  <MessageSquare 
+                    className={`w-3 h-3 ${permissions.canEditStationNotes ? 'text-gray-600 cursor-pointer hover:text-blue-600' : 'text-gray-400'}`}
+                    onClick={() => handleStationNotesClick(stationNumber)}
+                  />
+                </div>
               </div>
-            </div>
-          )}
-
-          {/* Progress status indicator for other statuses */}
-          {['Plan', 'In Progress'].includes(program.status) && (
-            <div className="mt-3 p-2 bg-gray-50 rounded border">
-              <div className="text-xs text-gray-700">
-                הושלמו {getCompletedStations().length} תחנות מתוך {stations.filter(s => s.activityId).length} תחנות משובצות
-                {getNextStationToComplete() && (
-                  <span className="mr-2">• התחנה הבאה לביצוע: {getNextStationToComplete()}</span>
-                )}
-              </div>
-            </div>
-          )}
+            );
+          })}
         </div>
+      
+        {/* Assignment status indicator for OPEN status */}
+        {program.status === 'Open' && (
+          <div className="mt-3 p-2 bg-blue-50 rounded border">
+            <div className="text-xs text-blue-800">
+              {isAssignmentValid() ? (
+                <span className="text-green-700">✓ שיבוץ התחנות תקין - ניתן לקבע את המשימה</span>
+              ) : (
+                <span>יש לשבץ לפחות 2 תחנות לפני קיבוע המשימה</span>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* Progress status indicator for other statuses */}
+        {['Plan', 'In Progress'].includes(program.status) && (
+          <div className="mt-3 p-2 bg-gray-50 rounded border">
+            <div className="text-xs text-gray-700">
+              הושלמו {getCompletedStations().length} תחנות מתוך {stations.filter(s => s.activityId).length} תחנות משובצות
+              {getNextStationToComplete() && (
+                <span className="mr-2">• התחנה הבאה לביצוע: {getNextStationToComplete()}</span>
+              )}
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Station Notes Dialog */}

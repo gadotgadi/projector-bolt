@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { TaskStatus, STATUS_CONFIG } from '../../types';
 
@@ -13,7 +12,7 @@ const StatusBadge: React.FC<StatusBadgeProps> = ({ status, size = 'md' }) => {
   const sizeClasses = {
     sm: 'px-2 py-1 text-xs',
     md: 'px-3 py-1 text-sm', 
-    lg: 'px-4 py-2 text-base'
+    lg: 'px-4 py-2 text-lg font-bold'
   };
 
   return (
