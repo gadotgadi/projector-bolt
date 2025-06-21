@@ -32,6 +32,8 @@ import { getDefaultRouteForRole } from './utils/rolePermissions';
 const AppContent: React.FC = () => {
   const { user, isAuthenticated, login } = useAuth();
 
+  console.log('AppContent rendering, isAuthenticated:', isAuthenticated, 'user:', user);
+
   if (!isAuthenticated) {
     return <LoginForm onLogin={login} />;
   }
@@ -191,6 +193,8 @@ const AppContent: React.FC = () => {
 };
 
 function App() {
+  console.log('App component rendering');
+  
   return (
     <AuthProvider>
       <Router>

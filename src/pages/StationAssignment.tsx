@@ -28,13 +28,16 @@ const StationAssignment = () => {
   const [isLoading, setIsLoading] = useState(true);
 
   console.log('StationAssignment component loaded with taskId:', taskId);
+  console.log('Current user:', user);
 
   // Find program from mock data
   const initialProgram = mockPrograms.find(p => p.taskId === Number(taskId));
   
   useEffect(() => {
+    console.log('StationAssignment useEffect running');
     // Simulate loading time to ensure proper initialization
     const timer = setTimeout(() => {
+      console.log('Setting loading to false');
       setIsLoading(false);
     }, 100);
 
@@ -42,6 +45,7 @@ const StationAssignment = () => {
   }, []);
 
   if (isLoading) {
+    console.log('Still loading...');
     return (
       <AppLayout currentRoute="/station-assignment">
         <div className="flex items-center justify-center h-64">
@@ -84,10 +88,12 @@ const StationAssignment = () => {
   });
 
   const handleBack = () => {
+    console.log('Navigating back to dashboard');
     navigate('/');
   };
 
   const handleSave = () => {
+    console.log('Saving task changes');
     toast({
       title: "שינויים נשמרו",
       description: "פרטי המשימה נשמרו בהצלחה",
@@ -95,6 +101,7 @@ const StationAssignment = () => {
   };
 
   const handleFreeze = () => {
+    console.log('Freezing task');
     // Validate station assignment if program is in OPEN status
     if (program.status === 'Open') {
       if (window.validateStationAssignment && !window.validateStationAssignment()) {
@@ -122,6 +129,7 @@ const StationAssignment = () => {
   };
 
   const handleProgramUpdate = (updatedProgram: Program) => {
+    console.log('Program updated:', updatedProgram.title);
     setProgram(updatedProgram);
   };
 
@@ -134,6 +142,15 @@ const StationAssignment = () => {
 
     // גורם דורש
     if (roleCode === 4) {
+      if (status === 'Open') {
+        // גורם דורש can edit in Open status (should redirect to new task form)
+        return {
+          canEdit: true,
+          canSave: true,
+          canFreeze: false,
+          isReadOnly: false
+        };
+      }
       return {
         canEdit: false,
         canSave: false,
@@ -214,6 +231,8 @@ const StationAssignment = () => {
   const handlePermissionDenied = () => {
     setShowPermissionDialog(true);
   };
+
+  console.log('Rendering StationAssignment component');
 
   return (
     <AppLayout currentRoute="/station-assignment" pageTitle={`עדכון משימה #${program.taskId}`}>
