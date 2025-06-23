@@ -242,136 +242,134 @@ const StationAssignment = () => {
   }
 
   return (
-    <AppLayout currentRoute="/station-assignment" pageTitle={`טיפול במשימה #${program.taskId}`}>
-      <div className="min-h-screen bg-gray-50" dir="rtl">
-        {/* Single Header with everything */}
-        <div className="bg-white border-b px-6 py-4">
-          <div className="flex items-center justify-between">
-            {/* Right side - Title and Action buttons */}
-            <div className="flex items-center gap-6">
-              <div className="text-xl font-bold text-gray-900">
-                טיפול במשימה #{program.taskId}
-              </div>
-              
-              <div className="flex items-center gap-3">
-                <Button variant="outline" onClick={handleBack} className="flex items-center gap-2 px-4 py-2">
-                  <ArrowRight className="w-4 h-4" />
-                  חזרה
-                </Button>
-                
-                {permissions.canSave && (
-                  <Button onClick={handleSave} className="flex items-center gap-2 px-6 py-3 text-lg font-medium">
-                    <Save className="w-5 h-5" />
-                    שמור
-                  </Button>
-                )}
-                
-                {permissions.canFreeze && (
-                  <Button onClick={handleFreeze} variant="secondary" className="flex items-center gap-2 px-6 py-3 text-lg font-medium">
-                    <Lock className="w-5 h-5" />
-                    קיבוע
-                  </Button>
-                )}
-              </div>
+    <div className="min-h-screen bg-gray-50" dir="rtl">
+      {/* Single Header with everything - NO AppLayout wrapper */}
+      <div className="bg-white border-b px-6 py-4">
+        <div className="flex items-center justify-between">
+          {/* Right side - Title and Action buttons */}
+          <div className="flex items-center gap-6">
+            <div className="text-xl font-bold text-gray-900">
+              טיפול במשימה #{program.taskId}
             </div>
             
-            {/* Left side - Year selector and user name */}
-            <div className="flex items-center gap-4">
-              <select className="border border-gray-300 rounded-lg px-3 py-2 text-sm">
-                <option value="2024">2024</option>
-                <option value="2025">2025</option>
-                <option value="2026">2026</option>
-              </select>
-              <span className="font-medium text-gray-800">{user?.fullName}</span>
+            <div className="flex items-center gap-3">
+              <Button variant="outline" onClick={handleBack} className="flex items-center gap-2 px-4 py-2">
+                <ArrowRight className="w-4 h-4" />
+                חזרה
+              </Button>
+              
+              {permissions.canSave && (
+                <Button onClick={handleSave} className="flex items-center gap-2 px-6 py-3 text-lg font-medium">
+                  <Save className="w-5 h-5" />
+                  שמור
+                </Button>
+              )}
+              
+              {permissions.canFreeze && (
+                <Button onClick={handleFreeze} variant="secondary" className="flex items-center gap-2 px-6 py-3 text-lg font-medium">
+                  <Lock className="w-5 h-5" />
+                  קיבוע
+                </Button>
+              )}
             </div>
           </div>
+          
+          {/* Left side - Year selector and user name */}
+          <div className="flex items-center gap-4">
+            <select className="border border-gray-300 rounded-lg px-3 py-2 text-sm">
+              <option value="2024">2024</option>
+              <option value="2025">2025</option>
+              <option value="2026">2026</option>
+            </select>
+            <span className="font-medium text-gray-800">{user?.fullName}</span>
+          </div>
+        </div>
+      </div>
+
+      {/* Main Content */}
+      <div className="flex p-6 gap-6">
+        {/* Right Side - Program Details (2/3 width) */}
+        <div className="w-2/3 bg-white rounded-lg border p-6">
+          <ProgramForm 
+            program={program}
+            canEdit={permissions.canEdit}
+            onProgramUpdate={handleProgramUpdate}
+            isEditing={false}
+            onSave={handleSave}
+            onCancel={() => {}}
+          />
         </div>
 
-        {/* Main Content */}
-        <div className="flex p-6 gap-6">
-          {/* Right Side - Program Details (2/3 width) */}
-          <div className="w-2/3 bg-white rounded-lg border p-6">
-            <ProgramForm 
-              program={program}
-              canEdit={permissions.canEdit}
-              onProgramUpdate={handleProgramUpdate}
-              isEditing={false}
-              onSave={handleSave}
-              onCancel={() => {}}
-            />
-          </div>
-
-          {/* Left Side - Station Assignment (1/3 width) */}
-          <div className="w-1/3 space-y-4">
-            {/* Status and Last Update */}
-            <div className="bg-white rounded-lg border p-4">
-              <div className="flex items-center justify-between">
-                {/* Status Badge with dropdown if editable */}
-                <div className="flex items-center">
-                  {permissions.canEditStatus ? (
-                    <Select value={program.status} onValueChange={handleStatusChange}>
-                      <SelectTrigger className="border-0 p-0 h-auto focus:ring-0 bg-transparent">
-                        <div className="flex items-center gap-2">
-                          <StatusBadge status={program.status} size="lg" />
-                          <ChevronDown className="w-4 h-4" />
-                        </div>
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value={program.status}>
-                          {STATUS_CONFIG[program.status].label} (נוכחי)
+        {/* Left Side - Station Assignment (1/3 width) */}
+        <div className="w-1/3 space-y-4">
+          {/* Status and Last Update */}
+          <div className="bg-white rounded-lg border p-4">
+            <div className="flex items-center justify-between">
+              {/* Status Badge with dropdown if editable */}
+              <div className="flex items-center">
+                {permissions.canEditStatus ? (
+                  <Select value={program.status} onValueChange={handleStatusChange}>
+                    <SelectTrigger className="border-0 p-0 h-auto focus:ring-0 bg-transparent">
+                      <div className="flex items-center gap-2">
+                        <StatusBadge status={program.status} size="lg" />
+                        <ChevronDown className="w-4 h-4" />
+                      </div>
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value={program.status}>
+                        {STATUS_CONFIG[program.status].label} (נוכחי)
+                      </SelectItem>
+                      {getAvailableStatusOptions().map(status => (
+                        <SelectItem key={status} value={status}>
+                          {STATUS_CONFIG[status as keyof typeof STATUS_CONFIG]?.label}
                         </SelectItem>
-                        {getAvailableStatusOptions().map(status => (
-                          <SelectItem key={status} value={status}>
-                            {STATUS_CONFIG[status as keyof typeof STATUS_CONFIG]?.label}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  ) : (
-                    <StatusBadge status={program.status} size="lg" />
-                  )}
-                </div>
-                
-                {/* Last Update */}
-                <div className="text-left">
-                  <div className="text-sm font-medium text-gray-700 mb-1">עדכון אחרון</div>
-                  <div className="text-sm text-gray-600">
-                    {program.lastUpdate ? program.lastUpdate.toLocaleDateString('he-IL') : 'לא עודכן'}
-                  </div>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                ) : (
+                  <StatusBadge status={program.status} size="lg" />
+                )}
+              </div>
+              
+              {/* Last Update */}
+              <div className="text-left">
+                <div className="text-sm font-medium text-gray-700 mb-1">עדכון אחרון</div>
+                <div className="text-sm text-gray-600">
+                  {program.lastUpdate ? program.lastUpdate.toLocaleDateString('he-IL') : 'לא עודכן'}
                 </div>
               </div>
             </div>
+          </div>
 
-            {/* Station Assignment */}
-            <div className="bg-white rounded-lg border p-4">
-              <StationAssignmentForm 
-                program={program}
-                canEdit={permissions.canEdit}
-                onSave={handleSave}
-                onProgramUpdate={handleProgramUpdate}
-              />
-            </div>
+          {/* Station Assignment */}
+          <div className="bg-white rounded-lg border p-4">
+            <StationAssignmentForm 
+              program={program}
+              canEdit={permissions.canEdit}
+              onSave={handleSave}
+              onProgramUpdate={handleProgramUpdate}
+            />
           </div>
         </div>
-
-        {/* Permission Dialog */}
-        <Dialog open={showPermissionDialog} onOpenChange={setShowPermissionDialog}>
-          <DialogContent className="text-right">
-            <DialogHeader>
-              <DialogTitle>אין הרשאה</DialogTitle>
-              <DialogDescription>
-                אין לך הרשאה לבצע פעולה זו. פנה למנהל המערכת לקבלת הרשאות נוספות.
-              </DialogDescription>
-            </DialogHeader>
-            <div className="flex justify-end mt-4">
-              <Button onClick={() => setShowPermissionDialog(false)}>
-                סגור
-              </Button>
-            </div>
-          </DialogContent>
-        </Dialog>
       </div>
-    </AppLayout>
+
+      {/* Permission Dialog */}
+      <Dialog open={showPermissionDialog} onOpenChange={setShowPermissionDialog}>
+        <DialogContent className="text-right">
+          <DialogHeader>
+            <DialogTitle>אין הרשאה</DialogTitle>
+            <DialogDescription>
+              אין לך הרשאה לבצע פעולה זו. פנה למנהל המערכת לקבלת הרשאות נוספות.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="flex justify-end mt-4">
+            <Button onClick={() => setShowPermissionDialog(false)}>
+              סגור
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+    </div>
   );
 };
 
