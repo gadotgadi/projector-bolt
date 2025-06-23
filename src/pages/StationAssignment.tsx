@@ -244,7 +244,7 @@ const StationAssignment = () => {
   return (
     <AppLayout currentRoute="/station-assignment" pageTitle={`טיפול במשימה #${program.taskId}`}>
       <div className="min-h-screen bg-gray-50" dir="rtl">
-        {/* Header */}
+        {/* Single Header with everything */}
         <div className="bg-white border-b px-6 py-4">
           <div className="flex items-center justify-between">
             {/* Right side - Title and Action buttons */}
@@ -305,18 +305,16 @@ const StationAssignment = () => {
           <div className="w-1/3 space-y-4">
             {/* Status and Last Update */}
             <div className="bg-white rounded-lg border p-4">
-              <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center justify-between">
                 {/* Status Badge with dropdown if editable */}
-                <div className="flex-1">
+                <div className="flex items-center">
                   {permissions.canEditStatus ? (
                     <Select value={program.status} onValueChange={handleStatusChange}>
-                      <SelectTrigger className="w-full">
-                        <SelectValue>
-                          <div className="flex items-center gap-2">
-                            <StatusBadge status={program.status} size="md" />
-                            <ChevronDown className="w-4 h-4" />
-                          </div>
-                        </SelectValue>
+                      <SelectTrigger className="border-0 p-0 h-auto focus:ring-0 bg-transparent">
+                        <div className="flex items-center gap-2">
+                          <StatusBadge status={program.status} size="lg" />
+                          <ChevronDown className="w-4 h-4" />
+                        </div>
                       </SelectTrigger>
                       <SelectContent>
                         <SelectItem value={program.status}>
@@ -330,7 +328,7 @@ const StationAssignment = () => {
                       </SelectContent>
                     </Select>
                   ) : (
-                    <StatusBadge status={program.status} size="md" />
+                    <StatusBadge status={program.status} size="lg" />
                   )}
                 </div>
                 
