@@ -3,7 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import AppLayout from '../components/layout/AppLayout';
 import { Program, STATUS_CONFIG } from '../types';
 import { Button } from '../components/ui/button';
-import { ArrowRight, Save, Lock } from 'lucide-react';
+import { ArrowRight, Save, Lock, ChevronDown } from 'lucide-react';
 import { useToast } from '../components/ui/use-toast';
 import ProgramForm from '../components/program/ProgramForm';
 import StationAssignmentForm from '../components/stations/StationAssignmentForm';
@@ -11,6 +11,7 @@ import StatusBadge from '../components/common/StatusBadge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '../components/ui/dialog';
 import { mockPrograms } from '../data/mockPrograms';
 import { useAuth } from '../components/auth/AuthProvider';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select';
 
 // Declare global validation function
 declare global {
@@ -123,6 +124,20 @@ const StationAssignment = () => {
     }
   };
 
+  const handleStatusChange = (newStatus: string) => {
+    const updatedProgram = {
+      ...program,
+      status: newStatus as any,
+      lastUpdate: new Date()
+    };
+    setProgram(updatedProgram);
+    
+    toast({
+      title: "סטטוס עודכן",
+      description: `סטטוס המשימה שונה ל-${STATUS_CONFIG[newStatus as keyof typeof STATUS_CONFIG]?.label}`,
+    });
+  };
+
   const handleProgramUpdate = (updatedProgram: Program) => {
     setProgram(updatedProgram);
   };
@@ -135,7 +150,8 @@ const StationAssignment = () => {
     return {
       canEdit: getEditPermission(roleCode, status),
       canSave: getSavePermission(roleCode, status),
-      canFreeze: getFreezePermission(roleCode, status)
+      canFreeze: getFreezePermission(roleCode, status),
+      canEditStatus: getStatusEditPermission(roleCode, status)
     };
   };
 
@@ -187,6 +203,35 @@ const StationAssignment = () => {
     return roleCode === 1 && status === 'Open';
   };
 
+  const getStatusEditPermission = (roleCode?: number, status?: string) => {
+    // Only מנהל רכש can edit status manually
+    if (roleCode !== 1) return false;
+    
+    // Different statuses allow different transitions
+    const allowedTransitions: Record<string, string[]> = {
+      'Complete': ['Done', 'Freeze', 'Cancel'],
+      'In Progress': ['Freeze', 'Cancel'],
+      'Plan': ['Freeze', 'Cancel'],
+      'Open': ['Freeze', 'Cancel'],
+      'Freeze': ['Cancel', 'Open', 'Plan', 'In Progress', 'Done', 'Complete']
+    };
+    
+    return allowedTransitions[status || '']?.length > 0;
+  };
+
+  const getAvailableStatusOptions = () => {
+    const status = program.status;
+    const allowedTransitions: Record<string, string[]> = {
+      'Complete': ['Done', 'Freeze', 'Cancel'],
+      'In Progress': ['Freeze', 'Cancel'],
+      'Plan': ['Freeze', 'Cancel'],
+      'Open': ['Freeze', 'Cancel'],
+      'Freeze': ['Cancel', 'Open', 'Plan', 'In Progress', 'Done', 'Complete']
+    };
+    
+    return allowedTransitions[status] || [];
+  };
+
   const permissions = getUserPermissions();
 
   // Check if user should be redirected to new task form
@@ -202,31 +247,42 @@ const StationAssignment = () => {
         {/* Header */}
         <div className="bg-white border-b px-6 py-4">
           <div className="flex items-center justify-between">
-            {/* Left side - Action buttons */}
-            <div className="flex items-center gap-4">
-              <Button variant="outline" onClick={handleBack} className="flex items-center gap-2 px-4 py-2">
-                <ArrowRight className="w-4 h-4" />
-                חזרה
-              </Button>
+            {/* Right side - Title and Action buttons */}
+            <div className="flex items-center gap-6">
+              <div className="text-xl font-bold text-gray-900">
+                טיפול במשימה #{program.taskId}
+              </div>
               
-              {permissions.canSave && (
-                <Button onClick={handleSave} className="flex items-center gap-2 px-6 py-3 text-lg font-medium">
-                  <Save className="w-5 h-5" />
-                  שמור
+              <div className="flex items-center gap-3">
+                <Button variant="outline" onClick={handleBack} className="flex items-center gap-2 px-4 py-2">
+                  <ArrowRight className="w-4 h-4" />
+                  חזרה
                 </Button>
-              )}
-              
-              {permissions.canFreeze && (
-                <Button onClick={handleFreeze} variant="secondary" className="flex items-center gap-2 px-6 py-3 text-lg font-medium">
-                  <Lock className="w-5 h-5" />
-                  קיבוע
-                </Button>
-              )}
+                
+                {permissions.canSave && (
+                  <Button onClick={handleSave} className="flex items-center gap-2 px-6 py-3 text-lg font-medium">
+                    <Save className="w-5 h-5" />
+                    שמור
+                  </Button>
+                )}
+                
+                {permissions.canFreeze && (
+                  <Button onClick={handleFreeze} variant="secondary" className="flex items-center gap-2 px-6 py-3 text-lg font-medium">
+                    <Lock className="w-5 h-5" />
+                    קיבוע
+                  </Button>
+                )}
+              </div>
             </div>
             
-            {/* Right side - Title */}
-            <div className="text-xl font-bold text-gray-900">
-              טיפול במשימה #{program.taskId}
+            {/* Left side - Year selector and user name */}
+            <div className="flex items-center gap-4">
+              <select className="border border-gray-300 rounded-lg px-3 py-2 text-sm">
+                <option value="2024">2024</option>
+                <option value="2025">2025</option>
+                <option value="2026">2026</option>
+              </select>
+              <span className="font-medium text-gray-800">{user?.fullName}</span>
             </div>
           </div>
         </div>
@@ -235,17 +291,6 @@ const StationAssignment = () => {
         <div className="flex p-6 gap-6">
           {/* Right Side - Program Details (2/3 width) */}
           <div className="w-2/3 bg-white rounded-lg border p-6">
-            <div className="flex items-center gap-4 mb-6">
-              <div className="flex-1">
-                <h2 className="text-xl font-bold text-gray-900 text-right">
-                  כותרת המשימה
-                </h2>
-              </div>
-              <div className="flex items-center gap-4">
-                <StatusBadge status={program.status} size="lg" />
-              </div>
-            </div>
-            
             <ProgramForm 
               program={program}
               canEdit={permissions.canEdit}
@@ -258,17 +303,49 @@ const StationAssignment = () => {
 
           {/* Left Side - Station Assignment (1/3 width) */}
           <div className="w-1/3 space-y-4">
-            {/* Last Update */}
+            {/* Status and Last Update */}
             <div className="bg-white rounded-lg border p-4">
-              <div className="text-sm font-medium text-gray-700 mb-2 text-right">עדכון אחרון למשימה</div>
-              <div className="text-sm text-gray-600">
-                {program.lastUpdate ? program.lastUpdate.toLocaleDateString('he-IL') : 'לא עודכן'}
+              <div className="flex items-center justify-between mb-4">
+                {/* Status Badge with dropdown if editable */}
+                <div className="flex-1">
+                  {permissions.canEditStatus ? (
+                    <Select value={program.status} onValueChange={handleStatusChange}>
+                      <SelectTrigger className="w-full">
+                        <SelectValue>
+                          <div className="flex items-center gap-2">
+                            <StatusBadge status={program.status} size="md" />
+                            <ChevronDown className="w-4 h-4" />
+                          </div>
+                        </SelectValue>
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value={program.status}>
+                          {STATUS_CONFIG[program.status].label} (נוכחי)
+                        </SelectItem>
+                        {getAvailableStatusOptions().map(status => (
+                          <SelectItem key={status} value={status}>
+                            {STATUS_CONFIG[status as keyof typeof STATUS_CONFIG]?.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  ) : (
+                    <StatusBadge status={program.status} size="md" />
+                  )}
+                </div>
+                
+                {/* Last Update */}
+                <div className="text-left">
+                  <div className="text-sm font-medium text-gray-700 mb-1">עדכון אחרון</div>
+                  <div className="text-sm text-gray-600">
+                    {program.lastUpdate ? program.lastUpdate.toLocaleDateString('he-IL') : 'לא עודכן'}
+                  </div>
+                </div>
               </div>
             </div>
 
             {/* Station Assignment */}
             <div className="bg-white rounded-lg border p-4">
-              <h3 className="text-lg font-bold text-gray-900 mb-4 text-right">פריסת תחנות</h3>
               <StationAssignmentForm 
                 program={program}
                 canEdit={permissions.canEdit}
