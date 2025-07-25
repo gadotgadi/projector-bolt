@@ -439,13 +439,14 @@ const ProgramForm: React.FC<ProgramFormProps> = ({ program, canEdit, onProgramUp
                 if (value === 'none') {
                   handleChange('assignedOfficerName', '');
                   handleChange('assignedOfficerId', undefined);
+                  handleChange('computedTeamName', '');
                 } else {
                   const officer = getAvailableOfficers().find(o => o.id.toString() === value);
                   if (officer) {
                     handleChange('assignedOfficerName', officer.fullName);
                     handleChange('assignedOfficerId', officer.id);
-                    // Auto-fill team
-                    handleChange('teamName', officer.procurementTeam);
+                    // Auto-fill computed team
+                    handleChange('computedTeamName', officer.procurementTeam);
                   }
                 }
               }}

@@ -516,31 +516,13 @@ const NewTaskForm: React.FC<NewTaskFormProps> = ({ onSave, onCancel }) => {
                 <Label htmlFor="divisionName" className="block text-sm font-medium text-gray-700 mb-2">
                   אגף <span className="text-red-500">*</span>
                 </Label>
-                {isDivisionLocked() ? (
-                  <Input
-                    id="divisionName"
-                    value={formData.divisionName}
-                    className="text-right text-sm bg-gray-50"
-                    disabled
-                  />
-                ) : (
-                  <Select
-                    value={formData.divisionId?.toString() || ''}
-                    onValueChange={handleDivisionChange}
-                    disabled={isSubmitting || isFormLocked}
-                  >
-                    <SelectTrigger className="text-right text-sm">
-                      <SelectValue placeholder="בחר אגף" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {getAvailableDivisions().map(division => (
-                        <SelectItem key={division.id} value={division.id.toString()}>
-                          {division.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                )}
+                <Input
+                  id="divisionName"
+                  value={formData.divisionName}
+                  className="text-right text-sm bg-gray-50"
+                  disabled
+                  placeholder="יוגדר אוטומטית לפי הגורם הדורש"
+                />
               </div>
 
               <div>
