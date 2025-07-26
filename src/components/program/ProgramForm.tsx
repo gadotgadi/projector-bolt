@@ -445,8 +445,8 @@ const ProgramForm: React.FC<ProgramFormProps> = ({ program, canEdit, onProgramUp
                   if (officer) {
                     handleChange('assignedOfficerName', officer.fullName);
                     handleChange('assignedOfficerId', officer.id);
-                    // Auto-fill computed team
-                    handleChange('computedTeamName', officer.procurementTeam);
+                    // Auto-fill computed team name
+                    handleChange('computedTeamName', officer.procurementTeam || '');
                   }
                 }
               }}
@@ -469,44 +469,12 @@ const ProgramForm: React.FC<ProgramFormProps> = ({ program, canEdit, onProgramUp
           {/* Team */}
           <div className="grid grid-cols-1 gap-2">
             <Label htmlFor="teamName" className="text-sm font-medium text-right">צוות</Label>
-            {user?.roleCode === 2 ? (
-              <Input
-                value={user.procurementTeam || ''}
-                disabled
-                className="text-right text-sm h-8 bg-gray-50"
-              />
-            ) : (
-              <Select
-                value={formData.teamName || 'none'}
-                onValueChange={(value) => {
-                  if (value === 'none') {
-                    handleChange('teamName', '');
-                  } else {
-                    handleChange('teamName', value);
-                    // Auto-fill officer if team changes
-                    const teamOfficers = getAvailableOfficers().filter(o => o.procurementTeam === value);
-                    if (teamOfficers.length > 0) {
-                      const firstOfficer = teamOfficers[0];
-                      handleChange('assignedOfficerName', firstOfficer.fullName);
-                      handleChange('assignedOfficerId', firstOfficer.id);
-                    }
-                  }
-                }}
-                disabled={!canEditField('teamName')}
-              >
-                <SelectTrigger className="text-right text-sm h-8">
-                  <SelectValue placeholder="בחר צוות" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="none">ללא צוות</SelectItem>
-                  {getAvailableTeams().map(team => (
-                    <SelectItem key={team.id} value={team.name}>
-                      {team.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            )}
+            <Input
+              value={formData.computedTeamName || ''}
+              disabled
+              className="text-right text-sm h-8 bg-gray-50"
+              placeholder="נקבע אוטומטית לפי הקניין המטפל"
+            />
           </div>
         </div>
 
