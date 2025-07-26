@@ -439,14 +439,14 @@ const ProgramForm: React.FC<ProgramFormProps> = ({ program, canEdit, onProgramUp
                 if (value === 'none') {
                   handleChange('assignedOfficerName', '');
                   handleChange('assignedOfficerId', undefined);
-                  handleChange('computedTeamName', '');
+                  handleChange('teamName', '');
                 } else {
                   const officer = getAvailableOfficers().find(o => o.id.toString() === value);
                   if (officer) {
                     handleChange('assignedOfficerName', officer.fullName);
                     handleChange('assignedOfficerId', officer.id);
                     // Auto-fill computed team name
-                    handleChange('computedTeamName', officer.procurementTeam || '');
+                    handleChange('teamName', officer.procurementTeam || '');
                   }
                 }
               }}
@@ -470,7 +470,7 @@ const ProgramForm: React.FC<ProgramFormProps> = ({ program, canEdit, onProgramUp
           <div className="grid grid-cols-1 gap-2">
             <Label htmlFor="teamName" className="text-sm font-medium text-right">צוות</Label>
             <Input
-              value={formData.computedTeamName || ''}
+              value={formData.teamName || ''}
               disabled
               className="text-right text-sm h-8 bg-gray-50"
               placeholder="נקבע אוטומטית לפי הקניין המטפל"
